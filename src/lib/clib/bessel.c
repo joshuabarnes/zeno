@@ -7,8 +7,8 @@
 
 #include <gsl/gsl_sf_bessel.h>
 
-//  ______________________________________________________________________
 //  bessel_I0: regular modified cylindrical Bessel function I, order zero.
+//  ______________________________________________________________________
 
 double bessel_I0(double x)
 {
@@ -21,8 +21,8 @@ double bessel_I0(double x)
   return (res.val);
 }
 
-//  _____________________________________________________________________
 //  bessel_I1: regular modified cylindrical Bessel function I, order one.
+//  _____________________________________________________________________
 
 double bessel_I1(double x)
 {
@@ -35,8 +35,8 @@ double bessel_I1(double x)
   return (res.val);
 }
 
-//  ___________________________________________________________________
 //  bessel_I: regular modified cylindrical Bessel function I, order nu.
+//  ___________________________________________________________________
 
 double bessel_I(double nu, double x)
 {
@@ -48,9 +48,9 @@ double bessel_I(double nu, double x)
     error("%s.bessel_I: error status: %s\n", getprog(), gsl_strerror(stat));
   return (res.val);
 }
-
-//  ________________________________________________________________________
+
 //  bessel_K0: irregular modified cylindrical Bessel function K, order zero.
+//  ________________________________________________________________________
 
 double bessel_K0(double x)
 {
@@ -63,8 +63,8 @@ double bessel_K0(double x)
   return (res.val);
 }
 
-//  _______________________________________________________________________
 //  bessel_K1: irregular modified cylindrical Bessel function K, order one.
+//  _______________________________________________________________________
 
 double bessel_K1(double x)
 {
@@ -77,8 +77,8 @@ double bessel_K1(double x)
   return (res.val);
 }
 
-//  _____________________________________________________________________
 //  bessel_K: irregular modified cylindrical Bessel function K, order nu.
+//  _____________________________________________________________________
 
 double bessel_K(double nu, double x)
 {
