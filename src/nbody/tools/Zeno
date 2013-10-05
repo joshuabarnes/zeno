@@ -1,0 +1,17 @@
+# ~/nbody/tools/Zeno: install Zeno N-body tools.
+# Copyright (c) 1997  Joshua E. Barnes  Honolulu, Hawai'i.
+
+# Targets used to export things to Zeno.
+
+install: .install_bin
+
+include Makefile
+
+.install_bin: $(BINFILES)
+	mv $(BINFILES) $(ZENOPATH)/bin
+	@touch .install_bin
+
+# Targets used to clean up.
+
+reset:
+	rm -f .install_inc .install_lib $(BINFILES)

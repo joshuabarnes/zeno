@@ -1,0 +1,29 @@
+# ~/nbody/library/Zeno: install include and library files in Zeno.
+# Copyright (c) 1997  Joshua E. Barnes  Honolulu, Hawai'i.
+
+INCFILES = bodytags.h fixbody.h phatbody.h snapcenter.h snapkinem.h
+LIBFILES = libNBody.a snapmap_s3.o snapmap_m3.o snapmap_d3.o
+
+# Targets used to export things to Zeno.
+
+install: .install_inc .install_lib .install_bin
+
+include Makefile
+
+.install_inc: $(INCFILES)
+	cp $(INCFILES) $(ZENOPATH)/inc
+	@touch .install_inc
+
+.install_lib: $(LIBFILES)
+	cp $(LIBFILES) $(ZENOPATH)/lib
+	@touch .install_lib
+
+.install_bin: $(BINFILES)
+	mv $(BINFILES) $(ZENOPATH)/bin
+	@touch .install_bin
+
+# Targets used to clean up.
+
+reset:
+	make tidy
+	rm -f .install_inc .install_lib $(LIBFILES) $(BINFILES)

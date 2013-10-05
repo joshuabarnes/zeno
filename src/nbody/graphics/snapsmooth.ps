@@ -1,0 +1,1313 @@
+%!PS-Adobe-3.0
+%%BoundingBox: 38 24 574 768
+%%Title: Enscript Output
+%%For: Joshua Barnes
+%%Creator: GNU enscript 1.6.4
+%%CreationDate: Thu May  9 08:12:18 2013
+%%Orientation: Landscape
+%%Pages: (atend)
+%%DocumentMedia: Letter 612 792 0 () ()
+%%DocumentNeededResources: (atend)
+%%EndComments
+%%BeginProlog
+%%BeginResource: procset Enscript-Prolog 1.6 4
+%
+% Procedures.
+%
+
+/_S {	% save current state
+  /_s save def
+} def
+/_R {	% restore from saved state
+  _s restore
+} def
+
+/S {	% showpage protecting gstate
+  gsave
+  showpage
+  grestore
+} bind def
+
+/MF {	% fontname newfontname -> -	make a new encoded font
+  /newfontname exch def
+  /fontname exch def
+
+  /fontdict fontname findfont def
+  /newfont fontdict maxlength dict def
+
+  fontdict {
+    exch
+    dup /FID eq {
+      % skip FID pair
+      pop pop
+    } {
+      % copy to the new font dictionary
+      exch newfont 3 1 roll put
+    } ifelse
+  } forall
+
+  newfont /FontName newfontname put
+
+  % insert only valid encoding vectors
+  encoding_vector length 256 eq {
+    newfont /Encoding encoding_vector put
+  } if
+
+  newfontname newfont definefont pop
+} def
+
+/MF_PS { % fontname newfontname -> -	make a new font preserving its enc
+  /newfontname exch def
+  /fontname exch def
+
+  /fontdict fontname findfont def
+  /newfont fontdict maxlength dict def
+
+  fontdict {
+    exch
+    dup /FID eq {
+      % skip FID pair
+      pop pop
+    } {
+      % copy to the new font dictionary
+      exch newfont 3 1 roll put
+    } ifelse
+  } forall
+
+  newfont /FontName newfontname put
+
+  newfontname newfont definefont pop
+} def
+
+/SF { % fontname width height -> -	set a new font
+  /height exch def
+  /width exch def
+
+  findfont
+  [width 0 0 height 0 0] makefont setfont
+} def
+
+/SUF { % fontname width height -> -	set a new user font
+  /height exch def
+  /width exch def
+
+  /F-gs-user-font MF
+  /F-gs-user-font width height SF
+} def
+
+/SUF_PS { % fontname width height -> -	set a new user font preserving its enc
+  /height exch def
+  /width exch def
+
+  /F-gs-user-font MF_PS
+  /F-gs-user-font width height SF
+} def
+
+/M {moveto} bind def
+/s {show} bind def
+
+/Box {	% x y w h -> -			define box path
+  /d_h exch def /d_w exch def /d_y exch def /d_x exch def
+  d_x d_y  moveto
+  d_w 0 rlineto
+  0 d_h rlineto
+  d_w neg 0 rlineto
+  closepath
+} def
+
+/bgs {	% x y height blskip gray str -> -	show string with bg color
+  /str exch def
+  /gray exch def
+  /blskip exch def
+  /height exch def
+  /y exch def
+  /x exch def
+
+  gsave
+    x y blskip sub str stringwidth pop height Box
+    gray setgray
+    fill
+  grestore
+  x y M str s
+} def
+
+/bgcs { % x y height blskip red green blue str -> -  show string with bg color
+  /str exch def
+  /blue exch def
+  /green exch def
+  /red exch def
+  /blskip exch def
+  /height exch def
+  /y exch def
+  /x exch def
+
+  gsave
+    x y blskip sub str stringwidth pop height Box
+    red green blue setrgbcolor
+    fill
+  grestore
+  x y M str s
+} def
+
+% Highlight bars.
+/highlight_bars {	% nlines lineheight output_y_margin gray -> -
+  gsave
+    setgray
+    /ymarg exch def
+    /lineheight exch def
+    /nlines exch def
+
+    % This 2 is just a magic number to sync highlight lines to text.
+    0 d_header_y ymarg sub 2 sub translate
+
+    /cw d_output_w cols div def
+    /nrows d_output_h ymarg 2 mul sub lineheight div cvi def
+
+    % for each column
+    0 1 cols 1 sub {
+      cw mul /xp exch def
+
+      % for each rows
+      0 1 nrows 1 sub {
+        /rn exch def
+        rn lineheight mul neg /yp exch def
+        rn nlines idiv 2 mod 0 eq {
+	  % Draw highlight bar.  4 is just a magic indentation.
+	  xp 4 add yp cw 8 sub lineheight neg Box fill
+	} if
+      } for
+    } for
+
+  grestore
+} def
+
+% Line highlight bar.
+/line_highlight {	% x y width height gray -> -
+  gsave
+    /gray exch def
+    Box gray setgray fill
+  grestore
+} def
+
+% Column separator lines.
+/column_lines {
+  gsave
+    .1 setlinewidth
+    0 d_footer_h translate
+    /cw d_output_w cols div def
+    1 1 cols 1 sub {
+      cw mul 0 moveto
+      0 d_output_h rlineto stroke
+    } for
+  grestore
+} def
+
+% Column borders.
+/column_borders {
+  gsave
+    .1 setlinewidth
+    0 d_footer_h moveto
+    0 d_output_h rlineto
+    d_output_w 0 rlineto
+    0 d_output_h neg rlineto
+    closepath stroke
+  grestore
+} def
+
+% Do the actual underlay drawing
+/draw_underlay {
+  ul_style 0 eq {
+    ul_str true charpath stroke
+  } {
+    ul_str show
+  } ifelse
+} def
+
+% Underlay
+/underlay {	% - -> -
+  gsave
+    0 d_page_h translate
+    d_page_h neg d_page_w atan rotate
+
+    ul_gray setgray
+    ul_font setfont
+    /dw d_page_h dup mul d_page_w dup mul add sqrt def
+    ul_str stringwidth pop dw exch sub 2 div ul_h_ptsize -2 div moveto
+    draw_underlay
+  grestore
+} def
+
+/user_underlay {	% - -> -
+  gsave
+    ul_x ul_y translate
+    ul_angle rotate
+    ul_gray setgray
+    ul_font setfont
+    0 0 ul_h_ptsize 2 div sub moveto
+    draw_underlay
+  grestore
+} def
+
+% Page prefeed
+/page_prefeed {		% bool -> -
+  statusdict /prefeed known {
+    statusdict exch /prefeed exch put
+  } {
+    pop
+  } ifelse
+} def
+
+% Wrapped line markers
+/wrapped_line_mark {	% x y charwith charheight type -> -
+  /type exch def
+  /h exch def
+  /w exch def
+  /y exch def
+  /x exch def
+
+  type 2 eq {
+    % Black boxes (like TeX does)
+    gsave
+      0 setlinewidth
+      x w 4 div add y M
+      0 h rlineto w 2 div 0 rlineto 0 h neg rlineto
+      closepath fill
+    grestore
+  } {
+    type 3 eq {
+      % Small arrows
+      gsave
+        .2 setlinewidth
+        x w 2 div add y h 2 div add M
+        w 4 div 0 rlineto
+        x w 4 div add y lineto stroke
+
+        x w 4 div add w 8 div add y h 4 div add M
+        x w 4 div add y lineto
+	w 4 div h 8 div rlineto stroke
+      grestore
+    } {
+      % do nothing
+    } ifelse
+  } ifelse
+} def
+
+% EPSF import.
+
+/BeginEPSF {
+  /b4_Inc_state save def    		% Save state for cleanup
+  /dict_count countdictstack def	% Count objects on dict stack
+  /op_count count 1 sub def		% Count objects on operand stack
+  userdict begin
+  /showpage { } def
+  0 setgray 0 setlinecap
+  1 setlinewidth 0 setlinejoin
+  10 setmiterlimit [ ] 0 setdash newpath
+  /languagelevel where {
+    pop languagelevel
+    1 ne {
+      false setstrokeadjust false setoverprint
+    } if
+  } if
+} bind def
+
+/EndEPSF {
+  count op_count sub { pos } repeat	% Clean up stacks
+  countdictstack dict_count sub { end } repeat
+  b4_Inc_state restore
+} bind def
+
+% Check PostScript language level.
+/languagelevel where {
+  pop /gs_languagelevel languagelevel def
+} {
+  /gs_languagelevel 1 def
+} ifelse
+%%EndResource
+%%BeginResource: procset Enscript-Encoding-88591 1.6 4
+/encoding_vector [
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/space        	/exclam       	/quotedbl     	/numbersign   	
+/dollar       	/percent      	/ampersand    	/quoteright   	
+/parenleft    	/parenright   	/asterisk     	/plus         	
+/comma        	/hyphen       	/period       	/slash        	
+/zero         	/one          	/two          	/three        	
+/four         	/five         	/six          	/seven        	
+/eight        	/nine         	/colon        	/semicolon    	
+/less         	/equal        	/greater      	/question     	
+/at           	/A            	/B            	/C            	
+/D            	/E            	/F            	/G            	
+/H            	/I            	/J            	/K            	
+/L            	/M            	/N            	/O            	
+/P            	/Q            	/R            	/S            	
+/T            	/U            	/V            	/W            	
+/X            	/Y            	/Z            	/bracketleft  	
+/backslash    	/bracketright 	/asciicircum  	/underscore   	
+/quoteleft    	/a            	/b            	/c            	
+/d            	/e            	/f            	/g            	
+/h            	/i            	/j            	/k            	
+/l            	/m            	/n            	/o            	
+/p            	/q            	/r            	/s            	
+/t            	/u            	/v            	/w            	
+/x            	/y            	/z            	/braceleft    	
+/bar          	/braceright   	/tilde        	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/space        	/exclamdown   	/cent         	/sterling     	
+/currency     	/yen          	/brokenbar    	/section      	
+/dieresis     	/copyright    	/ordfeminine  	/guillemotleft	
+/logicalnot   	/hyphen       	/registered   	/macron       	
+/degree       	/plusminus    	/twosuperior  	/threesuperior	
+/acute        	/mu           	/paragraph    	/bullet       	
+/cedilla      	/onesuperior  	/ordmasculine 	/guillemotright	
+/onequarter   	/onehalf      	/threequarters	/questiondown 	
+/Agrave       	/Aacute       	/Acircumflex  	/Atilde       	
+/Adieresis    	/Aring        	/AE           	/Ccedilla     	
+/Egrave       	/Eacute       	/Ecircumflex  	/Edieresis    	
+/Igrave       	/Iacute       	/Icircumflex  	/Idieresis    	
+/Eth          	/Ntilde       	/Ograve       	/Oacute       	
+/Ocircumflex  	/Otilde       	/Odieresis    	/multiply     	
+/Oslash       	/Ugrave       	/Uacute       	/Ucircumflex  	
+/Udieresis    	/Yacute       	/Thorn        	/germandbls   	
+/agrave       	/aacute       	/acircumflex  	/atilde       	
+/adieresis    	/aring        	/ae           	/ccedilla     	
+/egrave       	/eacute       	/ecircumflex  	/edieresis    	
+/igrave       	/iacute       	/icircumflex  	/idieresis    	
+/eth          	/ntilde       	/ograve       	/oacute       	
+/ocircumflex  	/otilde       	/odieresis    	/divide       	
+/oslash       	/ugrave       	/uacute       	/ucircumflex  	
+/udieresis    	/yacute       	/thorn        	/ydieresis    	
+] def
+%%EndResource
+%%EndProlog
+%%BeginSetup
+%%IncludeResource: font Courier-Bold
+%%IncludeResource: font Courier
+/HFpt_w 10 def
+/HFpt_h 10 def
+/Courier-Bold /HF-gs-font MF
+/HF /HF-gs-font findfont [HFpt_w 0 0 HFpt_h 0 0] makefont def
+/Courier /F-gs-font MF
+/F-gs-font 7 7 SF
+/#copies 1 def
+% Pagedevice definitions:
+gs_languagelevel 1 gt {
+  <<
+    /PageSize [612 792] 
+  >> setpagedevice
+} if
+%%BeginResource: procset Enscript-Header-simple 1.6 4
+
+/do_header {	% print default simple header
+  gsave
+    d_header_x d_header_y HFpt_h 3 div add translate
+
+    HF setfont
+    user_header_p {
+      5 0 moveto user_header_left_str show
+
+      d_header_w user_header_center_str stringwidth pop sub 2 div
+      0 moveto user_header_center_str show
+
+      d_header_w user_header_right_str stringwidth pop sub 5 sub
+      0 moveto user_header_right_str show
+    } {
+      5 0 moveto fname show
+      45 0 rmoveto fmodstr show
+      45 0 rmoveto pagenumstr show
+    } ifelse
+
+  grestore
+} def
+%%EndResource
+/d_page_w 744 def
+/d_page_h 536 def
+/d_header_x 0 def
+/d_header_y 521 def
+/d_header_w 744 def
+/d_header_h 15 def
+/d_footer_x 0 def
+/d_footer_y 0 def
+/d_footer_w 744 def
+/d_footer_h 0 def
+/d_output_w 744 def
+/d_output_h 521 def
+/cols 2 def
+%%EndSetup
+%%Page: (1) 1
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 1 def
+/fname (snapsmooth.c) def
+/fdir () def
+/ftail (snapsmooth.c) def
+% User defined strings:
+/fmodstr (Thu May 09 08:12:08 2013) def
+/pagenumstr (1) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 511 M
+(/*) s
+5 503 M
+( * snapsmooth.c: smooth N-body/SPH values onto grid.) s
+5 495 M
+( */) s
+5 479 M
+(#include "stdinc.h") s
+5 471 M
+(#include "strset.h") s
+5 463 M
+(#include "mathfns.h") s
+5 455 M
+(#include "getparam.h") s
+5 447 M
+(#include "vectmath.h") s
+5 439 M
+(#include "filestruct.h") s
+5 431 M
+(#include "phatbody.h") s
+5 415 M
+(string defv[] = {               ";Smooth N-body/SPH values onto grid",) s
+5 407 M
+(  "in=???",                     ";Input snapshot data file name",) s
+5 399 M
+(  "pgmout=",                    ";Output pgm file name pattern",) s
+5 391 M
+(  "auxout=",                    ";Output values at body positions",) s
+5 383 M
+(  "times=all",                  ";Range of times to process",) s
+5 375 M
+(  "value=rho",                  ";Options are: rho, aux, bright, rgb, RGB",) s
+5 367 M
+(  "threedim=false",             ";If TRUE, do 3-D interpolation",) s
+5 359 M
+(  "zval=0.0",                   ";Z coordinate of sampling grid",) s
+5 351 M
+(  "scale=1/256",                ";Spacing between grid points",) s
+5 343 M
+(  "xsize=640",                  ";Width of grid, in grid cells",) s
+5 335 M
+(  "ysize=512",                  ";Height of grid, in grid cells",) s
+5 327 M
+(  "logmap=true",                ";If TRUE, take log of values",) s
+5 319 M
+(  "midval=1.0",                 ";Value mapped to midpoint",) s
+5 311 M
+(  "slope=16.0",                 ";Contrast \(steps per factor of 2\)",) s
+5 303 M
+(  "depth=1",                    ";Depth of image \(1 or 2 bytes\)",) s
+5 295 M
+(  "startcount=0",               ";Number of first output frame",) s
+5 287 M
+(  "stepcount=1",                ";Increment between output frames",) s
+5 279 M
+(  "VERSION=2.0",                ";Josh Barnes  9 May 2013",) s
+5 271 M
+(  NULL,) s
+5 263 M
+(};) s
+5 247 M
+(// Procedure prototypes.) s
+5 231 M
+(bool get_bodies\(stream, string, bool\);) s
+5 223 M
+(void smooth_rho\(real *, bool, real\);) s
+5 215 M
+(void smooth_aux\(real *, bool, real\);) s
+5 207 M
+(void smooth_bright\(real *, int\);) s
+5 199 M
+(void put_pgm\(string, int, string, bool, real, real, int, real *\);) s
+5 191 M
+(void put_ppm\(string, int, bool, real, real, int, real *, real *, real *\);) s
+5 183 M
+(int pixmap\(real gridval, bool logmap, real slope, real midval, int maxpix\);) s
+5 175 M
+(void pixclip\(int *pixval, int *lowcount, int *highcount, int maxpix\);) s
+5 167 M
+(void set_aux_value\(real *\);) s
+5 151 M
+(// Global quantities.) s
+5 135 M
+(string *bodytags;                       // list of fields for bodies) s
+5 127 M
+(bodyptr btab = NULL;                    // array of bodies to smooth) s
+5 119 M
+(int nbody;                              // noumber of bodies in array) s
+5 111 M
+(real tsnap;                             // time value for body data) s
+5 103 M
+(bool taudef;                            // true if Tau\(\) data input     ) s
+5 87 M
+(real scale;                             // grid point spacing) s
+5 79 M
+(int xsize, ysize, xysize;               // size of output frames) s
+5 71 M
+(real *grid1, *grid2, *grid3;            // interpolated values) s
+5 55 M
+(#define MAXPIX_1   255                  // max pixel value \(1 byte, unsigned\)) s
+5 47 M
+(#define MAXPIX_2 65535                  // max pixel value \(2 byte, unsigned\)) s
+5 39 M
+(#define MAXPIXm2 32767                  // max pixel value \(2 byte, signed\)) s
+377 503 M
+(int main\(int argc, string argv[]\)) s
+377 495 M
+({) s
+377 487 M
+(  string value;) s
+377 479 M
+(  stream instr, auxstr = NULL;) s
+377 471 M
+(  bool rhovalue = FALSE, threedim, logmap;) s
+377 463 M
+(  real midval, slope;) s
+377 455 M
+(  int count, depth;) s
+377 439 M
+(  initparam\(argv, defv\);) s
+377 431 M
+(  instr = stropen\(getparam\("in"\), "r"\);) s
+377 423 M
+(  get_history\(instr\);) s
+377 415 M
+(  value = getparam\("value"\);) s
+377 407 M
+(  if \(streq\(value, "rho"\)\) {) s
+377 399 M
+(    bodytags = set_cons\(MassTag, PosTag, SmoothTag,) s
+377 391 M
+(                        strnull\(getparam\("auxout"\)\) ? NULL : AuxTag, NULL\);) s
+377 383 M
+(    rhovalue = TRUE;) s
+377 375 M
+(  } else if \(streq\(value, "aux"\)\) {) s
+377 367 M
+(    bodytags = set_cons\(MassTag, PosTag, SmoothTag, AuxTag, RhoTag, NULL\);) s
+377 359 M
+(  } else if \(streq\(value, "bright"\)\) {) s
+377 351 M
+(    bodytags = set_cons\(PosTag, SmoothTag, AuxTag, TauTag, NULL\);) s
+377 343 M
+(    if \(getbparam\("threedim"\)\)) s
+377 335 M
+(      error\("%s: value=bright requires threedim=false\\n", getprog\(\)\);) s
+377 327 M
+(  } else if \(streq\(value, "rgb"\) || streq\(value, "RGB"\)\) {) s
+377 319 M
+(    bodytags = set_cons\(PosTag, SmoothTag, AuxVecTag, TauTag, NULL\);) s
+377 311 M
+(    if \(getbparam\("threedim"\)\)) s
+377 303 M
+(      error\("%s: value=%s requires threedim=false\\n", getprog\(\), value\);) s
+377 295 M
+(  } else) s
+377 287 M
+(    error\("%s: value=%s undefined\\n", getprog\(\), value\);) s
+377 279 M
+(  layout_body\(bodytags, Precision, NDIM\);) s
+377 271 M
+(  threedim = getbparam\("threedim"\);) s
+377 263 M
+(  scale = getdparam\("scale"\);) s
+377 255 M
+(  xsize = getiparam\("xsize"\);) s
+377 247 M
+(  ysize = getiparam\("ysize"\);) s
+377 239 M
+(  logmap = getbparam\("logmap"\);) s
+377 231 M
+(  midval = getdparam\("midval"\);) s
+377 223 M
+(  slope = getdparam\("slope"\);) s
+377 215 M
+(  depth = getiparam\("depth"\);) s
+377 207 M
+(  count = getiparam\("startcount"\);) s
+377 199 M
+(  xysize = xsize * ysize;) s
+377 191 M
+(  grid1 = \(real *\) allocate\(xysize * sizeof\(real\)\);) s
+377 183 M
+(  grid2 = \(real *\) allocate\(xysize * sizeof\(real\)\);) s
+377 175 M
+(  grid3 = \(real *\) allocate\(xysize * sizeof\(real\)\);) s
+377 167 M
+(  if \(! strnull\(getparam\("auxout"\)\)\) {) s
+377 159 M
+(    if \(threedim\)) s
+377 151 M
+(      error\("%s: auxout requires threedim=false\\n", getprog\(\)\);) s
+377 143 M
+(    auxstr = stropen\(getparam\("auxout"\), "w"\);) s
+377 135 M
+(    put_history\(auxstr\);) s
+377 127 M
+(  }) s
+377 119 M
+(  while \(get_bodies\(instr, getparam\("times"\), rhovalue\)\) {) s
+377 111 M
+(    if \(streq\(value, "rho"\)\) {) s
+377 103 M
+(      smooth_rho\(grid1, threedim, getdparam\("zval"\)\);) s
+377 95 M
+(      put_pgm\(getparam\("pgmout"\), count, "", logmap, midval, slope, depth, grid1\);) s
+377 87 M
+(    } else if \(streq\(value, "aux"\)\) {) s
+377 79 M
+(      smooth_aux\(grid1, threedim, getdparam\("zval"\)\);) s
+377 71 M
+(      put_pgm\(getparam\("pgmout"\), count, "", logmap, midval, slope, depth, grid1\);) s
+377 63 M
+(    } else if \(streq\(value, "bright"\)\) {) s
+377 55 M
+(      smooth_bright\(grid1, -1\);) s
+377 47 M
+(      put_pgm\(getparam\("pgmout"\), count, "", logmap, midval, slope, depth, grid1\);) s
+377 39 M
+(    } else {) s
+377 31 M
+(      smooth_bright\(grid1, 0\);) s
+377 23 M
+(      smooth_bright\(grid2, 1\);) s
+377 15 M
+(      smooth_bright\(grid3, 2\);) s
+377 7 M
+(      if \(streq\(value, "rgb"\)\) {) s
+_R
+S
+%%Page: (2) 2
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 2 def
+/fname (snapsmooth.c) def
+/fdir () def
+/ftail (snapsmooth.c) def
+% User defined strings:
+/fmodstr (Thu May 09 08:12:08 2013) def
+/pagenumstr (2) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 511 M
+(        put_pgm\(getparam\("pgmout"\), count, "r", logmap, midval, slope, depth, grid1\);) s
+5 503 M
+(        put_pgm\(getparam\("pgmout"\), count, "g", logmap, midval, slope, depth, grid2\);) s
+5 495 M
+(        put_pgm\(getparam\("pgmout"\), count, "b", logmap, midval, slope, depth, grid3\);) s
+5 487 M
+(      } else) s
+5 479 M
+(        put_ppm\(getparam\("pgmout"\), count, logmap, midval, slope, depth,) s
+5 471 M
+(                grid1, grid2, grid3\);) s
+5 463 M
+(    } ) s
+5 455 M
+(    count += getiparam\("stepcount"\);) s
+5 447 M
+(    if \(auxstr != NULL\) {) s
+5 439 M
+(      set_aux_value\(grid1\);) s
+5 431 M
+(      put_snap\(auxstr, &btab, &nbody, &tsnap, bodytags\);) s
+5 423 M
+(    }) s
+5 415 M
+(  }) s
+5 407 M
+(  return \(0\);) s
+5 399 M
+(}) s
+5 383 M
+(//  __________________________________________) s
+5 375 M
+(//  get_bodies: read snapshot from input file.) s
+5 359 M
+(bool get_bodies\(stream instr, string times, bool rhovalue\)) s
+5 351 M
+({) s
+5 343 M
+(  static bool firstcall = TRUE;) s
+5 335 M
+(  string intags[MaxBodyFields];) s
+5 327 M
+(  int i;) s
+5 311 M
+(  get_history\(instr\);) s
+5 303 M
+(  if \(! get_snap_t\(instr, &btab, &nbody, &tsnap, intags, FALSE, times\)\)) s
+5 295 M
+(    return \(FALSE\);) s
+5 287 M
+(  if \(firstcall\) {                              // check reqd. data fields) s
+5 279 M
+(    for \(i = 0; bodytags[i] != NULL; i++\) {) s
+5 271 M
+(      if \(streq\(bodytags[i], AuxTag\) && rhovalue\)) s
+5 263 M
+(        continue;                               // Aux data not required) s
+5 255 M
+(      if \(streq\(bodytags[i], TauTag\)\)) s
+5 247 M
+(        continue;                               // Tau data not required) s
+5 239 M
+(      if \(! set_member\(intags, bodytags[i]\)\)) s
+5 231 M
+(        error\("%s: %s data missing\\n", getprog\(\), bodytags[i]\);) s
+5 223 M
+(    }) s
+5 215 M
+(    firstcall = FALSE;                          // don't check again) s
+5 207 M
+(    taudef = set_member\(intags, TauTag\);) s
+5 199 M
+(  }) s
+5 191 M
+(  eprintf\("[%s.get_bodies: time = %.2f]\\n", getprog\(\), tsnap\);) s
+5 183 M
+(  return \(TRUE\);) s
+5 175 M
+(}) s
+377 503 M
+(//  _________________________________________________) s
+377 495 M
+(//  smooth_rho: interpolate density onto sample grid.) s
+377 479 M
+(void smooth_rho\(real *grid, bool threedim, real zval\)) s
+377 471 M
+({) s
+377 463 M
+(  int i, j, i1, i2, j1, j2;) s
+377 455 M
+(  bodyptr b;) s
+377 447 M
+(  real hsqr, dzsqr, C, y1, y2, dysqr, x1, x2, dxsqr, q, W;) s
+377 431 M
+(  for \(i = 0; i < xysize; i++\)) s
+377 423 M
+(    grid[i] = 0.0;) s
+377 415 M
+(  for \(b = btab; b < NthBody\(btab, nbody\); b = NextBody\(b\)\) {) s
+377 407 M
+(    hsqr = rsqr\(Smooth\(b\)\);) s
+377 399 M
+(    dzsqr = \(threedim ? rsqr\(Pos\(b\)[2] - zval\) : 0.0\);) s
+377 391 M
+(    if \(dzsqr <= 4 * hsqr\) {) s
+377 383 M
+(      C = \(threedim ? 1/\(PI*rqbe\(Smooth\(b\)\)\) : 10/\(7*PI*rsqr\(Smooth\(b\)\)\)\);) s
+377 375 M
+(      y1 = Pos\(b\)[1] - rsqrt\(4 * hsqr - dzsqr\);) s
+377 367 M
+(      y2 = Pos\(b\)[1] + rsqrt\(4 * hsqr - dzsqr\);) s
+377 359 M
+(      j1 = rfloor\(y1 / scale + \(ysize-1\) / 2.0\);) s
+377 351 M
+(      j2 = rceil\(y2 / scale + \(ysize-1\) / 2.0\);) s
+377 343 M
+(      for \(j = MAX\(j1, 0\); j <= MIN\(j2, ysize-1\); j++\) {) s
+377 335 M
+(        dysqr = rsqr\(Pos\(b\)[1] - scale * \(j - \(ysize-1\)/2.0\)\);) s
+377 327 M
+(        if \(dzsqr + dysqr <= 4 * hsqr\) {) s
+377 319 M
+(          x1 = Pos\(b\)[0] - rsqrt\(4 * hsqr - dzsqr - dysqr\);) s
+377 311 M
+(          x2 = Pos\(b\)[0] + rsqrt\(4 * hsqr - dzsqr - dysqr\);) s
+377 303 M
+(          i1 = rfloor\(x1 / scale + \(xsize-1\) / 2.0\);) s
+377 295 M
+(          i2 = rceil\(x2 / scale + \(xsize-1\) / 2.0\);) s
+377 287 M
+(          for \(i = MAX\(i1, 0\); i <= MIN\(i2, xsize-1\); i++\) {) s
+377 279 M
+(            dxsqr = rsqr\(Pos\(b\)[0] - scale * \(i - \(xsize-1\)/2.0\)\);) s
+377 271 M
+(            if \(dzsqr + dysqr + dxsqr <= 4 * hsqr\) {) s
+377 263 M
+(              q = rsqrt\(\(dzsqr + dysqr + dxsqr\) / hsqr\);) s
+377 255 M
+(              W = C * \(q > 1 ? rqbe\(2-q\)/4.0 : 1 - 1.5*rsqr\(q\) + 0.75*rqbe\(q\)\);) s
+377 247 M
+(              grid[i + xsize*j] += W * Mass\(b\);) s
+377 239 M
+(            }) s
+377 231 M
+(          }) s
+377 223 M
+(        }) s
+377 215 M
+(      }) s
+377 207 M
+(    }) s
+377 199 M
+(  }) s
+377 191 M
+(}) s
+_R
+S
+%%Page: (3) 3
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 3 def
+/fname (snapsmooth.c) def
+/fdir () def
+/ftail (snapsmooth.c) def
+% User defined strings:
+/fmodstr (Thu May 09 08:12:08 2013) def
+/pagenumstr (3) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 503 M
+(//  _____________________________________________) s
+5 495 M
+(//  smooth_aux: interpolate aux onto sample grid.) s
+5 479 M
+(void smooth_aux\(real *grid, bool threedim, real zval\)) s
+5 471 M
+({) s
+5 463 M
+(  int i, j, i1, i2, j1, j2;) s
+5 455 M
+(  bodyptr b;) s
+5 447 M
+(  real hsqr, dzsqr, C, y1, y2, dysqr, x1, x2, dxsqr, q, W;) s
+5 431 M
+(  for \(i = 0; i < xysize; i++\)) s
+5 423 M
+(    grid[i] = 0.0;) s
+5 415 M
+(  for \(b = btab; b < NthBody\(btab, nbody\); b = NextBody\(b\)\) {) s
+5 407 M
+(    hsqr = rsqr\(Smooth\(b\)\);) s
+5 399 M
+(    dzsqr = \(threedim ? rsqr\(Pos\(b\)[2] - zval\) : 0.0\);) s
+5 391 M
+(    if \(dzsqr <= 4 * hsqr\) {) s
+5 383 M
+(      C = \(threedim ? 1/\(PI*rqbe\(Smooth\(b\)\)\) : 10/\(7*PI*rsqr\(Smooth\(b\)\)\)\);) s
+5 375 M
+(      y1 = Pos\(b\)[1] - rsqrt\(4 * hsqr - dzsqr\);) s
+5 367 M
+(      y2 = Pos\(b\)[1] + rsqrt\(4 * hsqr - dzsqr\);) s
+5 359 M
+(      j1 = rfloor\(y1 / scale + \(ysize-1\) / 2.0\);) s
+5 351 M
+(      j2 = rceil\(y2 / scale + \(ysize-1\) / 2.0\);) s
+5 343 M
+(      for \(j = MAX\(j1, 0\); j <= MIN\(j2, ysize-1\); j++\) {) s
+5 335 M
+(        dysqr = rsqr\(Pos\(b\)[1] - scale * \(j - \(ysize-1\)/2.0\)\);) s
+5 327 M
+(        if \(dzsqr + dysqr <= 4 * hsqr\) {) s
+5 319 M
+(          x1 = Pos\(b\)[0] - rsqrt\(4 * hsqr - dzsqr - dysqr\);) s
+5 311 M
+(          x2 = Pos\(b\)[0] + rsqrt\(4 * hsqr - dzsqr - dysqr\);) s
+5 303 M
+(          i1 = rfloor\(x1 / scale + \(xsize-1\) / 2.0\);) s
+5 295 M
+(          i2 = rceil\(x2 / scale + \(xsize-1\) / 2.0\);) s
+5 287 M
+(          for \(i = MAX\(i1, 0\); i <= MIN\(i2, xsize-1\); i++\) {) s
+5 279 M
+(            dxsqr = rsqr\(Pos\(b\)[0] - scale * \(i - \(xsize-1\)/2.0\)\);) s
+5 271 M
+(            if \(dzsqr + dysqr + dxsqr <= 4 * hsqr\) {) s
+5 263 M
+(              q = rsqrt\(\(dzsqr + dysqr + dxsqr\) / hsqr\);) s
+5 255 M
+(              W = C * \(q > 1 ? rqbe\(2-q\)/4.0 : 1 - 1.5*rsqr\(q\) + 0.75*rqbe\(q\)\);) s
+5 247 M
+(              grid[i + xsize*j] += W * Mass\(b\) * Aux\(b\) / Rho\(b\);) s
+5 239 M
+(            }) s
+5 231 M
+(          }) s
+5 223 M
+(        }) s
+5 215 M
+(      }) s
+5 207 M
+(    }) s
+5 199 M
+(  }) s
+5 191 M
+(}) s
+377 503 M
+(//  _______________________________________________________) s
+377 495 M
+(//  smooth_bright: interpolate brightness onto sample grid.) s
+377 479 M
+(void smooth_bright\(real *grid, int indx\)) s
+377 471 M
+({) s
+377 463 M
+(  int i, j, i1, i2, j1, j2;) s
+377 455 M
+(  bodyptr b;) s
+377 447 M
+(  real hsqr, C, y1, y2, dysqr, x1, x2, dxsqr, q, W;) s
+377 431 M
+(  for \(i = 0; i < xysize; i++\)) s
+377 423 M
+(    grid[i] = 0.0;) s
+377 415 M
+(  for \(b = btab; b < NthBody\(btab, nbody\); b = NextBody\(b\)\) {) s
+377 407 M
+(    hsqr = rsqr\(Smooth\(b\)\);) s
+377 399 M
+(    C = 10/\(7*PI*rsqr\(Smooth\(b\)\)\);) s
+377 391 M
+(    y1 = Pos\(b\)[1] - rsqrt\(4 * hsqr\);) s
+377 383 M
+(    y2 = Pos\(b\)[1] + rsqrt\(4 * hsqr\);) s
+377 375 M
+(    j1 = rfloor\(y1 / scale + \(ysize-1\) / 2.0\);) s
+377 367 M
+(    j2 = rceil\(y2 / scale + \(ysize-1\) / 2.0\);) s
+377 359 M
+(    for \(j = MAX\(j1, 0\); j <= MIN\(j2, ysize-1\); j++\) {) s
+377 351 M
+(      dysqr = rsqr\(Pos\(b\)[1] - scale * \(j - \(ysize-1\)/2.0\)\);) s
+377 343 M
+(      if \(dysqr <= 4 * hsqr\) {) s
+377 335 M
+(        x1 = Pos\(b\)[0] - rsqrt\(4 * hsqr - dysqr\);) s
+377 327 M
+(        x2 = Pos\(b\)[0] + rsqrt\(4 * hsqr - dysqr\);) s
+377 319 M
+(        i1 = rfloor\(x1 / scale + \(xsize-1\) / 2.0\);) s
+377 311 M
+(        i2 = rceil\(x2 / scale + \(xsize-1\) / 2.0\);) s
+377 303 M
+(        for \(i = MAX\(i1, 0\); i <= MIN\(i2, xsize-1\); i++\) {) s
+377 295 M
+(          dxsqr = rsqr\(Pos\(b\)[0] - scale * \(i - \(xsize-1\)/2.0\)\);) s
+377 287 M
+(          if \(dysqr + dxsqr <= 4 * hsqr\) {) s
+377 279 M
+(            q = rsqrt\(\(dysqr + dxsqr\) / hsqr\);) s
+377 271 M
+(            W = C * \(q > 1 ? rqbe\(2-q\)/4.0 : 1 - 1.5*rsqr\(q\) + 0.75*rqbe\(q\)\);) s
+377 263 M
+(            if \(taudef && Tau\(b\) > 0.0\)) s
+377 255 M
+(              grid[i + xsize*j] *= rexp\(- W * Tau\(b\)\);) s
+377 247 M
+(            grid[i + xsize*j] += W * \(indx == -1 ? Aux\(b\) : AuxVec\(b\)[indx]\);) s
+377 239 M
+(          }) s
+377 231 M
+(        }) s
+377 223 M
+(      }) s
+377 215 M
+(    }) s
+377 207 M
+(  }) s
+377 199 M
+(}) s
+_R
+S
+%%Page: (4) 4
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 4 def
+/fname (snapsmooth.c) def
+/fdir () def
+/ftail (snapsmooth.c) def
+% User defined strings:
+/fmodstr (Thu May 09 08:12:08 2013) def
+/pagenumstr (4) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 503 M
+(//  ________________________________________________) s
+5 495 M
+(//  put_pgm: output pixel data in linear pgm format.) s
+5 479 M
+(#define BUFSIZE  256                    // size of temp buffer) s
+5 463 M
+(void put_pgm\(string out, int count, string color,) s
+5 455 M
+(             bool logmap, real midval, real slope, int depth, real *grid\)) s
+5 447 M
+({) s
+5 439 M
+(  int maxpix, lowcount, highcount, j, i, pixij;) s
+5 431 M
+(  char name[BUFSIZE];) s
+5 423 M
+(  stream pgmstr;) s
+5 407 M
+(  if \(! strnull\(out\)\) {) s
+5 399 M
+(    if \(depth != 1 && depth != 2 && depth != -2\)) s
+5 391 M
+(      error\("%s: illegal image depth: %d\\n", getprog\(\), depth\);) s
+5 383 M
+(    maxpix = \(depth == 1 ? MAXPIX_1 : depth == 2 ? MAXPIX_2 : MAXPIXm2\);) s
+5 375 M
+(    snprintf\(name, BUFSIZE, out, count, color\); // make output file name) s
+5 367 M
+(    pgmstr = stropen\(name, "w"\);) s
+5 359 M
+(    fprintf\(pgmstr, "P5\\n"\);                    // output PGM header) s
+5 351 M
+(    fprintf\(pgmstr, "# Time = %.6f\\n", tsnap\);) s
+5 343 M
+(    fprintf\(pgmstr, "%d %d\\n", xsize, ysize\);) s
+5 335 M
+(    fprintf\(pgmstr, "%d\\n", maxpix\);) s
+5 327 M
+(    lowcount = highcount = 0;                   // count low, high pixels) s
+5 319 M
+(    for \(j = ysize - 1; j >= 0; j--\)) s
+5 311 M
+(      for \(i = 0; i < xsize; i++\) {) s
+5 303 M
+(        pixij = pixmap\(grid[i + xsize*j], logmap, slope, midval, maxpix\);) s
+5 295 M
+(        pixclip\(&pixij, &lowcount, &highcount, maxpix\);) s
+5 287 M
+(        if \(depth != 1\)                         // put most sig. byte 1st) s
+5 279 M
+(          fputc\(MAXPIX_1 & \(pixij >> 8\), pgmstr\);) s
+5 271 M
+(        fputc\(MAXPIX_1 & pixij, pgmstr\);) s
+5 263 M
+(      }) s
+5 255 M
+(    fclose\(pgmstr\);) s
+5 247 M
+(    eprintf\(lowcount + highcount < xysize ?) s
+5 239 M
+(            "[%s.put_pgm: %d low pixels, %d high pixels]\\n" :) s
+5 231 M
+(            "[%s.put_pgm: WARNING: %d low pixels, %d high pixels]\\n",) s
+5 223 M
+(            getprog\(\), lowcount, highcount\);) s
+5 215 M
+(  }) s
+5 207 M
+(}) s
+377 503 M
+(//  ________________________________________________) s
+377 495 M
+(//  put_ppm: output pixel data in linear ppm format.) s
+377 479 M
+(void put_ppm\(string out, int count, bool logmap, real midval, real slope,) s
+377 471 M
+(             int depth, real *grid1, real *grid2, real *grid3\)) s
+377 463 M
+({) s
+377 455 M
+(  int maxpix, lowcount, highcount, j, i, pixij;) s
+377 447 M
+(  char name[BUFSIZE];) s
+377 439 M
+(  stream ppmstr;) s
+377 423 M
+(  if \(! strnull\(out\)\) {) s
+377 415 M
+(    if \(depth != 1 && depth != 2 && depth != -2\)) s
+377 407 M
+(      error\("%s: illegal image depth: %d\\n", getprog\(\), depth\);) s
+377 399 M
+(    maxpix = \(depth == 1 ? MAXPIX_1 : depth == 2 ? MAXPIX_2 : MAXPIXm2\);) s
+377 391 M
+(    snprintf\(name, BUFSIZE, out, count\);        // make output file name) s
+377 383 M
+(    ppmstr = stropen\(name, "w"\);) s
+377 375 M
+(    fprintf\(ppmstr, "P6\\n"\);                    // output PPM header) s
+377 367 M
+(    fprintf\(ppmstr, "# Time = %.6f\\n", tsnap\);) s
+377 359 M
+(    fprintf\(ppmstr, "%d %d\\n", xsize, ysize\);) s
+377 351 M
+(    fprintf\(ppmstr, "%d\\n", maxpix\);) s
+377 343 M
+(    lowcount = highcount = 0;                   // count low, high pixels) s
+377 335 M
+(    for \(j = ysize - 1; j >= 0; j--\)) s
+377 327 M
+(      for \(i = 0; i < xsize; i++\) {) s
+377 319 M
+(        pixij = pixmap\(grid1[i + xsize*j], logmap, slope, midval, maxpix\);) s
+377 311 M
+(        pixclip\(&pixij, &lowcount, &highcount, maxpix\);) s
+377 303 M
+(        if \(depth != 1\)                         // put most sig. byte 1st) s
+377 295 M
+(          fputc\(MAXPIX_1 & \(pixij >> 8\), ppmstr\);) s
+377 287 M
+(        fputc\(MAXPIX_1 & pixij, ppmstr\);) s
+377 279 M
+(        pixij = pixmap\(grid2[i + xsize*j], logmap, slope, midval, maxpix\);) s
+377 271 M
+(        pixclip\(&pixij, &lowcount, &highcount, maxpix\);) s
+377 263 M
+(        if \(depth != 1\)                         // put most sig. byte 1st) s
+377 255 M
+(          fputc\(MAXPIX_1 & \(pixij >> 8\), ppmstr\);) s
+377 247 M
+(        fputc\(MAXPIX_1 & pixij, ppmstr\);) s
+377 239 M
+(        pixij = pixmap\(grid3[i + xsize*j], logmap, slope, midval, maxpix\);) s
+377 231 M
+(        pixclip\(&pixij, &lowcount, &highcount, maxpix\);) s
+377 223 M
+(        if \(depth != 1\)                         // put most sig. byte 1st) s
+377 215 M
+(          fputc\(MAXPIX_1 & \(pixij >> 8\), ppmstr\);) s
+377 207 M
+(        fputc\(MAXPIX_1 & pixij, ppmstr\);) s
+377 199 M
+(      }) s
+377 191 M
+(    fclose\(ppmstr\);) s
+377 183 M
+(    eprintf\(lowcount + highcount < 3 * xysize ?) s
+377 175 M
+(            "[%s.put_ppm: %d low pixels, %d high pixels]\\n" :) s
+377 167 M
+(            "[%s.put_ppm: WARNING: %d low pixels, %d high pixels]\\n",) s
+377 159 M
+(            getprog\(\), lowcount, highcount\);) s
+377 151 M
+(  }) s
+377 143 M
+(}) s
+_R
+S
+%%Page: (5) 5
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 5 def
+/fname (snapsmooth.c) def
+/fdir () def
+/ftail (snapsmooth.c) def
+% User defined strings:
+/fmodstr (Thu May 09 08:12:08 2013) def
+/pagenumstr (5) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 503 M
+(// _________________________________________________________) s
+5 495 M
+(// pixmap: transform real grid value to integer pixel value.) s
+5 479 M
+(int pixmap\(real gridval, bool logmap, real slope, real midval, int maxpix\)) s
+5 471 M
+({) s
+5 463 M
+(  if \(logmap\) {                                 // log transform data?) s
+5 455 M
+(    if \(gridval > 0.0\)) s
+5 447 M
+(      return \(rfloor\(slope * rlog2\(gridval / midval\) + \(maxpix + 1\) / 2\)\);) s
+5 439 M
+(    else) s
+5 431 M
+(      return \(slope > 0.0 ? -1 : maxpix + 1\);   // handle zero or negative) s
+5 423 M
+(  } else) s
+5 415 M
+(    return \(rfloor\(slope * \(gridval / midval - 1\) + \(maxpix + 1\) / 2\)\);) s
+5 407 M
+(}) s
+5 391 M
+(// __________________________________________________________________) s
+5 383 M
+(// pixclip: limit pixel value to allowed range, and count exceptions.) s
+5 367 M
+(void pixclip\(int *pixval, int *lowcount, int *highcount, int maxpix\)) s
+5 359 M
+({) s
+5 351 M
+(  if \(*pixval < 0\) {) s
+5 343 M
+(    \(*lowcount\)++;) s
+5 335 M
+(    *pixval = 0;) s
+5 327 M
+(  } else if \(*pixval > maxpix\) {) s
+5 319 M
+(    \(*highcount\)++;) s
+5 311 M
+(    *pixval = maxpix;) s
+5 303 M
+(  }) s
+5 295 M
+(}) s
+5 279 M
+(//  ______________________________________________________) s
+5 271 M
+(//  set_aux_value: set aux\(\) value of each body from grid.) s
+5 255 M
+(void set_aux_value\(real *grid\)) s
+5 247 M
+({) s
+5 239 M
+(  bodyptr b;) s
+5 231 M
+(  int i, j;) s
+5 215 M
+(  for \(b = btab; b < NthBody\(btab, nbody\); b = NextBody\(b\)\) {) s
+5 207 M
+(    i = rfloor\(Pos\(b\)[0] / scale + xsize / 2.0\);) s
+5 199 M
+(    j = rfloor\(Pos\(b\)[1] / scale + ysize / 2.0\);) s
+5 191 M
+(    if \(0 <= i && i < xsize && 0 <= j && j < ysize\)) s
+5 183 M
+(      Aux\(b\) = grid[i + xsize*j];) s
+5 175 M
+(    else) s
+5 167 M
+(      Aux\(b\) = -1.0;) s
+5 159 M
+(  }) s
+5 151 M
+(}) s
+_R
+S
+%%Trailer
+%%Pages: 5
+%%DocumentNeededResources: font Courier-Bold Courier 
+%%EOF

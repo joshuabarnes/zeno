@@ -1,0 +1,3421 @@
+%!PS-Adobe-3.0
+%%BoundingBox: 38 24 574 768
+%%Title: Enscript Output
+%%For: Joshua Barnes
+%%Creator: GNU enscript 1.6.4
+%%CreationDate: Tue Mar 13 11:23:37 2012
+%%Orientation: Landscape
+%%Pages: (atend)
+%%DocumentMedia: Letter 612 792 0 () ()
+%%DocumentNeededResources: (atend)
+%%EndComments
+%%BeginProlog
+%%BeginResource: procset Enscript-Prolog 1.6 4
+%
+% Procedures.
+%
+
+/_S {	% save current state
+  /_s save def
+} def
+/_R {	% restore from saved state
+  _s restore
+} def
+
+/S {	% showpage protecting gstate
+  gsave
+  showpage
+  grestore
+} bind def
+
+/MF {	% fontname newfontname -> -	make a new encoded font
+  /newfontname exch def
+  /fontname exch def
+
+  /fontdict fontname findfont def
+  /newfont fontdict maxlength dict def
+
+  fontdict {
+    exch
+    dup /FID eq {
+      % skip FID pair
+      pop pop
+    } {
+      % copy to the new font dictionary
+      exch newfont 3 1 roll put
+    } ifelse
+  } forall
+
+  newfont /FontName newfontname put
+
+  % insert only valid encoding vectors
+  encoding_vector length 256 eq {
+    newfont /Encoding encoding_vector put
+  } if
+
+  newfontname newfont definefont pop
+} def
+
+/MF_PS { % fontname newfontname -> -	make a new font preserving its enc
+  /newfontname exch def
+  /fontname exch def
+
+  /fontdict fontname findfont def
+  /newfont fontdict maxlength dict def
+
+  fontdict {
+    exch
+    dup /FID eq {
+      % skip FID pair
+      pop pop
+    } {
+      % copy to the new font dictionary
+      exch newfont 3 1 roll put
+    } ifelse
+  } forall
+
+  newfont /FontName newfontname put
+
+  newfontname newfont definefont pop
+} def
+
+/SF { % fontname width height -> -	set a new font
+  /height exch def
+  /width exch def
+
+  findfont
+  [width 0 0 height 0 0] makefont setfont
+} def
+
+/SUF { % fontname width height -> -	set a new user font
+  /height exch def
+  /width exch def
+
+  /F-gs-user-font MF
+  /F-gs-user-font width height SF
+} def
+
+/SUF_PS { % fontname width height -> -	set a new user font preserving its enc
+  /height exch def
+  /width exch def
+
+  /F-gs-user-font MF_PS
+  /F-gs-user-font width height SF
+} def
+
+/M {moveto} bind def
+/s {show} bind def
+
+/Box {	% x y w h -> -			define box path
+  /d_h exch def /d_w exch def /d_y exch def /d_x exch def
+  d_x d_y  moveto
+  d_w 0 rlineto
+  0 d_h rlineto
+  d_w neg 0 rlineto
+  closepath
+} def
+
+/bgs {	% x y height blskip gray str -> -	show string with bg color
+  /str exch def
+  /gray exch def
+  /blskip exch def
+  /height exch def
+  /y exch def
+  /x exch def
+
+  gsave
+    x y blskip sub str stringwidth pop height Box
+    gray setgray
+    fill
+  grestore
+  x y M str s
+} def
+
+/bgcs { % x y height blskip red green blue str -> -  show string with bg color
+  /str exch def
+  /blue exch def
+  /green exch def
+  /red exch def
+  /blskip exch def
+  /height exch def
+  /y exch def
+  /x exch def
+
+  gsave
+    x y blskip sub str stringwidth pop height Box
+    red green blue setrgbcolor
+    fill
+  grestore
+  x y M str s
+} def
+
+% Highlight bars.
+/highlight_bars {	% nlines lineheight output_y_margin gray -> -
+  gsave
+    setgray
+    /ymarg exch def
+    /lineheight exch def
+    /nlines exch def
+
+    % This 2 is just a magic number to sync highlight lines to text.
+    0 d_header_y ymarg sub 2 sub translate
+
+    /cw d_output_w cols div def
+    /nrows d_output_h ymarg 2 mul sub lineheight div cvi def
+
+    % for each column
+    0 1 cols 1 sub {
+      cw mul /xp exch def
+
+      % for each rows
+      0 1 nrows 1 sub {
+        /rn exch def
+        rn lineheight mul neg /yp exch def
+        rn nlines idiv 2 mod 0 eq {
+	  % Draw highlight bar.  4 is just a magic indentation.
+	  xp 4 add yp cw 8 sub lineheight neg Box fill
+	} if
+      } for
+    } for
+
+  grestore
+} def
+
+% Line highlight bar.
+/line_highlight {	% x y width height gray -> -
+  gsave
+    /gray exch def
+    Box gray setgray fill
+  grestore
+} def
+
+% Column separator lines.
+/column_lines {
+  gsave
+    .1 setlinewidth
+    0 d_footer_h translate
+    /cw d_output_w cols div def
+    1 1 cols 1 sub {
+      cw mul 0 moveto
+      0 d_output_h rlineto stroke
+    } for
+  grestore
+} def
+
+% Column borders.
+/column_borders {
+  gsave
+    .1 setlinewidth
+    0 d_footer_h moveto
+    0 d_output_h rlineto
+    d_output_w 0 rlineto
+    0 d_output_h neg rlineto
+    closepath stroke
+  grestore
+} def
+
+% Do the actual underlay drawing
+/draw_underlay {
+  ul_style 0 eq {
+    ul_str true charpath stroke
+  } {
+    ul_str show
+  } ifelse
+} def
+
+% Underlay
+/underlay {	% - -> -
+  gsave
+    0 d_page_h translate
+    d_page_h neg d_page_w atan rotate
+
+    ul_gray setgray
+    ul_font setfont
+    /dw d_page_h dup mul d_page_w dup mul add sqrt def
+    ul_str stringwidth pop dw exch sub 2 div ul_h_ptsize -2 div moveto
+    draw_underlay
+  grestore
+} def
+
+/user_underlay {	% - -> -
+  gsave
+    ul_x ul_y translate
+    ul_angle rotate
+    ul_gray setgray
+    ul_font setfont
+    0 0 ul_h_ptsize 2 div sub moveto
+    draw_underlay
+  grestore
+} def
+
+% Page prefeed
+/page_prefeed {		% bool -> -
+  statusdict /prefeed known {
+    statusdict exch /prefeed exch put
+  } {
+    pop
+  } ifelse
+} def
+
+% Wrapped line markers
+/wrapped_line_mark {	% x y charwith charheight type -> -
+  /type exch def
+  /h exch def
+  /w exch def
+  /y exch def
+  /x exch def
+
+  type 2 eq {
+    % Black boxes (like TeX does)
+    gsave
+      0 setlinewidth
+      x w 4 div add y M
+      0 h rlineto w 2 div 0 rlineto 0 h neg rlineto
+      closepath fill
+    grestore
+  } {
+    type 3 eq {
+      % Small arrows
+      gsave
+        .2 setlinewidth
+        x w 2 div add y h 2 div add M
+        w 4 div 0 rlineto
+        x w 4 div add y lineto stroke
+
+        x w 4 div add w 8 div add y h 4 div add M
+        x w 4 div add y lineto
+	w 4 div h 8 div rlineto stroke
+      grestore
+    } {
+      % do nothing
+    } ifelse
+  } ifelse
+} def
+
+% EPSF import.
+
+/BeginEPSF {
+  /b4_Inc_state save def    		% Save state for cleanup
+  /dict_count countdictstack def	% Count objects on dict stack
+  /op_count count 1 sub def		% Count objects on operand stack
+  userdict begin
+  /showpage { } def
+  0 setgray 0 setlinecap
+  1 setlinewidth 0 setlinejoin
+  10 setmiterlimit [ ] 0 setdash newpath
+  /languagelevel where {
+    pop languagelevel
+    1 ne {
+      false setstrokeadjust false setoverprint
+    } if
+  } if
+} bind def
+
+/EndEPSF {
+  count op_count sub { pos } repeat	% Clean up stacks
+  countdictstack dict_count sub { end } repeat
+  b4_Inc_state restore
+} bind def
+
+% Check PostScript language level.
+/languagelevel where {
+  pop /gs_languagelevel languagelevel def
+} {
+  /gs_languagelevel 1 def
+} ifelse
+%%EndResource
+%%BeginResource: procset Enscript-Encoding-88591 1.6 4
+/encoding_vector [
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/space        	/exclam       	/quotedbl     	/numbersign   	
+/dollar       	/percent      	/ampersand    	/quoteright   	
+/parenleft    	/parenright   	/asterisk     	/plus         	
+/comma        	/hyphen       	/period       	/slash        	
+/zero         	/one          	/two          	/three        	
+/four         	/five         	/six          	/seven        	
+/eight        	/nine         	/colon        	/semicolon    	
+/less         	/equal        	/greater      	/question     	
+/at           	/A            	/B            	/C            	
+/D            	/E            	/F            	/G            	
+/H            	/I            	/J            	/K            	
+/L            	/M            	/N            	/O            	
+/P            	/Q            	/R            	/S            	
+/T            	/U            	/V            	/W            	
+/X            	/Y            	/Z            	/bracketleft  	
+/backslash    	/bracketright 	/asciicircum  	/underscore   	
+/quoteleft    	/a            	/b            	/c            	
+/d            	/e            	/f            	/g            	
+/h            	/i            	/j            	/k            	
+/l            	/m            	/n            	/o            	
+/p            	/q            	/r            	/s            	
+/t            	/u            	/v            	/w            	
+/x            	/y            	/z            	/braceleft    	
+/bar          	/braceright   	/tilde        	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/space        	/exclamdown   	/cent         	/sterling     	
+/currency     	/yen          	/brokenbar    	/section      	
+/dieresis     	/copyright    	/ordfeminine  	/guillemotleft	
+/logicalnot   	/hyphen       	/registered   	/macron       	
+/degree       	/plusminus    	/twosuperior  	/threesuperior	
+/acute        	/mu           	/paragraph    	/bullet       	
+/cedilla      	/onesuperior  	/ordmasculine 	/guillemotright	
+/onequarter   	/onehalf      	/threequarters	/questiondown 	
+/Agrave       	/Aacute       	/Acircumflex  	/Atilde       	
+/Adieresis    	/Aring        	/AE           	/Ccedilla     	
+/Egrave       	/Eacute       	/Ecircumflex  	/Edieresis    	
+/Igrave       	/Iacute       	/Icircumflex  	/Idieresis    	
+/Eth          	/Ntilde       	/Ograve       	/Oacute       	
+/Ocircumflex  	/Otilde       	/Odieresis    	/multiply     	
+/Oslash       	/Ugrave       	/Uacute       	/Ucircumflex  	
+/Udieresis    	/Yacute       	/Thorn        	/germandbls   	
+/agrave       	/aacute       	/acircumflex  	/atilde       	
+/adieresis    	/aring        	/ae           	/ccedilla     	
+/egrave       	/eacute       	/ecircumflex  	/edieresis    	
+/igrave       	/iacute       	/icircumflex  	/idieresis    	
+/eth          	/ntilde       	/ograve       	/oacute       	
+/ocircumflex  	/otilde       	/odieresis    	/divide       	
+/oslash       	/ugrave       	/uacute       	/ucircumflex  	
+/udieresis    	/yacute       	/thorn        	/ydieresis    	
+] def
+%%EndResource
+%%EndProlog
+%%BeginSetup
+%%IncludeResource: font Courier-Bold
+%%IncludeResource: font Courier
+/HFpt_w 10 def
+/HFpt_h 10 def
+/Courier-Bold /HF-gs-font MF
+/HF /HF-gs-font findfont [HFpt_w 0 0 HFpt_h 0 0] makefont def
+/Courier /F-gs-font MF
+/F-gs-font 7 7 SF
+/#copies 1 def
+% Pagedevice definitions:
+gs_languagelevel 1 gt {
+  <<
+    /PageSize [612 792] 
+  >> setpagedevice
+} if
+%%BeginResource: procset Enscript-Header-simple 1.6 4
+
+/do_header {	% print default simple header
+  gsave
+    d_header_x d_header_y HFpt_h 3 div add translate
+
+    HF setfont
+    user_header_p {
+      5 0 moveto user_header_left_str show
+
+      d_header_w user_header_center_str stringwidth pop sub 2 div
+      0 moveto user_header_center_str show
+
+      d_header_w user_header_right_str stringwidth pop sub 5 sub
+      0 moveto user_header_right_str show
+    } {
+      5 0 moveto fname show
+      45 0 rmoveto fmodstr show
+      45 0 rmoveto pagenumstr show
+    } ifelse
+
+  grestore
+} def
+%%EndResource
+/d_page_w 744 def
+/d_page_h 536 def
+/d_header_x 0 def
+/d_header_y 521 def
+/d_header_w 744 def
+/d_header_h 15 def
+/d_footer_x 0 def
+/d_footer_y 0 def
+/d_footer_w 744 def
+/d_footer_h 0 def
+/d_output_w 744 def
+/d_output_h 521 def
+/cols 2 def
+%%EndSetup
+%%Page: (1) 1
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 1 def
+/fname (treecode.c) def
+/fdir () def
+/ftail (treecode.c) def
+% User defined strings:
+/fmodstr (Tue Mar 13 11:15:21 2012) def
+/pagenumstr (1) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 511 M
+(/****************************************************************************/) s
+5 503 M
+(/* TREECODE.C: hierarchical N-body code.                                    */) s
+5 495 M
+(/* Copyright \(c\) 2012 by Joshua E. Barnes, Honolulu, HI.                    */) s
+5 487 M
+(/****************************************************************************/) s
+5 471 M
+(#define global                          /* don't default global to extern   */) s
+5 455 M
+(#include "stdinc.h") s
+5 447 M
+(#include "mathfns.h") s
+5 439 M
+(#include "vectmath.h") s
+5 431 M
+(#include "getparam.h") s
+5 423 M
+(#include "datatypes.h") s
+5 415 M
+(#include "treecode.h") s
+5 407 M
+(#include "fixbody.h") s
+5 399 M
+(#include "snapcenter.h") s
+5 383 M
+(/* Default values for input parameters. */) s
+5 367 M
+(string defv[] = {) s
+5 359 M
+(#if defined\(QUICKSCAN\)) s
+5 351 M
+(                                ";Hierarchical N-body code \(quick scan\)",) s
+5 343 M
+(#elif defined\(EXTGRAV\)) s
+5 335 M
+(                                ";Hierarchical N-body code \(+ ext grav\)",) s
+5 327 M
+(#else) s
+5 319 M
+(                                ";Hierarchical N-body code",) s
+5 311 M
+(#endif) s
+5 303 M
+(    "in=",                      ";Input file with initial conditions",) s
+5 295 M
+(    "out=",                     ";Output file pattern for N-body frames.",) s
+5 287 M
+(                                ";Replace %d with step number of frame.",) s
+5 279 M
+(    "restore=",                 ";Continue run from state file",) s
+5 271 M
+(    "save=",                    ";Write state file as code runs",) s
+5 263 M
+(    "dtime=1/32",               ";Leapfrog integration timestep",) s
+5 255 M
+(    "eps=0.025",                ";Density field smoothing length",) s
+5 247 M
+(#if !defined\(QUICKSCAN\)) s
+5 239 M
+(    "theta=1.0",                ";Force accuracy parameter",) s
+5 231 M
+(#endif) s
+5 223 M
+(    "usequad=false",            ";If true, use quad moments",) s
+5 215 M
+(    "options=",                 ";Various simulation options.",) s
+5 207 M
+(                                ";new-tout: reschedule output times.",) s
+5 199 M
+(                                ";reset-time: set time to zero.",) s
+5 191 M
+(                                ";bh86,sw94,theta-eff: alt. opening criteria.",) s
+5 183 M
+(    "outputs=" PosTag "," VelTag,) s
+5 175 M
+(                                ";Data fields to output.",) s
+5 167 M
+(                                ";Others: " MassTag "," PhiTag "," AccTag ".",) s
+5 159 M
+(    "tstop=2.0",                ";Time to stop integration",) s
+5 151 M
+(    "dtout=1/4",                ";Data output timestep",) s
+5 143 M
+(    "nstatic=0",                ";Number of static bodies in array.",) s
+5 135 M
+(                                ";If pos \(neg\), count from start \(end\).",) s
+5 127 M
+(    "nbody=4096",               ";Number of particles \(for test run\).",) s
+5 119 M
+(                                ";If no input file, make Plummer model.",) s
+5 111 M
+(    "seed=123",                 ";Random number seed \(for test run\)",) s
+5 103 M
+(    "trace=",                   ";Output file pattern for trace frames",) s
+5 95 M
+(    "log=",                     ";Output file name for calculation log",) s
+5 87 M
+(#if defined\(EXTGRAV\)) s
+5 79 M
+(    "gravgsp=",                 ";Input GSP for external gravity",) s
+5 71 M
+(#endif) s
+5 63 M
+(    "VERSION=1.5",              ";Joshua Barnes  11 March 2012",) s
+5 55 M
+(    NULL,) s
+5 47 M
+(};) s
+377 503 M
+(/* Prototypes for local procedures. */) s
+377 487 M
+(local void startrun\(void\);                      /* initialize system state  */) s
+377 479 M
+(local void newrun\(void\);                        /* start new simulation     */) s
+377 471 M
+(local void oldrun\(void\);                        /* resume old simulation    */) s
+377 463 M
+(local void testdata\(void\);                      /* generate test data       */) s
+377 455 M
+(local void stepsystem\(void\);                    /* advance by one time-step */) s
+377 447 M
+(local void treeforce\(void\);                     /* do force calculation     */) s
+377 431 M
+(#if defined\(EXTGRAV\)) s
+377 423 M
+(#include "gsp.h") s
+377 415 M
+(gsprof *gravgsp = NULL;                 /* GSP for external grav. field     */) s
+377 407 M
+(#endif) s
+377 391 M
+(/*) s
+377 383 M
+( * MAIN: toplevel routine for hierarchical N-body code.) s
+377 375 M
+( */) s
+377 359 M
+(int main\(int argc, string argv[]\)) s
+377 351 M
+({) s
+377 343 M
+(  initparam\(argv, defv\);                        /* initialize param access  */) s
+377 335 M
+(  headline = defv[0] + 1;                       /* use default headline     */) s
+377 327 M
+(  startrun\(\);                                   /* get params & input data  */) s
+377 319 M
+(  startoutput\(\);                                /* activate output code     */) s
+377 311 M
+(  if \(nstep == 0\) {                             /* if data just initialized */) s
+377 303 M
+(    treeforce\(\);                                /* calculate initial forces */) s
+377 295 M
+(    output\(\);                                   /* generate initial output  */) s
+377 287 M
+(  }) s
+377 279 M
+(  if \(dtime != 0.0\)                             /* if time steps requested  */) s
+377 271 M
+(    while \(tstop - tnow > 0.01 * dtime\) {       /* while not past tstop     */) s
+377 263 M
+(      stepsystem\(\);                             /* advance step by step     */) s
+377 255 M
+(      output\(\);                                 /* output results each time */) s
+377 247 M
+(    }) s
+377 239 M
+(  return \(0\);                                   /* end with proper status   */) s
+377 231 M
+(}) s
+_R
+S
+%%Page: (2) 2
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 2 def
+/fname (treecode.c) def
+/fdir () def
+/ftail (treecode.c) def
+% User defined strings:
+/fmodstr (Tue Mar 13 11:15:21 2012) def
+/pagenumstr (2) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 503 M
+(/*) s
+5 495 M
+( * STARTRUN: startup hierarchical N-body code.) s
+5 487 M
+( */) s
+5 471 M
+(local void startrun\(void\)) s
+5 463 M
+({) s
+5 455 M
+(  bodyptr p1, p2, p;) s
+5 447 M
+(  stream gravstr;) s
+5 431 M
+(  define_body\(sizeof\(body\), Precision, NDIM\);   /* setup phat body struct   */) s
+5 423 M
+(  define_body_offset\(PosTag,  BodyOffset\(Pos\)\);) s
+5 415 M
+(  define_body_offset\(VelTag,  BodyOffset\(Vel\)\);) s
+5 407 M
+(  define_body_offset\(MassTag, BodyOffset\(Mass\)\);) s
+5 399 M
+(  define_body_offset\(PhiTag,  BodyOffset\(Phi\)\);) s
+5 391 M
+(  define_body_offset\(AccTag,  BodyOffset\(Acc\)\);) s
+5 383 M
+(  infile = getparam\("in"\);                      /* set I/O file names       */) s
+5 375 M
+(  outfile = getparam\("out"\);) s
+5 367 M
+(  savefile = getparam\("save"\);) s
+5 359 M
+(  if \(strnull\(getparam\("restore"\)\)\)             /* starting a new run?      */) s
+5 351 M
+(    newrun\(\);) s
+5 343 M
+(  else                                          /* else resume old run      */) s
+5 335 M
+(    oldrun\(\);) s
+5 327 M
+(  if \(ABS\(nstatic\) > nbody\)                     /* check nstatic is OK      */) s
+5 319 M
+(    error\("%s: absurd value for nstatic\\n", getargv0\(\)\);) s
+5 311 M
+(  p1 = bodytab + MAX\(nstatic, 0\);               /* set dynamic body range   */) s
+5 303 M
+(  p2 = bodytab + nbody + MIN\(nstatic, 0\);) s
+5 295 M
+(  testcalc = TRUE;                              /* determine type of calc:  */) s
+5 287 M
+(  for \(p = p1; p < p2; p++\)) s
+5 279 M
+(    testcalc = testcalc && \(Mass\(p\) == 0\);      /* look for dynamic masses  */) s
+5 271 M
+(  tracefile = getparam\("trace"\);) s
+5 263 M
+(  logfile = getparam\("log"\);) s
+5 255 M
+(#if defined\(EXTGRAV\)) s
+5 247 M
+(  if \(! strnull\(getparam\("gravgsp"\)\)\) {         /* was GSP file given?      */) s
+5 239 M
+(    gravstr = stropen\(getparam\("gravgsp"\), "r"\);) s
+5 231 M
+(    get_history\(gravstr\);) s
+5 223 M
+(    gravgsp = get_gsprof\(gravstr\);              /* read external field GSP  */) s
+5 215 M
+(    strclose\(gravstr\);) s
+5 207 M
+(  }) s
+5 199 M
+(#endif) s
+5 191 M
+(}) s
+377 503 M
+(/*) s
+377 495 M
+( * NEWRUN, OLDRUN: initialize parameters and bodies.) s
+377 487 M
+( */) s
+377 471 M
+(local void newrun\(void\)) s
+377 463 M
+({) s
+377 455 M
+(  real dt1, dt2;) s
+377 439 M
+(  eps = getdparam\("eps"\);                       /* get input parameters     */) s
+377 431 M
+(  dtime = \(sscanf\(getparam\("dtime"\), "%f/%f", &dt1, &dt2\) == 2 ?) s
+377 423 M
+(           dt1 / dt2 : getdparam\("dtime"\)\);) s
+377 415 M
+(  nstatic = getiparam\("nstatic"\);) s
+377 407 M
+(#if !defined\(QUICKSCAN\)) s
+377 399 M
+(  theta = getdparam\("theta"\);) s
+377 391 M
+(#endif) s
+377 383 M
+(  usequad = getbparam\("usequad"\);) s
+377 375 M
+(  tstop = getdparam\("tstop"\);) s
+377 367 M
+(  dtout = \(sscanf\(getparam\("dtout"\), "%f/%f", &dt1, &dt2\) == 2 ?) s
+377 359 M
+(           dt1 / dt2 : getdparam\("dtout"\)\);) s
+377 351 M
+(  options = getparam\("options"\);) s
+377 343 M
+(  outputs = getparam\("outputs"\);) s
+377 335 M
+(  if \(! strnull\(infile\)\)                        /* if data file was given   */) s
+377 327 M
+(    inputdata\(\);                                /* then read inital data    */) s
+377 319 M
+(  else {                                        /* else make initial data   */) s
+377 311 M
+(    nbody = getiparam\("nbody"\);                 /* get number of bodies     */) s
+377 303 M
+(    srandom\(getiparam\("seed"\)\);                 /* set random number gen.   */) s
+377 295 M
+(    testdata\(\);                                 /* and make plummer model   */) s
+377 287 M
+(  }) s
+377 279 M
+(  rsize = 1.0;                                  /* start root w/ unit cube  */) s
+377 271 M
+(  nstep = 0;                                    /* begin counting steps     */) s
+377 263 M
+(  tout = tnow;                                  /* schedule first output    */) s
+377 255 M
+(}) s
+377 239 M
+(local void oldrun\(void\)) s
+377 231 M
+({) s
+377 223 M
+(  real dt1, dt2;) s
+377 207 M
+(  restorestate\(getparam\("restore"\)\);            /* read in old state file   */) s
+377 199 M
+(  if \(getparamstat\("eps"\) & ARGPARAM\)           /* was eps given new value? */) s
+377 191 M
+(    eps = getdparam\("eps"\);                     /* use command line value   */) s
+377 183 M
+(  if \(getparamstat\("nstatic"\) & ARGPARAM\)       /* likewise for others...   */) s
+377 175 M
+(    nstatic = getiparam\("nstatic"\);) s
+377 167 M
+(#if !defined\(QUICKSCAN\)) s
+377 159 M
+(  if \(getparamstat\("theta"\) & ARGPARAM\)) s
+377 151 M
+(    theta = getdparam\("theta"\);) s
+377 143 M
+(#endif) s
+377 135 M
+(  if \(getparamstat\("usequad"\) & ARGPARAM\)) s
+377 127 M
+(    usequad = getbparam\("usequad"\);) s
+377 119 M
+(  if \(getparamstat\("options"\) & ARGPARAM\)) s
+377 111 M
+(    options = getparam\("options"\);) s
+377 103 M
+(  if \(getparamstat\("outputs"\) & ARGPARAM\)) s
+377 95 M
+(    outputs = getparam\("outputs"\);) s
+377 87 M
+(  if \(getparamstat\("tstop"\) & ARGPARAM\)) s
+377 79 M
+(    tstop = getdparam\("tstop"\);) s
+377 71 M
+(  if \(getparamstat\("dtout"\) & ARGPARAM\)) s
+377 63 M
+(    dtout = \(sscanf\(getparam\("dtout"\), "%f/%f", &dt1, &dt2\) == 2 ?) s
+377 55 M
+(             dt1 / dt2 : getdparam\("dtout"\)\);) s
+377 47 M
+(  if \(scanopt\(options, "new-tout"\)\)             /* if output time reset     */) s
+377 39 M
+(    tout = tnow + dtout;                        /* then offset from now     */) s
+377 31 M
+(}) s
+_R
+S
+%%Page: (3) 3
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 3 def
+/fname (treecode.c) def
+/fdir () def
+/ftail (treecode.c) def
+% User defined strings:
+/fmodstr (Tue Mar 13 11:15:21 2012) def
+/pagenumstr (3) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 503 M
+(/*) s
+5 495 M
+( * TESTDATA: generate Plummer model initial conditions for test runs,) s
+5 487 M
+( * scaled to units such that M = -4E = G = 1 \(Henon, Hegge, etc\).) s
+5 479 M
+( * See Aarseth, SJ, Henon, M, & Wielen, R \(1974\) Astr & Ap, 37, 183.) s
+5 471 M
+( */) s
+5 455 M
+(#define MFRAC  0.999                            /* cut off 1-MFRAC of mass  */) s
+5 439 M
+(local void testdata\(void\)) s
+5 431 M
+({) s
+5 423 M
+(  real rsc, vsc, r, v, x, y;) s
+5 415 M
+(  bodyptr p;) s
+5 399 M
+(  if \(nbody < 1\)                                /* check for silly values   */) s
+5 391 M
+(    error\("%s: absurd value for nbody\\n", getargv0\(\)\);) s
+5 383 M
+(  bodytab = \(bodyptr\) allocate\(nbody * sizeof\(body\)\);) s
+5 375 M
+(                                                /* alloc space for bodies   */) s
+5 367 M
+(  rsc = \(3 * PI\) / 16;                          /* set length scale factor  */) s
+5 359 M
+(  vsc = rsqrt\(1.0 / rsc\);                       /* find speed scale factor  */) s
+5 351 M
+(  for \(p = bodytab; p < bodytab+nbody; p++\) {   /* loop over particles      */) s
+5 343 M
+(    Type\(p\) = BODY;                             /* tag as a body            */) s
+5 335 M
+(    Mass\(p\) = 1.0 / nbody;                      /* set masses equal         */) s
+5 327 M
+(    x = xrandom\(0.0, MFRAC\);                    /* pick enclosed mass       */) s
+5 319 M
+(    r = 1.0 / rsqrt\(rpow\(x, -2.0/3.0\) - 1\);     /* find enclosing radius    */) s
+5 311 M
+(    pickshell\(Pos\(p\), NDIM, rsc * r\);           /* pick position vector     */) s
+5 303 M
+(    do {                                        /* select from fn g\(x\)      */) s
+5 295 M
+(      x = xrandom\(0.0, 1.0\);                    /* for x in range 0:1       */) s
+5 287 M
+(      y = xrandom\(0.0, 0.1\);                    /* max of g\(x\) is 0.092     */) s
+5 279 M
+(    } while \(y > x*x * rpow\(1 - x*x, 3.5\)\);     /* using von Neumann tech   */) s
+5 271 M
+(    v = x * rsqrt\(2.0 / rsqrt\(1 + r*r\)\);        /* find resulting speed     */) s
+5 263 M
+(    pickshell\(Vel\(p\), NDIM, vsc * v\);           /* pick velocity vector     */) s
+5 255 M
+(  }) s
+5 247 M
+(  snapcenter\(bodytab, nbody, BodyOffset\(Mass\)\); /* subtract cm coordinates  */) s
+5 239 M
+(  tnow = 0.0;                                   /* set elapsed model time   */) s
+5 231 M
+(}) s
+377 503 M
+(/*) s
+377 495 M
+( * STEPSYSTEM: advance N-body system using simple leap-frog.) s
+377 487 M
+( */) s
+377 471 M
+(local void stepsystem\(void\)) s
+377 463 M
+({) s
+377 455 M
+(  bodyptr p1, p2, p;) s
+377 439 M
+(  p1 = bodytab + MAX\(nstatic, 0\);               /* set dynamic body range   */) s
+377 431 M
+(  p2 = bodytab + nbody + MIN\(nstatic, 0\);) s
+377 423 M
+(  for \(p = p1; p < p2; p++\) {                   /* loop over body range     */) s
+377 415 M
+(    ADDMULVS\(Vel\(p\), Acc\(p\), 0.5 * dtime\);      /* advance v by 1/2 step    */) s
+377 407 M
+(    ADDMULVS\(Pos\(p\), Vel\(p\), dtime\);            /* advance r by 1 step      */) s
+377 399 M
+(  }) s
+377 391 M
+(  treeforce\(\);) s
+377 383 M
+(  for \(p = p1; p < p2; p++\) {                   /* loop over body range     */) s
+377 375 M
+(    ADDMULVS\(Vel\(p\), Acc\(p\), 0.5 * dtime\);      /* advance v by 1/2 step    */) s
+377 367 M
+(  }) s
+377 359 M
+(  nstep++;                                      /* count another time step  */) s
+377 351 M
+(  tnow = tnow + dtime;                          /* finally, advance time    */) s
+377 343 M
+(}) s
+377 327 M
+(/*) s
+377 319 M
+( * TREEFORCE: supervise force calculation.) s
+377 311 M
+( */) s
+377 295 M
+(local void treeforce\(void\)) s
+377 287 M
+({) s
+377 279 M
+(  bodyptr p1, p2, p;) s
+377 271 M
+(  real r, mrinv3;) s
+377 255 M
+(  p1 = bodytab + MAX\(nstatic, 0\);               /* set dynamic body range   */) s
+377 247 M
+(  p2 = bodytab + nbody + MIN\(nstatic, 0\);) s
+377 239 M
+(  for \(p = bodytab; p < bodytab+nbody; p++\)     /* loop over all bodies     */) s
+377 231 M
+(    Update\(p\) = \(testcalc ? p1 <= p && p < p2 : TRUE\);) s
+377 223 M
+(                                                /* flag bodies to update    */) s
+377 215 M
+(  maketree\(bodytab, nbody\);                     /* construct tree structure */) s
+377 207 M
+(  gravcalc\(\);                                   /* compute current forces   */) s
+377 199 M
+(  forcereport\(\);                                /* print force statistics   */) s
+377 191 M
+(#if defined\(EXTGRAV\)) s
+377 183 M
+(  for \(p = bodytab; p < bodytab+nbody; p++\)     /* loop over all bodies     */) s
+377 175 M
+(    if \(Update\(p\) && gravgsp != NULL\) {         /* update in extern field?  */) s
+377 167 M
+(      r = absv\(Pos\(p\)\);                         /* get distance from origin */) s
+377 159 M
+(      mrinv3 = - mass_gsp\(gravgsp, r\) / \(r*r*r\);) s
+377 151 M
+(      ADDMULVS\(Acc\(p\), Pos\(p\), mrinv3\);         /* add extern acc and phi   */) s
+377 143 M
+(      Phi\(p\) += phi_gsp\(gravgsp, r\);) s
+377 135 M
+(    }) s
+377 127 M
+(#endif) s
+377 119 M
+(}) s
+_R
+S
+%%Page: (1) 4
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 1 def
+/fname (treeload.c) def
+/fdir () def
+/ftail (treeload.c) def
+% User defined strings:
+/fmodstr (Tue Mar 13 11:23:32 2012) def
+/pagenumstr (1) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 511 M
+(/****************************************************************************/) s
+5 503 M
+(/* TREELOAD.C: routines to create tree.  Public routines: maketree\(\).       */) s
+5 495 M
+(/* Copyright \(c\) 2012 by Joshua E. Barnes, Honolulu, HI.                    */) s
+5 487 M
+(/****************************************************************************/) s
+5 471 M
+(#include "stdinc.h") s
+5 463 M
+(#include "mathfns.h") s
+5 455 M
+(#include "vectmath.h") s
+5 447 M
+(#include "treedefs.h") s
+5 431 M
+(/* Local routines and variables to perform tree construction. */) s
+5 423 M
+( ) s
+5 415 M
+(local void newtree\(void\);                       /* flush existing tree      */) s
+5 407 M
+(local cellptr makecell\(void\);                   /* create an empty cell     */) s
+5 399 M
+(local void expandbox\(bodyptr, int\);             /* set size of root cell    */) s
+5 391 M
+(local void loadbody\(bodyptr\);                   /* load body into tree      */) s
+5 383 M
+(local int subindex\(bodyptr, cellptr\);           /* compute subcell index    */) s
+5 375 M
+(local void hackcofm\(cellptr, real, int\);        /* find centers of mass     */) s
+5 367 M
+(local void setrcrit\(cellptr, vector, real\);     /* set cell's crit. radius  */) s
+5 359 M
+(local void threadtree\(nodeptr, nodeptr\);        /* set next and more links  */) s
+5 351 M
+(local void hackquad\(cellptr\);                   /* compute quad moments     */) s
+5 343 M
+( ) s
+5 335 M
+(local bool bh86, sw94, theff;                   /* use alternate criteria   */) s
+5 327 M
+(local nodeptr freecell = NULL;                  /* list of free cells       */) s
+5 311 M
+(#define MAXLEVEL  32                            /* max height of tree       */) s
+5 295 M
+(local int cellhist[MAXLEVEL];                   /* count cells by level     */) s
+5 287 M
+(local int subnhist[MAXLEVEL];                   /* count subnodes by level  */) s
+5 271 M
+(/* <A NAME="maketree"></A>) s
+5 263 M
+( * MAKETREE: initialize tree structure for hierarchical force calculation.) s
+5 255 M
+( */) s
+5 247 M
+( ) s
+5 239 M
+(void maketree\(bodyptr btab, int nbody\)) s
+5 231 M
+({) s
+5 223 M
+(  double cpustart;) s
+5 215 M
+(  bodyptr p;) s
+5 207 M
+(  int i;) s
+5 199 M
+( ) s
+5 191 M
+(  cpustart = cputime\(\);                         /* record time at start     */) s
+5 183 M
+(  newtree\(\);                                    /* flush existing tree      */) s
+5 175 M
+(  root = makecell\(\);                            /* allocate the root cell   */) s
+5 167 M
+(  CLRV\(Pos\(root\)\);                              /* initialize the midpoint  */) s
+5 159 M
+(  expandbox\(btab, nbody\);                       /* expand to fit bodies     */) s
+5 151 M
+(  for \(p = btab; p < btab+nbody; p++\)           /* loop over all bodies     */) s
+5 143 M
+(    loadbody\(p\);                                /* insert each into tree    */) s
+5 135 M
+(  bh86 = scanopt\(options, "bh86"\);              /* set flags for alternate  */) s
+5 127 M
+(  sw94 = scanopt\(options, "sw94"\);              /* ...cell opening criteria */) s
+5 119 M
+(  theff = scanopt\(options, "theta-eff"\);) s
+5 111 M
+(  if \(\(bh86 && sw94\) || \(sw94 && theff\) || \(theff && bh86\)\)) s
+5 103 M
+(                                                /* allow just one at a time */) s
+5 95 M
+(    error\("maketree: options bh86, sw94, theta-eff are incompatible\\n"\);) s
+5 87 M
+(  tdepth = 0;                                   /* init count of levels     */) s
+5 79 M
+(  for \(i = 0; i < MAXLEVEL; i++\)                /* and init tree histograms */) s
+5 71 M
+(    cellhist[i] = subnhist[i] = 0;) s
+5 63 M
+(  hackcofm\(root, rsize, 0\);                     /* find c-of-m coords, etc  */) s
+5 55 M
+(  threadtree\(\(nodeptr\) root, NULL\);             /* add next and more links  */) s
+5 47 M
+(  if \(usequad\)                                  /* if including quad terms  */) s
+5 39 M
+(    hackquad\(root\);                             /* find quadrupole moments  */) s
+5 31 M
+(  cputree = cputime\(\) - cpustart;               /* store elapsed CPU time   */) s
+5 23 M
+(}) s
+377 503 M
+(/* <A NAME="newtree"></A>) s
+377 495 M
+( * NEWTREE: reclaim cells in tree, prepare to build new one.) s
+377 487 M
+( */) s
+377 479 M
+( ) s
+377 471 M
+(local void newtree\(void\)) s
+377 463 M
+({) s
+377 455 M
+(  static bool firstcall = TRUE;) s
+377 447 M
+(  nodeptr p;) s
+377 439 M
+( ) s
+377 431 M
+(  if \(! firstcall\) {                            /* if cells to reclaim      */) s
+377 423 M
+(    p = \(nodeptr\) root;                         /* start with the root      */) s
+377 415 M
+(    while \(p != NULL\)                           /* loop scanning tree       */) s
+377 407 M
+(      if \(Type\(p\) == CELL\) {                    /* if we found a cell to    */) s
+377 399 M
+(        Next\(p\) = freecell;                     /* then save existing list  */) s
+377 391 M
+(        freecell = p;                           /* and add it to the front  */) s
+377 383 M
+(        p = More\(p\);                            /* then scan down tree      */) s
+377 375 M
+(      } else                                    /* else, skip over bodies   */) s
+377 367 M
+(        p = Next\(p\);                            /* by going on to the next  */) s
+377 359 M
+(  } else                                        /* else nothing to reclaim  */) s
+377 351 M
+(    firstcall = FALSE;                          /* so just note it          */) s
+377 343 M
+(  root = NULL;                                  /* flush existing tree      */) s
+377 335 M
+(  ncell = 0;                                    /* reset cell count         */) s
+377 327 M
+(}) s
+377 319 M
+( ) s
+377 311 M
+(/* <A NAME="makecell"></A>) s
+377 303 M
+( * MAKECELL: return pointer to free cell.) s
+377 295 M
+( */) s
+377 287 M
+( ) s
+377 279 M
+(local cellptr makecell\(void\)) s
+377 271 M
+({) s
+377 263 M
+(  cellptr c;) s
+377 255 M
+(  int i;) s
+377 247 M
+( ) s
+377 239 M
+(  if \(freecell == NULL\)                         /* if no free cells left    */) s
+377 231 M
+(    c = \(cellptr\) allocate\(sizeof\(cell\)\);       /* then allocate a new one  */) s
+377 223 M
+(  else {                                        /* else use existing cell   */) s
+377 215 M
+(    c = \(cellptr\) freecell;                     /* take the one in front    */) s
+377 207 M
+(    freecell = Next\(c\);                         /* and go on to next one    */) s
+377 199 M
+(  }) s
+377 191 M
+(  Type\(c\) = CELL;                               /* initialize node type     */) s
+377 183 M
+(  Update\(c\) = FALSE;                            /* and force update flag    */) s
+377 175 M
+(  for \(i = 0; i < NSUB; i++\)                    /* loop over subcells       */) s
+377 167 M
+(    Subp\(c\)[i] = NULL;                          /* and empty each one       */) s
+377 159 M
+(  ncell++;                                      /* count one more cell      */) s
+377 151 M
+(  return \(c\);                                   /* return pointer to cell   */) s
+377 143 M
+(}) s
+_R
+S
+%%Page: (2) 5
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 2 def
+/fname (treeload.c) def
+/fdir () def
+/ftail (treeload.c) def
+% User defined strings:
+/fmodstr (Tue Mar 13 11:23:32 2012) def
+/pagenumstr (2) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 503 M
+(/* <A NAME="expandbox"></A>) s
+5 495 M
+( * EXPANDBOX: find range of coordinate values \(with respect to root\)) s
+5 487 M
+( * and expand root cell to fit.  The size is doubled at each step to) s
+5 479 M
+( * take advantage of exact representation of powers of two.) s
+5 471 M
+( */) s
+5 463 M
+( ) s
+5 455 M
+(local void expandbox\(bodyptr btab, int nbody\)) s
+5 447 M
+({) s
+5 439 M
+(  real dmax, d;) s
+5 431 M
+(  bodyptr p;) s
+5 423 M
+(  int k;) s
+5 415 M
+( ) s
+5 407 M
+(  dmax = 0.0;                                   /* keep track of max value  */) s
+5 399 M
+(  for \(p = btab; p < btab+nbody; p++\)           /* loop over all bodies     */) s
+5 391 M
+(    for \(k = 0; k < NDIM; k++\) {                /* and over all dimensions  */) s
+5 383 M
+(      d = rabs\(Pos\(p\)[k] - Pos\(root\)[k]\);       /* find distance to midpnt  */) s
+5 375 M
+(      if \(d > dmax\)                             /* if bigger than old one   */) s
+5 367 M
+(        dmax = d;                               /* store new max value      */) s
+5 359 M
+(    }) s
+5 351 M
+(  while \(rsize < 2 * dmax\)                      /* loop until value fits    */) s
+5 343 M
+(    rsize = 2 * rsize;                          /* doubling box each time   */) s
+5 335 M
+(}) s
+5 319 M
+(/* <A NAME="loadbody"></A>) s
+5 311 M
+( * LOADBODY: descend tree and insert body p in appropriate place.) s
+5 303 M
+( */) s
+5 295 M
+( ) s
+5 287 M
+(local void loadbody\(bodyptr p\)) s
+5 279 M
+({) s
+5 271 M
+(  cellptr q, c;) s
+5 263 M
+(  int qind, k;) s
+5 255 M
+(  real qsize;) s
+5 247 M
+( ) s
+5 239 M
+(  q = root;                                     /* start with tree root     */) s
+5 231 M
+(  qind = subindex\(p, q\);                        /* get index of subcell     */) s
+5 223 M
+(  qsize = rsize;                                /* keep track of cell size  */) s
+5 215 M
+(  while \(Subp\(q\)[qind] != NULL\) {               /* loop descending tree     */) s
+5 207 M
+(    if \(Type\(Subp\(q\)[qind]\) == BODY\) {          /* found a body in subcell? */) s
+5 199 M
+(      if \(Pos\(p\)[0] == Pos\(Subp\(q\)[qind]\)[0] &&) s
+5 191 M
+(          Pos\(p\)[1] == Pos\(Subp\(q\)[qind]\)[1] &&) s
+5 183 M
+(          Pos\(p\)[2] == Pos\(Subp\(q\)[qind]\)[2]\)) s
+5 175 M
+(        fatal\("loadbody: two bodies have same position\\n"\);) s
+5 167 M
+(      c = makecell\(\);                           /* allocate cell for both   */) s
+5 159 M
+(      for \(k = 0; k < NDIM; k++\)                /* and initialize midpoint  */) s
+5 151 M
+(        Pos\(c\)[k] = Pos\(q\)[k] + \(Pos\(p\)[k]<Pos\(q\)[k] ? - qsize : qsize\) / 4;) s
+5 143 M
+(                                                /* set offset from parent   */) s
+5 135 M
+(      Subp\(c\)[subindex\(\(bodyptr\) Subp\(q\)[qind], c\)] = Subp\(q\)[qind];) s
+5 127 M
+(                                                /* put old body in cell     */) s
+5 119 M
+(      Subp\(q\)[qind] = \(nodeptr\) c;              /* link cell in tree        */) s
+5 111 M
+(    }) s
+5 103 M
+(    q = \(cellptr\) Subp\(q\)[qind];                /* advance to next level    */) s
+5 95 M
+(    qind = subindex\(p, q\);                      /* get index to examine     */) s
+5 87 M
+(    qsize = qsize / 2;                          /* shrink current cell      */) s
+5 79 M
+(  }) s
+5 71 M
+(  Subp\(q\)[qind] = \(nodeptr\) p;                  /* found place, store p     */) s
+5 63 M
+(}) s
+377 503 M
+(/* <A NAME="subindex"></A>) s
+377 495 M
+( * SUBINDEX: compute subcell index for body p in cell q.) s
+377 487 M
+( */) s
+377 479 M
+( ) s
+377 471 M
+(local int subindex\(bodyptr p, cellptr q\)) s
+377 463 M
+({) s
+377 455 M
+(  int ind, k;) s
+377 447 M
+( ) s
+377 439 M
+(  ind = 0;                                      /* accumulate subcell index */) s
+377 431 M
+(  for \(k = 0; k < NDIM; k++\)                    /* loop over dimensions     */) s
+377 423 M
+(    if \(Pos\(q\)[k] <= Pos\(p\)[k]\)                 /* if beyond midpoint       */) s
+377 415 M
+(      ind += NSUB >> \(k + 1\);                   /* then skip over subcells  */) s
+377 407 M
+(  return \(ind\);) s
+377 399 M
+(}) s
+377 383 M
+(/* <A NAME="hackcofm"></A>) s
+377 375 M
+( * HACKCOFM: descend tree finding center-of-mass coordinates;) s
+377 367 M
+( * also sets critical cell radii, if appropriate.) s
+377 359 M
+( */) s
+377 351 M
+( ) s
+377 343 M
+(local void hackcofm\(cellptr p, real psize, int lev\)) s
+377 335 M
+({) s
+377 327 M
+(  vector cmpos, tmpv;) s
+377 319 M
+(  int i, k;) s
+377 311 M
+(  nodeptr q;) s
+377 303 M
+(  real phalf = psize / 2.0;) s
+377 295 M
+( ) s
+377 287 M
+(  tdepth = MAX\(tdepth, lev\);                    /* remember maximum level   */) s
+377 279 M
+(  cellhist[lev]++;                              /* count cells by level     */) s
+377 271 M
+(  Mass\(p\) = 0.0;                                /* init cell's total mass   */) s
+377 263 M
+(  CLRV\(cmpos\);                                  /* and center of mass pos   */) s
+377 255 M
+(  for \(i = 0; i < NSUB; i++\)                    /* loop over the subnodes   */) s
+377 247 M
+(    if \(\(q = Subp\(p\)[i]\) != NULL\) {             /* skipping empty ones      */) s
+377 239 M
+(      subnhist[lev]++;                          /* count existing subnodes  */) s
+377 231 M
+(      if \(Type\(q\) == CELL\)                      /* and if node is a cell    */) s
+377 223 M
+(        hackcofm\(\(cellptr\) q, phalf, lev+1\);    /* then do the same for it  */) s
+377 215 M
+(      Update\(p\) |= Update\(q\);                   /* propagate update request */) s
+377 207 M
+(      Mass\(p\) += Mass\(q\);                       /* accumulate total mass    */) s
+377 199 M
+(      ADDMULVS\(cmpos, Pos\(q\), Mass\(q\)\);         /* and center of mass posn  */) s
+377 191 M
+(    }) s
+377 183 M
+(  if \(Mass\(p\) > 0.0\) {                          /* usually, cell has mass   */) s
+377 175 M
+(    DIVVS\(cmpos, cmpos, Mass\(p\)\);               /* so find c-of-m position  */) s
+377 167 M
+(  } else {                                      /* but if no mass inside    */) s
+377 159 M
+(    SETV\(cmpos, Pos\(p\)\);                        /* use centroid position    */) s
+377 151 M
+(  }) s
+377 143 M
+(  SUBV\(tmpv, cmpos, Pos\(p\)\);) s
+377 135 M
+(  if \(ABS\(tmpv[0]\)>phalf || ABS\(tmpv[1]\)>phalf || ABS\(tmpv[2]\)>phalf\)) s
+377 127 M
+(    eprintf\("[hackcofm: c.m. outside cell:  psize = %14.8g  lev = %d\\n") s
+377 119 M
+(            "   midp = \(%14.8g,%14.8g,%14.8g\)\\n") s
+377 111 M
+(            "   cofm = \(%14.8g,%14.8g,%14.8g\)]\\n", psize, lev,) s
+377 103 M
+(            Pos\(p\)[0], Pos\(p\)[1], Pos\(p\)[2],) s
+377 95 M
+(            cmpos[0], cmpos[1], cmpos[2]\);) s
+377 87 M
+(#ifndef QUICKSCAN) s
+377 79 M
+(  setrcrit\(p, cmpos, psize\);                    /* set critical radius      */) s
+377 71 M
+(#endif) s
+377 63 M
+(  SETV\(Pos\(p\), cmpos\);                          /* and center-of-mass pos   */) s
+377 55 M
+(}) s
+_R
+S
+%%Page: (3) 6
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 3 def
+/fname (treeload.c) def
+/fdir () def
+/ftail (treeload.c) def
+% User defined strings:
+/fmodstr (Tue Mar 13 11:23:32 2012) def
+/pagenumstr (3) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 503 M
+(#ifndef QUICKSCAN) s
+5 487 M
+(/* <A NAME="setrcrit"></A>) s
+5 479 M
+( * SETRCRIT: assign critical radius for cell p, using center-of-mass) s
+5 471 M
+( * position cmpos and cell size psize.) s
+5 463 M
+( */) s
+5 447 M
+(local void setrcrit\(cellptr p, vector cmpos, real psize\)) s
+5 439 M
+({) s
+5 431 M
+(  real bmax2, d;) s
+5 423 M
+(  int k;) s
+5 407 M
+(  if \(theta == 0.0\) {                           /* if exact calculation     */) s
+5 399 M
+(    Rcrit2\(p\) = rsqr\(2 * rsize\);                /* then always open cells   */) s
+5 391 M
+(  } else if \(sw94\) {                            /* if using S&W's criterion */) s
+5 383 M
+(    bmax2 = 0.0;                                /* compute max distance^2   */) s
+5 375 M
+(    for \(k = 0; k < NDIM; k++\) {                /* loop over dimensions     */) s
+5 367 M
+(      d = cmpos[k] - Pos\(p\)[k] + psize/2;       /* get dist from corner     */) s
+5 359 M
+(      bmax2 += rsqr\(MAX\(d, psize - d\)\);         /* and sum max distance^2   */) s
+5 351 M
+(    }) s
+5 343 M
+(    Rcrit2\(p\) = bmax2 / rsqr\(theta\);            /* use max dist from cm     */) s
+5 335 M
+(  } else if \(bh86\) {                            /* if using old criterion   */) s
+5 327 M
+(    Rcrit2\(p\) = rsqr\(psize / theta\);            /* just use size of cell    */) s
+5 319 M
+(  } else if \(theff\) {                           /* if using effective theta */) s
+5 311 M
+(    DISTV\(d, cmpos, Pos\(p\)\);                    /* find offset from center  */) s
+5 303 M
+(    Rcrit2\(p\) = rsqr\(psize / \(theta * \(eps + psize\) / \(2*eps + psize\)\) + d\);) s
+5 295 M
+(  } else {                                      /* else use new criterion   */) s
+5 287 M
+(    DISTV\(d, cmpos, Pos\(p\)\);                    /* find offset from center  */) s
+5 279 M
+(    Rcrit2\(p\) = rsqr\(psize / theta + d\);        /* use size plus offset     */) s
+5 271 M
+(  }) s
+5 263 M
+(}) s
+5 247 M
+(#endif) s
+5 231 M
+(/* <A NAME="threadtree"></A>) s
+5 223 M
+( * THREADTREE: do a recursive treewalk starting from node p,) s
+5 215 M
+( * with next stop n, installing Next and More links.) s
+5 207 M
+( */) s
+5 199 M
+( ) s
+5 191 M
+(local void threadtree\(nodeptr p, nodeptr n\)) s
+5 183 M
+({) s
+5 175 M
+(  int ndesc, i;) s
+5 167 M
+(  nodeptr desc[NSUB+1];) s
+5 159 M
+( ) s
+5 151 M
+(  Next\(p\) = n;                                  /* set link to next node    */) s
+5 143 M
+(  if \(Type\(p\) == CELL\) {                        /* if descendents to thread */) s
+5 135 M
+(    ndesc = 0;                                  /* start counting them      */) s
+5 127 M
+(    for \(i = 0; i < NSUB; i++\)                  /* loop over all subcells   */) s
+5 119 M
+(      if \(Subp\(p\)[i] != NULL\)                   /* if this one is occupied  */) s
+5 111 M
+(        desc[ndesc++] = Subp\(p\)[i];             /* then store it in table   */) s
+5 103 M
+(    More\(p\) = desc[0];                          /* set link to 1st one      */) s
+5 95 M
+(    desc[ndesc] = n;                            /* thread last one to next  */) s
+5 87 M
+(    for \(i = 0; i < ndesc; i++\)                 /* loop over descendents    */) s
+5 79 M
+(      threadtree\(desc[i], desc[i+1]\);           /* and thread them together */) s
+5 71 M
+(  }) s
+5 63 M
+(}) s
+377 503 M
+(/* <A NAME="hackquad"></A>) s
+377 495 M
+( * HACKQUAD: descend tree, evaluating quadrupole moments.  Note that this) s
+377 487 M
+( * routine is coded so that the Subp\(\) and Quad\(\) components of a cell can) s
+377 479 M
+( * share the same memory locations.) s
+377 471 M
+( */) s
+377 463 M
+( ) s
+377 455 M
+(local void hackquad\(cellptr p\)) s
+377 447 M
+({) s
+377 439 M
+(  int ndesc, i;) s
+377 431 M
+(  nodeptr desc[NSUB], q;) s
+377 423 M
+(  vector dr;) s
+377 415 M
+(  real drsq;) s
+377 407 M
+(  matrix drdr, Idrsq, tmpm;) s
+377 399 M
+( ) s
+377 391 M
+(  ndesc = 0;                                    /* count occupied subnodes  */) s
+377 383 M
+(  for \(i = 0; i < NSUB; i++\)                    /* loop over all subnodes   */) s
+377 375 M
+(    if \(Subp\(p\)[i] != NULL\)                     /* if this one's occupied   */) s
+377 367 M
+(      desc[ndesc++] = Subp\(p\)[i];               /* copy it to safety        */) s
+377 359 M
+(  CLRM\(Quad\(p\)\);                                /* init quadrupole moment   */) s
+377 351 M
+(  for \(i = 0; i < ndesc; i++\) {                 /* loop over real subnodes  */) s
+377 343 M
+(    q = desc[i];                                /* access ech one in turn   */) s
+377 335 M
+(    if \(Type\(q\) == CELL\)                        /* if it's also a cell      */) s
+377 327 M
+(      hackquad\(\(cellptr\) q\);                    /* then process it first    */) s
+377 319 M
+(    SUBV\(dr, Pos\(q\), Pos\(p\)\);                   /* find displacement vect.  */) s
+377 311 M
+(    OUTVP\(drdr, dr, dr\);                        /* form outer prod. of dr   */) s
+377 303 M
+(    DOTVP\(drsq, dr, dr\);                        /* and dot prod. dr * dr    */) s
+377 295 M
+(    SETMI\(Idrsq\);                               /* init unit matrix         */) s
+377 287 M
+(    MULMS\(Idrsq, Idrsq, drsq\);                  /* and scale by dr * dr     */) s
+377 279 M
+(    MULMS\(tmpm, drdr, 3.0\);                     /* scale drdr by 3          */) s
+377 271 M
+(    SUBM\(tmpm, tmpm, Idrsq\);                    /* now form quad. moment    */) s
+377 263 M
+(    MULMS\(tmpm, tmpm, Mass\(q\)\);                 /* from cm of subnode       */) s
+377 255 M
+(    if \(Type\(q\) == CELL\)                        /* if subnode is cell       */) s
+377 247 M
+(      ADDM\(tmpm, tmpm, Quad\(q\)\);                /* then include its moment  */) s
+377 239 M
+(    ADDM\(Quad\(p\), Quad\(p\), tmpm\);               /* increment moment of cell */) s
+377 231 M
+(  }) s
+377 223 M
+(}) s
+_R
+S
+%%Page: (1) 7
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 1 def
+/fname (treegrav.c) def
+/fdir () def
+/ftail (treegrav.c) def
+% User defined strings:
+/fmodstr (Tue Mar 13 11:21:39 2012) def
+/pagenumstr (1) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 511 M
+(/****************************************************************************/) s
+5 503 M
+(/* TREEGRAV.C: routines to compute gravity. Public routines: gravcalc\(\).    */) s
+5 495 M
+(/* Copyright \(c\) 2012 by Joshua E. Barnes, Honolulu, HI.                    */) s
+5 487 M
+(/****************************************************************************/) s
+5 479 M
+( ) s
+5 471 M
+(#include "stdinc.h") s
+5 463 M
+(#include "mathfns.h") s
+5 455 M
+(#include "vectmath.h") s
+5 447 M
+(#include "treedefs.h") s
+5 439 M
+( ) s
+5 431 M
+(/* Local routines to perform force calculations. */) s
+5 423 M
+( ) s
+5 415 M
+(local void walktree\(nodeptr *, nodeptr *, cellptr, cellptr,) s
+5 407 M
+(                    nodeptr, real, vector\);) s
+5 399 M
+(local bool accept\(nodeptr, real, vector\);) s
+5 391 M
+(local void walksub\(nodeptr *, nodeptr *, cellptr, cellptr,) s
+5 383 M
+(                   nodeptr, real, vector\);) s
+5 375 M
+(local void gravsum\(bodyptr, cellptr, cellptr\);) s
+5 367 M
+(local void sumnode\(cellptr, cellptr, vector, real *, vector\);) s
+5 359 M
+(local void sumcell\(cellptr, cellptr, vector, real *, vector\);) s
+5 351 M
+( ) s
+5 343 M
+(/* Lists of active nodes and interactions. */) s
+5 335 M
+( ) s
+5 327 M
+(#ifndef FACTIVE) s
+5 319 M
+(#  define FACTIVE  1.0                          /* active list fudge factor */) s
+5 311 M
+(#endif) s
+5 303 M
+( ) s
+5 295 M
+(local int actmax;                               /* length as allocated      */) s
+5 287 M
+(local int acttot;                               /* actual active length     */) s
+5 271 M
+(local nodeptr *active = NULL;                   /* list of nodes tested     */) s
+5 263 M
+(local cellptr interact = NULL;                  /* list of interactions     */) s
+5 247 M
+(/* <A NAME="gravcalc"></A>) s
+5 239 M
+( * GRAVCALC: perform force calculation on all particles.) s
+5 231 M
+( */) s
+5 223 M
+( ) s
+5 215 M
+(void gravcalc\(void\)) s
+5 207 M
+({) s
+5 199 M
+(  double cpustart;) s
+5 191 M
+(  vector rmid;) s
+5 183 M
+( ) s
+5 175 M
+(  if \(active == NULL\) {                         /* if this is the 1st call  */) s
+5 167 M
+(    actmax = FACTIVE * 216 * \(tdepth + 1\);      /* estimate list length     */) s
+5 159 M
+(#ifndef QUICKSCAN) s
+5 151 M
+(    if \(theta > 0.1\)) s
+5 143 M
+(      actmax = actmax * rpow\(theta,-2.5\);       /* allow for opening angle  */) s
+5 135 M
+(    else) s
+5 127 M
+(      actmax = 5.0 * ncell;                     /* guess total node count   */) s
+5 119 M
+(#endif) s
+5 111 M
+(    active = \(nodeptr *\) allocate\(actmax * sizeof\(nodeptr\)\);) s
+5 103 M
+(    interact = \(cellptr\) allocate\(actmax * sizeof\(cell\)\);) s
+5 95 M
+(  }) s
+5 87 M
+(  cpustart = cputime\(\);                         /* record time, less alloc  */) s
+5 79 M
+(  acttot = nfcalc = nbbcalc = nbccalc = 0;      /* zero cumulative counters */) s
+5 71 M
+(  active[0] = \(nodeptr\) root;                   /* initialize active list   */) s
+5 63 M
+(  CLRV\(rmid\);                                   /* set center of root cell  */) s
+5 55 M
+(  walktree\(active, active + 1, interact, interact + actmax,) s
+5 47 M
+(           \(nodeptr\) root, rsize, rmid\);        /* scan tree, update forces */) s
+5 39 M
+(  cpuforce = cputime\(\) - cpustart;              /* store CPU time w/o alloc */) s
+5 31 M
+(}) s
+377 503 M
+(/* <A NAME="walktree"></A>) s
+377 495 M
+( * WALKTREE: do a complete walk of the tree, building the interaction) s
+377 487 M
+( * list level-by-level and computing the resulting force on each body.) s
+377 479 M
+( */) s
+377 471 M
+( ) s
+377 463 M
+(local void walktree\(nodeptr *aptr, nodeptr *nptr, cellptr cptr, cellptr bptr,) s
+377 455 M
+(                    nodeptr p, real psize, vector pmid\)) s
+377 447 M
+({) s
+377 439 M
+(  nodeptr *np, *ap, q;) s
+377 431 M
+(  int actsafe;) s
+377 423 M
+( ) s
+377 415 M
+(  if \(Update\(p\)\) {                              /* are new forces needed?   */) s
+377 407 M
+(    np = nptr;                                  /* start new active list    */) s
+377 399 M
+(    actsafe = actmax - NSUB;                    /* leave room for NSUB more */) s
+377 391 M
+(    for \(ap = aptr; ap < nptr; ap++\) {          /* loop over active nodes   */) s
+377 383 M
+(      if \(Type\(*ap\) == CELL\) {                  /* is this node a cell?     */) s
+377 375 M
+(        if \(accept\(*ap, psize, pmid\)\) {         /* does it pass the test?   */) s
+377 367 M
+(          if \(Mass\(*ap\) > 0.0\) {                /* and contribute to field? */) s
+377 359 M
+(            Mass\(cptr\) = Mass\(*ap\);             /* copy to interaction list */) s
+377 351 M
+(            SETV\(Pos\(cptr\), Pos\(*ap\)\);) s
+377 343 M
+(            SETM\(Quad\(cptr\), Quad\(*ap\)\);) s
+377 335 M
+(#ifdef TESTFORCE) s
+377 327 M
+(            More\(cptr\) = More\(*ap\);) s
+377 319 M
+(            Next\(cptr\) = Next\(*ap\);) s
+377 311 M
+(#endif) s
+377 303 M
+(            cptr++;                             /* and bump cell array ptr  */) s
+377 295 M
+(          }) s
+377 287 M
+(        } else {                                /* else it fails the test   */) s
+377 279 M
+(          if \(np - active >= actsafe\)           /* check list has room      */) s
+377 271 M
+(            fatal\("walktree: active list overflow\\n"\);) s
+377 263 M
+(          for \(q = More\(*ap\); q != Next\(*ap\); q = Next\(q\)\)) s
+377 255 M
+(                                                /* loop over all subcells   */) s
+377 247 M
+(            *np++= q;                           /* put on new active list   */) s
+377 239 M
+(        }) s
+377 231 M
+(      } else                                    /* else this node is a body */) s
+377 223 M
+(        if \(*ap != p && Mass\(*ap\) > 0.0\) {      /* if not self-interaction  */) s
+377 215 M
+(          --bptr;                               /* bump body array ptr      */) s
+377 207 M
+(          Mass\(bptr\) = Mass\(*ap\);               /* and copy data to array   */) s
+377 199 M
+(          SETV\(Pos\(bptr\), Pos\(*ap\)\);) s
+377 191 M
+(        }) s
+377 183 M
+(    }) s
+377 175 M
+(    acttot = MAX\(acttot, np - active\);          /* keep track of max active */) s
+377 167 M
+(    if \(np != nptr\) {                           /* if new actives listed    */) s
+377 159 M
+(      walksub\(nptr, np, cptr, bptr, p, psize, pmid\);) s
+377 151 M
+(                                                /* then visit next level    */) s
+377 143 M
+(    } else {                                    /* else no actives left, so */) s
+377 135 M
+(      if \(Type\(p\) != BODY\)                      /* must have found a body   */) s
+377 127 M
+(        fatal\("walktree: recursion terminated with cell\\n") s
+377 119 M
+(              "  p = 0x%x  psize   = %.8f  Mass\(p\) = %g\\n") s
+377 111 M
+(              "  pmid =   \(%.8f,%.8f,%.8f\)\\n") s
+377 103 M
+(              "  Pos\(p\) = \(%.8f,%.8f,%.8f\)\\n",) s
+377 95 M
+(              \(int\) p, psize, Mass\(p\),) s
+377 87 M
+(              pmid[0], pmid[1], pmid[2],) s
+377 79 M
+(              Pos\(p\)[0], Pos\(p\)[1], Pos\(p\)[2]\);) s
+377 71 M
+(      gravsum\(\(bodyptr\) p, cptr, bptr\);         /* sum force on the body    */) s
+377 63 M
+(    }) s
+377 55 M
+(  }) s
+377 47 M
+(}) s
+_R
+S
+%%Page: (2) 8
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 2 def
+/fname (treegrav.c) def
+/fdir () def
+/ftail (treegrav.c) def
+% User defined strings:
+/fmodstr (Tue Mar 13 11:21:39 2012) def
+/pagenumstr (2) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 503 M
+(#ifdef QUICKSCAN) s
+5 495 M
+( ) s
+5 487 M
+(/* <A NAME="accept"></A>) s
+5 479 M
+( * ACCEPT: quick criterion accepts any cell not touching cell p.) s
+5 471 M
+( */) s
+5 463 M
+( ) s
+5 455 M
+(local bool accept\(nodeptr c, real psize, vector pmid\)) s
+5 447 M
+({) s
+5 439 M
+(  real p15, dk;) s
+5 431 M
+( ) s
+5 423 M
+(  p15 = \(\(real\) 1.5\) * psize;                   /* premultiply cell size    */) s
+5 415 M
+(  dk = Pos\(c\)[0] - pmid[0];                     /* find distance to midpnt  */) s
+5 407 M
+(  if \(ABS\(dk\) > p15\)                            /* if c does not touch p    */) s
+5 399 M
+(    return \(TRUE\);                              /* then accept interaction  */) s
+5 391 M
+(  dk = Pos\(c\)[1] - pmid[1];                     /* find distance to midpnt  */) s
+5 383 M
+(  if \(ABS\(dk\) > p15\)                            /* if c does not touch p    */) s
+5 375 M
+(    return \(TRUE\);                              /* then accept interaction  */) s
+5 367 M
+(  dk = Pos\(c\)[2] - pmid[2];                     /* find distance to midpnt  */) s
+5 359 M
+(  if \(ABS\(dk\) > p15\)                            /* if c does not touch p    */) s
+5 351 M
+(    return \(TRUE\);                              /* then accept interaction  */) s
+5 343 M
+(  return \(FALSE\);                               /* else do not accept it    */) s
+5 335 M
+(}) s
+5 327 M
+( ) s
+5 319 M
+(#else) s
+5 311 M
+( ) s
+5 303 M
+(/*) s
+5 295 M
+( * ACCEPT: standard criterion accepts cell if its critical radius) s
+5 287 M
+( * does not intersect cell p, and also imposes above condition.) s
+5 279 M
+( */) s
+5 271 M
+( ) s
+5 263 M
+(local bool accept\(nodeptr c, real psize, vector pmid\)) s
+5 255 M
+({) s
+5 247 M
+(    real dmax, dsq, dk;) s
+5 239 M
+(    int k;) s
+5 231 M
+( ) s
+5 223 M
+(    dmax = psize;                               /* init maximum distance    */) s
+5 215 M
+(    dsq = 0.0;                                  /* and squared min distance */) s
+5 207 M
+(    for \(k = 0; k < NDIM; k++\) {                /* loop over space dims     */) s
+5 199 M
+(        dk = Pos\(c\)[k] - pmid[k];               /* form distance to midpnt  */) s
+5 191 M
+(        if \(dk < 0\)                             /* and get absolute value   */) s
+5 183 M
+(            dk = - dk;) s
+5 175 M
+(        if \(dk > dmax\)                          /* keep track of max value  */) s
+5 167 M
+(            dmax = dk;) s
+5 159 M
+(        dk -= \(\(real\) 0.5\) * psize;             /* allow for size of cell   */) s
+5 151 M
+(        if \(dk > 0\)) s
+5 143 M
+(            dsq += dk * dk;                     /* sum min dist to cell ^2  */) s
+5 135 M
+(    }) s
+5 127 M
+(    return \(dsq > Rcrit2\(c\) &&                  /* test angular criterion   */) s
+5 119 M
+(              dmax > \(\(real\) 1.5\) * psize\);     /* and adjacency criterion  */) s
+5 111 M
+(}) s
+5 103 M
+( ) s
+5 95 M
+(#endif) s
+377 503 M
+(/* <A NAME="walksub"></A>) s
+377 495 M
+( * WALKSUB: test next level's active list against subnodes of p.) s
+377 487 M
+( */) s
+377 479 M
+( ) s
+377 471 M
+(local void walksub\(nodeptr *nptr, nodeptr *np, cellptr cptr, cellptr bptr,) s
+377 463 M
+(                   nodeptr p, real psize, vector pmid\)) s
+377 455 M
+({) s
+377 447 M
+(  nodeptr q;) s
+377 439 M
+(  int k;) s
+377 431 M
+(  vector qmid;) s
+377 423 M
+( ) s
+377 415 M
+(  if \(Type\(p\) == CELL\) {                        /* fanout over descendents  */) s
+377 407 M
+(    for \(q = More\(p\); q != Next\(p\); q = Next\(q\)\) {) s
+377 399 M
+(                                                /* loop over all subcells   */) s
+377 391 M
+(      for \(k = 0; k < NDIM; k++\)                /* set subcell's midpoint   */) s
+377 383 M
+(        qmid[k] = pmid[k] + \(Pos\(q\)[k] < pmid[k] ? - psize : psize\) / 4;) s
+377 375 M
+(      walktree\(nptr, np, cptr, bptr, q, psize / 2, qmid\);) s
+377 367 M
+(                                                /* recurse on subcell       */) s
+377 359 M
+(    }) s
+377 351 M
+(  } else {                                      /* extend "virtual" tree    */) s
+377 343 M
+(    for \(k = 0; k < NDIM; k++\)                  /* set virtual midpoint     */) s
+377 335 M
+(      qmid[k] = pmid[k] + \(Pos\(p\)[k] < pmid[k] ? - psize : psize\) / 4;) s
+377 327 M
+(    walktree\(nptr, np, cptr, bptr, p, psize / 2, qmid\);) s
+377 319 M
+(                                                /* and search next level    */) s
+377 311 M
+(  }) s
+377 303 M
+(}) s
+_R
+S
+%%Page: (3) 9
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 3 def
+/fname (treegrav.c) def
+/fdir () def
+/ftail (treegrav.c) def
+% User defined strings:
+/fmodstr (Tue Mar 13 11:21:39 2012) def
+/pagenumstr (3) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 503 M
+(/* <A NAME="gravsum"></A>) s
+5 495 M
+( * GRAVSUM: compute gravitational field at body p0.) s
+5 487 M
+( */) s
+5 479 M
+( ) s
+5 471 M
+(local void gravsum\(bodyptr p0, cellptr cptr, cellptr bptr\)) s
+5 463 M
+({) s
+5 455 M
+(  vector pos0, acc0;) s
+5 447 M
+(  real phi0;) s
+5 439 M
+( ) s
+5 431 M
+(  SETV\(pos0, Pos\(p0\)\);                          /* copy position of body    */) s
+5 423 M
+(  phi0 = 0.0;                                   /* init total potential     */) s
+5 415 M
+(  CLRV\(acc0\);                                   /* and total acceleration   */) s
+5 407 M
+(  if \(usequad\)                                  /* if using quad moments    */) s
+5 399 M
+(    sumcell\(interact, cptr, pos0, &phi0, acc0\); /* sum cell forces w quads  */) s
+5 391 M
+(  else                                          /* not using quad moments   */) s
+5 383 M
+(    sumnode\(interact, cptr, pos0, &phi0, acc0\); /* sum cell forces wo quads */) s
+5 375 M
+(  sumnode\(bptr, interact + actmax, pos0, &phi0, acc0\);) s
+5 367 M
+(                                                /* sum forces from bodies   */) s
+5 359 M
+(  Phi\(p0\) = phi0;                               /* store total potential    */) s
+5 351 M
+(  SETV\(Acc\(p0\), acc0\);                          /* and total acceleration   */) s
+5 343 M
+(  nfcalc++;                                     /* update counters          */) s
+5 335 M
+(  nbbcalc += interact + actmax - bptr;) s
+5 327 M
+(  nbccalc += cptr - interact;) s
+5 319 M
+(}) s
+377 503 M
+(/* <A NAME="sumnode"></A>) s
+377 495 M
+( * SUMNODE: add up body-node interactions.) s
+377 487 M
+( */) s
+377 479 M
+( ) s
+377 471 M
+(local void sumnode\(cellptr start, cellptr finish,) s
+377 463 M
+(                   vector pos0, real *phi0, vector acc0\)) s
+377 455 M
+({) s
+377 447 M
+(  cellptr p;) s
+377 439 M
+(  real eps2 = eps*eps, dr2, drab, phi_p, mr3i;) s
+377 431 M
+(  vector dr;) s
+377 423 M
+( ) s
+377 415 M
+(  for \(p = start; p < finish; p++\) {            /* loop over node list      */) s
+377 407 M
+(    DOTPSUBV\(dr2, dr, Pos\(p\), pos0\);            /* compute separation       */) s
+377 399 M
+(                                                /* and distance squared     */) s
+377 391 M
+(    dr2 += eps2;                                /* add standard softening   */) s
+377 383 M
+(    drab = rsqrt\(dr2\);                          /* form scalar "distance"   */) s
+377 375 M
+(    phi_p = Mass\(p\) / drab;                     /* get partial potential    */) s
+377 367 M
+(    *phi0 -= phi_p;                             /* decrement tot potential  */) s
+377 359 M
+(    mr3i = phi_p / dr2;                         /* form scale factor for dr */) s
+377 351 M
+(    ADDMULVS\(acc0, dr, mr3i\);                   /* sum partial acceleration */}) s
+377 343 M
+(}) s
+377 327 M
+(#ifndef TESTFORCE) s
+377 311 M
+(/* <A NAME="sumcell"></A>) s
+377 303 M
+( * SUMCELL: add up body-cell interactions.) s
+377 295 M
+( */) s
+377 287 M
+( ) s
+377 279 M
+(local void sumcell\(cellptr start, cellptr finish, vector pos0,) s
+377 271 M
+(                   real *phi0, vector acc0\)) s
+377 263 M
+({) s
+377 255 M
+(  cellptr p;) s
+377 247 M
+(  real eps2 = eps*eps, dr2, drab, phi_p, mr3i;) s
+377 239 M
+(  real drqdr, dr5i, phi_q;) s
+377 231 M
+(  vector dr, qdr;) s
+377 223 M
+( ) s
+377 215 M
+(  for \(p = start; p < finish; p++\) {            /* loop over node list      */) s
+377 207 M
+(    DOTPSUBV\(dr2, dr, Pos\(p\), pos0\);            /* do mono part of force    */) s
+377 199 M
+(    dr2 += eps2;) s
+377 191 M
+(    drab = rsqrt\(dr2\);) s
+377 183 M
+(    phi_p = Mass\(p\) / drab;) s
+377 175 M
+(    mr3i = phi_p / dr2;) s
+377 167 M
+(    DOTPMULMV\(drqdr, qdr, Quad\(p\), dr\);         /* do quad part of force    */) s
+377 159 M
+(    dr5i = \(\(real\) 1.0\) / \(dr2 * dr2 * drab\);) s
+377 151 M
+(    phi_q = \(\(real\) 0.5\) * dr5i * drqdr;) s
+377 143 M
+(    *phi0 -= phi_p + phi_q;                     /* add mono and quad pot    */) s
+377 135 M
+(    mr3i += \(\(real\) 5.0\) * phi_q / dr2;) s
+377 127 M
+(    ADDMULVS2\(acc0, dr, mr3i, qdr, -dr5i\);      /* add mono and quad acc    */) s
+377 119 M
+(  }) s
+377 111 M
+(}) s
+377 95 M
+(#endif) s
+_R
+S
+%%Page: (4) 10
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 4 def
+/fname (treegrav.c) def
+/fdir () def
+/ftail (treegrav.c) def
+% User defined strings:
+/fmodstr (Tue Mar 13 11:21:39 2012) def
+/pagenumstr (4) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 503 M
+(#ifdef TESTFORCE) s
+5 487 M
+(local void exactgrav\(cellptr p, vector pos0, real *phip, vector accp\);) s
+5 479 M
+(local real smoothmass\(cellptr p, real rad\);) s
+5 463 M
+(/* ) s
+5 455 M
+( * SUMCELL: add up body-cell interactions.) s
+5 447 M
+( */) s
+5 439 M
+( ) s
+5 431 M
+(local void sumcell\(cellptr start, cellptr finish, vector pos0,) s
+5 423 M
+(                   real *phi0, vector acc0\)) s
+5 415 M
+({) s
+5 407 M
+(  cellptr p;) s
+5 399 M
+(  real eps2 = eps*eps, dr2, drab, phi_p, mr3i;) s
+5 391 M
+(  real drqdr, dr5i, phi_q, phi_ap, phi_ex;) s
+5 383 M
+(  vector dr, qdr, acc_ap, acc_ex;) s
+5 375 M
+( ) s
+5 367 M
+(  for \(p = start; p < finish; p++\) {            /* loop over node list      */) s
+5 359 M
+(    DOTPSUBV\(dr2, dr, Pos\(p\), pos0\);            /* do mono part of force    */) s
+5 351 M
+(    dr2 += eps2;) s
+5 343 M
+(    drab = rsqrt\(dr2\);) s
+5 335 M
+(    phi_p = Mass\(p\) / drab;) s
+5 327 M
+(    mr3i = phi_p / dr2;) s
+5 319 M
+(    DOTPMULMV\(drqdr, qdr, Quad\(p\), dr\);         /* do quad part of force    */) s
+5 311 M
+(    dr5i = \(\(real\) 1.0\) / \(dr2 * dr2 * drab\);) s
+5 303 M
+(    phi_q = \(\(real\) 0.5\) * dr5i * drqdr;) s
+5 295 M
+(    *phi0 -= phi_p + phi_q;                     /* add mono and quad pot    */) s
+5 287 M
+(    mr3i += \(\(real\) 5.0\) * phi_q / dr2;) s
+5 279 M
+(    ADDMULVS2\(acc0, dr, mr3i, qdr, -dr5i\);      /* add mono and quad acc    */) s
+5 263 M
+(    phi_ap = -\(phi_p + phi_q\);) s
+5 255 M
+(    CLRV\(acc_ap\);) s
+5 247 M
+(    ADDMULVS2\(acc_ap, dr, mr3i, qdr, -dr5i\);) s
+5 239 M
+(    exactgrav\(p, pos0, &phi_ex, acc_ex\);) s
+5 231 M
+(    printf\("%12.5e %12.5e %12.5e %12.5e %12.5e %12.5e %12.5e %12.5e\\n",) s
+5 223 M
+(           pos0[0], Mass\(p\), distv\(pos0, Pos\(p\)\),) s
+5 215 M
+(           Pos\(p\)[0], Pos\(p\)[1], Pos\(p\)[2],) s
+5 207 M
+(           \(phi_ap - phi_ex\) / phi_ex, distv\(acc_ap, acc_ex\) / absv\(acc_ex\)\);) s
+5 191 M
+(  }) s
+5 183 M
+(}) s
+377 503 M
+(local void exactgrav\(cellptr p0, vector pos0, real *phi0, vector acc0\)) s
+377 495 M
+({) s
+377 487 M
+(  nodeptr p;) s
+377 479 M
+(  real eps2 = eps * eps, dr2, drab, phi_p, mr3i;) s
+377 471 M
+(  vector dr;) s
+377 455 M
+(  *phi0 = 0.0;) s
+377 447 M
+(  CLRV\(acc0\);) s
+377 439 M
+(  p = More\(p0\);) s
+377 431 M
+(  while \(p != Next\(p0\)\)) s
+377 423 M
+(    if \(Type\(p\) == CELL\)) s
+377 415 M
+(      p = More\(p\);) s
+377 407 M
+(    else {) s
+377 399 M
+(      DOTPSUBV\(dr2, dr, Pos\(p\), pos0\);) s
+377 391 M
+(      dr2 += eps2;) s
+377 383 M
+(      drab = rsqrt\(dr2\);) s
+377 375 M
+(      phi_p = Mass\(p\) / drab;) s
+377 367 M
+(      *phi0 -= phi_p;) s
+377 359 M
+(      mr3i = phi_p / dr2;) s
+377 351 M
+(      ADDMULVS\(acc0, dr, mr3i\);) s
+377 343 M
+(      p = Next\(p\);) s
+377 335 M
+(    }) s
+377 327 M
+(}) s
+377 311 M
+(local real smoothmass\(cellptr p, real rad\)) s
+377 303 M
+({) s
+377 295 M
+(  nodeptr q;) s
+377 287 M
+(  real mtot = 0, eps2 = eps * eps;) s
+377 279 M
+(  double ri;) s
+377 263 M
+(  q = More\(p\);) s
+377 255 M
+(  while \(q != Next\(p\)\)) s
+377 247 M
+(    if \(Type\(q\) == CELL\)) s
+377 239 M
+(      q = More\(q\);) s
+377 231 M
+(    else {) s
+377 223 M
+(      ri = distv\(Pos\(p\), Pos\(q\)\);) s
+377 215 M
+(      if \(ri > 0.0\) ) s
+377 207 M
+(        mtot += Mass\(q\) *) s
+377 199 M
+(          \(\(rad + ri + eps2/ri\) / sqrt\(\(rad + ri\)*\(rad + ri\) + eps2\) +) s
+377 191 M
+(           \(rad - ri - eps2/ri\) / sqrt\(\(rad - ri\)*\(rad - ri\) + eps2\)\) / 2;) s
+377 183 M
+(      else) s
+377 175 M
+(        mtot += Mass\(q\) / rpow\(1 + eps2/rad*rad, 1.5\);) s
+377 167 M
+(      q = Next\(q\);) s
+377 159 M
+(    }) s
+377 151 M
+(  return \(mtot\);) s
+377 143 M
+(}) s
+377 127 M
+(#endif) s
+_R
+S
+%%Page: (1) 11
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 1 def
+/fname (treeio.c) def
+/fdir () def
+/ftail (treeio.c) def
+% User defined strings:
+/fmodstr (Tue Mar 13 11:15:53 2012) def
+/pagenumstr (1) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 511 M
+(/****************************************************************************/) s
+5 503 M
+(/* TREEIO.C: I/O routines for hierarchical N-body code.                     */) s
+5 495 M
+(/* Public routines: inputdata\(\), startoutput\(\), forcereport\(\), output\(\),    */) s
+5 487 M
+(/* savestate\(\), restorestate\(\).                                             */) s
+5 479 M
+(/* Copyright \(c\) 2012 by Joshua E. Barnes, Honolulu, HI.                    */) s
+5 471 M
+(/****************************************************************************/) s
+5 455 M
+(#include "stdinc.h") s
+5 447 M
+(#include "mathfns.h") s
+5 439 M
+(#include "vectmath.h") s
+5 431 M
+(#include "getparam.h") s
+5 423 M
+(#include "filestruct.h") s
+5 415 M
+(#include "treecode.h") s
+5 407 M
+(#include "fixbody.h") s
+5 391 M
+(#include <sys/types.h>) s
+5 383 M
+(#include <sys/stat.h>) s
+5 367 M
+(/* Prototypes for local routines. */) s
+5 351 M
+(local void diagnostics\(void\);                   /* eval N-body diagnostics  */) s
+5 335 M
+(/* Output state variables. */) s
+5 319 M
+(local stream logstr;                            /* log stream, or stdout    */) s
+5 311 M
+(local bool forcehead;                           /* force headers printed?   */) s
+5 303 M
+(local real mtot;                                /* total mass of system     */) s
+5 295 M
+(local real etot[3];                             /* Etot, KE, PE of system   */) s
+5 287 M
+(local matrix keten;                             /* kinetic energy tensor    */) s
+5 279 M
+(local matrix peten;                             /* potential energy tensor  */) s
+5 271 M
+(local vector cmpos;                             /* center of mass position  */) s
+5 263 M
+(local vector cmvel;                             /* center of mass velocity  */) s
+5 255 M
+(local vector amvec;                             /* angular momentum vector  */) s
+5 239 M
+(/*) s
+5 231 M
+( * INPUTDATA: read initial conditions from input file.) s
+5 223 M
+( */) s
+5 207 M
+(void inputdata\(void\)) s
+5 199 M
+({) s
+5 191 M
+(  stream instr;) s
+5 183 M
+(  string intags[MaxBodyFields];) s
+5 175 M
+(  bodyptr p;) s
+5 159 M
+(  bodytab = NULL;                               /* request new input data   */) s
+5 151 M
+(  instr = stropen\(infile, "r"\);                 /* open input stream        */) s
+5 143 M
+(  get_history\(instr\);                           /* read file history data   */) s
+5 135 M
+(  if \(! get_snap\(instr, &bodytab, &nbody, &tnow, intags, FALSE\)\)) s
+5 127 M
+(    error\("inputdata: no data in input file\\n"\);) s
+5 119 M
+(  strclose\(instr\);                              /* close input stream       */) s
+5 111 M
+(  if \(! set_member\(intags, MassTag\) || ! set_member\(intags, PosTag\) ||) s
+5 103 M
+(      ! set_member\(intags, VelTag\)\)) s
+5 95 M
+(    error\("inputdata: essential data missing\\n"\);) s
+5 87 M
+(  if \(scanopt\(options, "reset-time"\)\)           /* reset starting time?     */) s
+5 79 M
+(    tnow = 0.0;) s
+5 71 M
+(  for \(p = bodytab; p < bodytab+nbody; p++\)     /* loop over new bodies     */) s
+5 63 M
+(    Type\(p\) = BODY;                             /* initializing body type   */) s
+5 55 M
+(}) s
+377 503 M
+(/*) s
+377 495 M
+( * STARTOUTPUT: begin output to log file.) s
+377 487 M
+( */) s
+377 471 M
+(void startoutput\(void\)) s
+377 463 M
+({) s
+377 455 M
+(  if \(! strnull\(logfile\)\)) s
+377 447 M
+(    logstr = stropen\(logfile, "w!"\);) s
+377 439 M
+(  else) s
+377 431 M
+(    logstr = stdout;) s
+377 423 M
+(  fprintf\(logstr, "\\n%s\\n", headline\);          /* print headline, params   */) s
+377 415 M
+(  fprintf\(logstr, "\\n%9s%9s%9s%9s", "nbody", "dtime", "nstatic", "eps"\);) s
+377 407 M
+(#ifndef QUICKSCAN) s
+377 399 M
+(  fprintf\(logstr, "%9s", "theta"\);) s
+377 391 M
+(#endif) s
+377 383 M
+(  fprintf\(logstr, "%9s%9s%9s\\n", "usequad", "dtout", "tstop"\);) s
+377 375 M
+(  fprintf\(logstr, "%9d%9.5f%9d%9.4f", nbody, dtime, nstatic, eps\);) s
+377 367 M
+(#ifndef QUICKSCAN) s
+377 359 M
+(  fprintf\(logstr, "%9.2f", theta\);) s
+377 351 M
+(#endif) s
+377 343 M
+(  fprintf\(logstr, "%9s%9.5f%9.4f\\n", usequad ? "true" : "false", dtout, tstop\);) s
+377 335 M
+(  if \(! strnull\(options\)\)                       /* print options, if any    */) s
+377 327 M
+(    fprintf\(logstr, "\\n\\toptions: %s\\n", options\);) s
+377 319 M
+(  if \(! strnull\(savefile\)\)                      /* was state file given?    */) s
+377 311 M
+(    savestate\(savefile\);                        /* save initial data        */) s
+377 303 M
+(  forcehead = FALSE;                            /* require header printing  */) s
+377 295 M
+(  fflush\(NULL\);                                 /* empty all output buffers */) s
+377 287 M
+(}) s
+377 271 M
+(/*) s
+377 263 M
+( * FORCEREPORT: print staristics on tree construction and force calculation.) s
+377 255 M
+( */) s
+377 239 M
+(void forcereport\(void\)) s
+377 231 M
+({) s
+377 223 M
+(  if \(! forcehead\)                              /* no force header printed? */) s
+377 215 M
+(    fprintf\(logstr, "\\n    %8s%8s%8s%8s%12s%12s%8s\\n",) s
+377 207 M
+(            "rsize", "tdepth", "ftree",) s
+377 199 M
+(            "nfcalc", "nbbtot", "nbctot", "CPUfc"\);) s
+377 191 M
+(  fprintf\(logstr, "    %8.1f%8d%8.3f%8d%12d%12d%8.3f\\n",) s
+377 183 M
+(          rsize, tdepth, \(nbody + ncell - 1\) / \(\(real\) ncell\),) s
+377 175 M
+(          nfcalc, nbbcalc, nbccalc, cpuforce\);) s
+377 167 M
+(  forcehead = TRUE;) s
+377 159 M
+(  fflush\(NULL\);                                 /* empty all output buffers */) s
+377 151 M
+(}) s
+_R
+S
+%%Page: (2) 12
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 2 def
+/fname (treeio.c) def
+/fdir () def
+/ftail (treeio.c) def
+% User defined strings:
+/fmodstr (Tue Mar 13 11:15:53 2012) def
+/pagenumstr (2) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 503 M
+(/*) s
+5 495 M
+( * OUTPUT: compute diagnostics and output binary data.) s
+5 487 M
+( */) s
+5 471 M
+(void output\(void\)) s
+5 463 M
+({) s
+5 455 M
+(  real teff;) s
+5 447 M
+(  int n;) s
+5 439 M
+(  string outtags[MaxBodyFields];) s
+5 431 M
+(  char namebuf[256];) s
+5 423 M
+(  struct stat buf;) s
+5 415 M
+(  stream outstr;) s
+5 407 M
+(  string tracetags[] = { MassTag, PosTag, VelTag, PhiTag, AccTag, NULL };) s
+5 391 M
+(  diagnostics\(\);                                /* compute std diagnostics  */) s
+5 383 M
+(  fprintf\(logstr, "\\n    %8s%8s%8s%8s%8s%8s%8s%8s\\n",) s
+5 375 M
+(         "time", "|T+U|", "T", "-U", "-T/U", "|Vcom|", "|Jtot|", "CPUtot"\);) s
+5 367 M
+(  fprintf\(logstr, "    %8.3f%8.4f%8.4f%8.4f%8.5f%8.5f%8.4f%8.2f\\n",) s
+5 359 M
+(         tnow, ABS\(etot[0]\), etot[1], -etot[2], -etot[1]/etot[2],) s
+5 351 M
+(         absv\(cmvel\), absv\(amvec\), cputime\(\)\);) s
+5 343 M
+(  teff = tnow + dtime/8;                        /* anticipate slightly...   */) s
+5 335 M
+(  if \(! strnull\(outfile\) && teff >= tout\) {     /* time for data output?    */) s
+5 327 M
+(    n = 0;) s
+5 319 M
+(    if \(scanopt\(outputs, PosTag\)\)               /* if listed in outputs     */) s
+5 311 M
+(      outtags[n++] = PosTag;                    /* include tag in list      */) s
+5 303 M
+(    if \(scanopt\(outputs, VelTag\)\)) s
+5 295 M
+(      outtags[n++] = VelTag;) s
+5 287 M
+(    if \(scanopt\(outputs, MassTag\) || \(nstep == 0\)\)) s
+5 279 M
+(      outtags[n++] = MassTag;) s
+5 271 M
+(    if \(scanopt\(outputs, PhiTag\)\)) s
+5 263 M
+(      outtags[n++] = PhiTag;                    /* select potential data    */) s
+5 255 M
+(    if \(scanopt\(outputs, AccTag\)\)) s
+5 247 M
+(      outtags[n++] = AccTag;                    /* select acceleration data */) s
+5 239 M
+(    outtags[n] = NULL;) s
+5 231 M
+(    sprintf\(namebuf, outfile, nstep\);           /* make up output file name */) s
+5 223 M
+(    if \(stat\(namebuf, &buf\) != 0\) {             /* no output file exists?   */) s
+5 215 M
+(      outstr = stropen\(namebuf, "w"\);           /* create & open for output */) s
+5 207 M
+(      put_history\(outstr\);                      /* write out hiatory data   */) s
+5 199 M
+(    } else                                      /* else file already exists */) s
+5 191 M
+(      outstr = stropen\(namebuf, "a"\);           /* reopen and append output */) s
+5 183 M
+(    put_snap\(outstr, &bodytab, &nbody, &tnow, outtags\);) s
+5 175 M
+(    strclose\(outstr\);                           /* close up output file     */) s
+5 167 M
+(    fprintf\(logstr, "\\n\\tdata output to file %s at time %f\\n", namebuf, tnow\);) s
+5 159 M
+(    tout += dtout;                              /* schedule next output     */) s
+5 151 M
+(  }) s
+5 143 M
+(  if \(! strnull\(tracefile\)\) {) s
+5 135 M
+(    if \(! streq\(tracefile, "-"\)\) {) s
+5 127 M
+(      sprintf\(namebuf, tracefile, nstep\);) s
+5 119 M
+(      if \(stat\(namebuf, &buf\) != 0\) {) s
+5 111 M
+(        outstr = stropen\(namebuf, "w"\);) s
+5 103 M
+(        put_history\(outstr\);) s
+5 95 M
+(      } else) s
+5 87 M
+(        outstr = stropen\(namebuf, "a"\);) s
+5 79 M
+(    } else) s
+5 71 M
+(      outstr = stdout;) s
+5 63 M
+(    put_snap\(outstr, &bodytab, &nbody, &tnow, tracetags\);) s
+5 55 M
+(    fflush\(outstr\);) s
+5 47 M
+(    if \(! streq\(tracefile, "-"\)\)) s
+5 39 M
+(      strclose\(outstr\);) s
+5 31 M
+(  }) s
+5 23 M
+(  if \(! strnull\(savefile\)\)                      /* was state file given?    */) s
+5 15 M
+(    savestate\(savefile\);                        /* save data for restart    */) s
+5 7 M
+(  forcehead = FALSE;                            /* insure headers print     */) s
+377 511 M
+(  fflush\(NULL\);                                 /* empty all output buffers */) s
+377 503 M
+(}) s
+_R
+S
+%%Page: (3) 13
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 3 def
+/fname (treeio.c) def
+/fdir () def
+/ftail (treeio.c) def
+% User defined strings:
+/fmodstr (Tue Mar 13 11:15:53 2012) def
+/pagenumstr (3) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 503 M
+(/*) s
+5 495 M
+( * DIAGNOSTICS: compute set of dynamical diagnostics.) s
+5 487 M
+( */) s
+5 471 M
+(local void diagnostics\(void\)) s
+5 463 M
+({) s
+5 455 M
+(  bodyptr p1, p2, p;) s
+5 447 M
+(  real mp, velsq;) s
+5 439 M
+(  vector tmpv;) s
+5 431 M
+(  matrix tmpt;) s
+5 415 M
+(  mtot = 0.0;                                   /* zero total mass          */) s
+5 407 M
+(  etot[1] = etot[2] = 0.0;                      /* zero total KE and PE     */) s
+5 399 M
+(  CLRM\(keten\);                                  /* zero ke tensor           */) s
+5 391 M
+(  CLRM\(peten\);                                  /* zero pe tensor           */) s
+5 383 M
+(  CLRV\(amvec\);                                  /* zero am vector           */) s
+5 375 M
+(  CLRV\(cmpos\);                                  /* zero c. of m. position   */) s
+5 367 M
+(  CLRV\(cmvel\);                                  /* zero c. of m. velocity   */) s
+5 359 M
+(  p1 = bodytab + MAX\(nstatic, 0\);               /* set dynamic body range   */) s
+5 351 M
+(  p2 = bodytab + nbody + MIN\(nstatic, 0\);) s
+5 343 M
+(  for \(p = p1; p < p2; p++\) {                   /* loop over body range     */) s
+5 335 M
+(    mp = \(testcalc ? 1.0 / \(nbody - ABS\(nstatic\)\) : Mass\(p\)\);) s
+5 327 M
+(                                                /* use eq. mass in testcalc */) s
+5 319 M
+(    mtot += mp;                                 /* sum particle masses      */) s
+5 311 M
+(    DOTVP\(velsq, Vel\(p\), Vel\(p\)\);               /* square vel vector        */) s
+5 303 M
+(    etot[1] += 0.5 * mp * velsq;                /* sum current KE           */) s
+5 295 M
+(    etot[2] += \(testcalc ? 1.0 : 0.5\) * mp * Phi\(p\);) s
+5 287 M
+(                                                /* and PE, weighted right   */) s
+5 279 M
+(    MULVS\(tmpv, Vel\(p\), 0.5 * mp\);              /* sum 0.5 m v_i v_j        */) s
+5 271 M
+(    OUTVP\(tmpt, tmpv, Vel\(p\)\);) s
+5 263 M
+(    ADDM\(keten, keten, tmpt\);) s
+5 255 M
+(    MULVS\(tmpv, Pos\(p\), mp\);                    /* sum m r_i a_j            */) s
+5 247 M
+(    OUTVP\(tmpt, tmpv, Acc\(p\)\);) s
+5 239 M
+(    ADDM\(peten, peten, tmpt\);) s
+5 231 M
+(    CROSSVP\(tmpv, Vel\(p\), Pos\(p\)\);              /* sum angular momentum     */) s
+5 223 M
+(    MULVS\(tmpv, tmpv, mp\);) s
+5 215 M
+(    ADDV\(amvec, amvec, tmpv\);) s
+5 207 M
+(    MULVS\(tmpv, Pos\(p\), mp\);                    /* sum cm position          */) s
+5 199 M
+(    ADDV\(cmpos, cmpos, tmpv\);) s
+5 191 M
+(    MULVS\(tmpv, Vel\(p\), mp\);                    /* sum cm momentum          */) s
+5 183 M
+(    ADDV\(cmvel, cmvel, tmpv\);) s
+5 175 M
+(  }) s
+5 167 M
+(  etot[0] = etot[1] + etot[2];                  /* sum KE and PE            */) s
+5 159 M
+(  DIVVS\(cmpos, cmpos, mtot\);                    /* normalize cm coords      */) s
+5 151 M
+(  DIVVS\(cmvel, cmvel, mtot\);) s
+5 143 M
+(}) s
+377 503 M
+(/*) s
+377 495 M
+( * SAVESTATE: write current state to disk file.) s
+377 487 M
+( */) s
+377 471 M
+(void savestate\(string pattern\)) s
+377 463 M
+({) s
+377 455 M
+(    char namebuf[256];) s
+377 447 M
+(    stream str;) s
+377 431 M
+(    sprintf\(namebuf, pattern, nstep & 1\);       /* construct alternate name */) s
+377 423 M
+(    str = stropen\(namebuf, "w!"\);               /* open state output file   */) s
+377 415 M
+(    put_string\(str, "program", getargv0\(\)\);) s
+377 407 M
+(    put_string\(str, "version", getversion\(\)\);) s
+377 399 M
+(    put_string\(str, "headline", headline\);      /* save control parameters  */) s
+377 391 M
+(    put_data\(str, "dtime", RealType, &dtime, 0\);) s
+377 383 M
+(    put_data\(str, "nstatic", IntType, &nstatic, 0\);) s
+377 375 M
+(#ifndef QUICKSCAN) s
+377 367 M
+(    put_data\(str, "theta", RealType, &theta, 0\);) s
+377 359 M
+(#endif) s
+377 351 M
+(    put_data\(str, "usequad", BoolType, &usequad, 0\);) s
+377 343 M
+(    put_data\(str, "eps", RealType, &eps, 0\);) s
+377 335 M
+(    put_string\(str, "options", options\);) s
+377 327 M
+(    put_string\(str, "outputs", outputs\);) s
+377 319 M
+(    put_data\(str, "tstop", RealType, &tstop, 0\);) s
+377 311 M
+(    put_data\(str, "dtout", RealType, &dtout, 0\);) s
+377 303 M
+(    put_data\(str, "tnow", RealType, &tnow, 0\);  /* save state variables     */) s
+377 295 M
+(    put_data\(str, "tout", RealType, &tout, 0\);) s
+377 287 M
+(    put_data\(str, "nstep", IntType, &nstep, 0\);) s
+377 279 M
+(    put_data\(str, "rsize", RealType, &rsize, 0\);) s
+377 271 M
+(    put_data\(str, "nbody", IntType, &nbody, 0\);) s
+377 263 M
+(    put_data\(str, "bodytab", AnyType, bodytab, nbody, sizeof\(body\), 0\);) s
+377 255 M
+(    strclose\(str\);) s
+377 247 M
+(}) s
+_R
+S
+%%Page: (4) 14
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 4 def
+/fname (treeio.c) def
+/fdir () def
+/ftail (treeio.c) def
+% User defined strings:
+/fmodstr (Tue Mar 13 11:15:53 2012) def
+/pagenumstr (4) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 503 M
+(/*) s
+5 495 M
+( * RESTORESTATE: restore state from disk file.) s
+5 487 M
+( */) s
+5 471 M
+(void restorestate\(string file\)) s
+5 463 M
+({) s
+5 455 M
+(    stream str;) s
+5 447 M
+(    string program, version;) s
+5 431 M
+(    str = stropen\(file, "r"\);                   /* open state input file    */) s
+5 423 M
+(    program = get_string\(str, "program"\);) s
+5 415 M
+(    version = get_string\(str, "version"\);) s
+5 407 M
+(    if \(! streq\(program, getargv0\(\)\) ||         /* check program, version   */) s
+5 399 M
+(          ! streq\(version, getversion\(\)\)\)) s
+5 391 M
+(        eprintf\("[warning: state file may be outdated]\\n\\n"\);) s
+5 383 M
+(    headline = get_string\(str, "headline"\);     /* read control parameters  */) s
+5 375 M
+(    get_data\(str, "dtime", RealType, &dtime, 0\);) s
+5 367 M
+(    get_data\(str, "nstatic", IntType, &nstatic, 0\);) s
+5 359 M
+(#ifndef QUICKSCAN) s
+5 351 M
+(    get_data\(str, "theta", RealType, &theta, 0\);) s
+5 343 M
+(#endif) s
+5 335 M
+(    get_data\(str, "usequad", BoolType, &usequad, 0\);) s
+5 327 M
+(    get_data\(str, "eps", RealType, &eps, 0\);) s
+5 319 M
+(    options = get_string\(str, "options"\);) s
+5 311 M
+(    outputs = get_string\(str, "outputs"\);) s
+5 303 M
+(    get_data\(str, "tstop", RealType, &tstop, 0\);) s
+5 295 M
+(    get_data\(str, "dtout", RealType, &dtout, 0\);) s
+5 287 M
+(    get_data\(str, "tnow", RealType, &tnow, 0\);  /* read state variables     */) s
+5 279 M
+(    get_data\(str, "tout", RealType, &tout, 0\);) s
+5 271 M
+(    get_data\(str, "nstep", IntType, &nstep, 0\);) s
+5 263 M
+(    get_data\(str, "rsize", RealType, &rsize, 0\);) s
+5 255 M
+(    get_data\(str, "nbody", IntType, &nbody, 0\);) s
+5 247 M
+(    bodytab = \(bodyptr\) allocate\(nbody * sizeof\(body\)\);) s
+5 239 M
+(    get_data\(str, "bodytab", AnyType, bodytab, nbody, sizeof\(body\), 0\);) s
+5 231 M
+(    strclose\(str\);) s
+5 223 M
+(}) s
+_R
+S
+%%Page: (1) 15
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 1 def
+/fname (treecode.h) def
+/fdir () def
+/ftail (treecode.h) def
+% User defined strings:
+/fmodstr (Tue Mar 13 11:15:28 2012) def
+/pagenumstr (1) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 511 M
+(/****************************************************************************/) s
+5 503 M
+(/* TREECODE.H: define various things for treecode.c and treeio.c.           */) s
+5 495 M
+(/* Copyright \(c\) 2012 by Joshua E. Barnes, Honolulu, HI.                    */) s
+5 487 M
+(/****************************************************************************/) s
+5 471 M
+(#ifndef _treecode_h) s
+5 463 M
+(#define _treecode_h) s
+5 447 M
+(#include "treedefs.h") s
+5 431 M
+(/*) s
+5 423 M
+( * Parameters, state variables, and diagnostics for N-body integration.) s
+5 415 M
+( */) s
+5 399 M
+(global string infile;                   /* file name for snapshot input     */) s
+5 391 M
+(global string outfile;                  /* file pattern for snapshot output */) s
+5 383 M
+(global string logfile;                  /* file pattern for log file        */) s
+5 375 M
+(global string savefile;                 /* file pattern for state output    */) s
+5 367 M
+(global real dtime;                      /* basic integration timestep       */) s
+5 359 M
+(global real dtout;                      /* data output timestep             */) s
+5 351 M
+(global real tstop;                      /* time to stop calculation         */) s
+5 343 M
+(global string outputs;                  /* list of data to output           */) s
+5 335 M
+(global string headline;                 /* message describing calculation   */) s
+5 327 M
+(global real tnow;                       /* current value of time            */) s
+5 319 M
+(global real tout;                       /* time of next output              */) s
+5 311 M
+(global int nstep;                       /* number of time-steps             */) s
+5 303 M
+(global int nbody;                       /* number of bodies in system       */) s
+5 295 M
+(global int nstatic;                     /* number of static bodies          */) s
+5 287 M
+(global bodyptr bodytab;                 /* points to array of bodies        */) s
+5 279 M
+(global string tracefile;                /* file pattern for trace output    */) s
+5 271 M
+(global bool testcalc;                   /* indicate test-particle calc.     */) s
+5 255 M
+(/*) s
+5 247 M
+( * Prototypes for I/O routines.) s
+5 239 M
+( */) s
+5 223 M
+(void inputdata\(void\);                   /* read initial data file           */) s
+5 215 M
+(void startoutput\(void\);                 /* open files for output            */) s
+5 207 M
+(void forcereport\(void\);                 /* report on force calculation      */) s
+5 199 M
+(void output\(void\);                      /* perform output operation         */) s
+5 191 M
+(void savestate\(string\);                 /* save system state                */) s
+5 183 M
+(void restorestate\(string\);              /* restore system state             */) s
+5 167 M
+(#endif /* ! _treecode_h */) s
+_R
+S
+%%Page: (1) 16
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 1 def
+/fname (treedefs.h) def
+/fdir () def
+/ftail (treedefs.h) def
+% User defined strings:
+/fmodstr (Wed Mar 07 14:03:36 2012) def
+/pagenumstr (1) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 511 M
+(/****************************************************************************/) s
+5 503 M
+(/* TREEDEFS.H: include file for hierarchical force calculation routines.    */) s
+5 495 M
+(/* These definitions are needed for treeload.c and treegrav.c, but this     */) s
+5 487 M
+(/* file does not provide definitions for other parts of the N-body code.    */) s
+5 479 M
+(/* Copyright \(c\) 2012 by Joshua E. Barnes, Honolulu, HI.                    */) s
+5 471 M
+(/****************************************************************************/) s
+5 463 M
+( ) s
+5 455 M
+(#ifndef _treedefs_h) s
+5 447 M
+(#define _treedefs_h) s
+5 431 M
+(/*) s
+5 423 M
+( * Body and cell data structures are used to represent the tree.  During) s
+5 415 M
+( * tree construction, descendent pointers are stored in the subp arrays:) s
+5 407 M
+( *) s
+5 399 M
+( *          +-------------------------------------------------------------+) s
+5 391 M
+( * root --> | CELL: mass, pos, next, rcrit2, more, subp:[/,o,/,/,/,/,o,/] |) s
+5 383 M
+( *          +----------------------------------------------|---------|----+) s
+5 375 M
+( *                                                         |         |) s
+5 367 M
+( *     +---------------------------------------------------+         |) s
+5 359 M
+( *     |                                                             |) s
+5 351 M
+( *     |    +--------------------------------------+                 |) s
+5 343 M
+( *     +--> | BODY: mass, pos, next, vel, acc, phi |                 |) s
+5 335 M
+( *          +--------------------------------------+                 |) s
+5 327 M
+( *                                                                   |) s
+5 319 M
+( *     +-------------------------------------------------------------+) s
+5 311 M
+( *     |) s
+5 303 M
+( *     |    +-------------------------------------------------------------+) s
+5 295 M
+( *     +--> | CELL: mass, pos, next, rcrit2, more, subp:[o,/,/,o,/,/,o,/] |) s
+5 287 M
+( *          +--------------------------------------------|-----|-----|----+) s
+5 279 M
+( *                                                      etc   etc   etc) s
+5 271 M
+( *) s
+5 263 M
+( */) s
+5 255 M
+( ) s
+5 247 M
+(/* <A NAME="node"></A>) s
+5 239 M
+( * NODE: data common to BODY and CELL structures.) s
+5 231 M
+( */) s
+5 215 M
+(typedef struct _node {) s
+5 207 M
+(    short type;                 /* code for node type */) s
+5 199 M
+(    bool update;                /* status in force calc */) s
+5 191 M
+(    struct _node *next;         /* link to next force calc */   ) s
+5 183 M
+(    real mass;                  /* total mass of node */) s
+5 175 M
+(    vector pos;                 /* position of node */) s
+5 167 M
+(} node, *nodeptr;) s
+5 159 M
+( ) s
+5 151 M
+(#define Type\(x\)   \(\(\(nodeptr\) \(x\)\)->type\)) s
+5 143 M
+(#define Update\(x\) \(\(\(nodeptr\) \(x\)\)->update\)) s
+5 135 M
+(#define Next\(x\)   \(\(\(nodeptr\) \(x\)\)->next\)) s
+5 127 M
+(#define Mass\(x\)   \(\(\(nodeptr\) \(x\)\)->mass\)) s
+5 119 M
+(#define Pos\(x\)    \(\(\(nodeptr\) \(x\)\)->pos\)) s
+5 103 M
+(#define BODY 01                 /* type code for bodies */) s
+5 95 M
+(#define CELL 02                 /* type code for cells */) s
+377 503 M
+(/* <A NAME="body"></A>) s
+377 495 M
+( * BODY: data structure used to represent particles.) s
+377 487 M
+( */) s
+377 479 M
+( ) s
+377 471 M
+(typedef struct {) s
+377 463 M
+(    node bodynode;              /* data common to all nodes */) s
+377 455 M
+(    vector vel;                 /* velocity of body */) s
+377 447 M
+(    vector acc;                 /* acceleration of body */) s
+377 439 M
+(    real phi;                   /* potential at body */) s
+377 431 M
+(} body, *bodyptr;) s
+377 415 M
+(#define Vel\(x\)    \(\(\(bodyptr\) \(x\)\)->vel\)) s
+377 407 M
+(#define Acc\(x\)    \(\(\(bodyptr\) \(x\)\)->acc\)) s
+377 399 M
+(#define Phi\(x\)    \(\(\(bodyptr\) \(x\)\)->phi\)) s
+377 383 M
+(/* <A NAME="cell"></A>) s
+377 375 M
+( * CELL: structure used to represent internal nodes of tree.) s
+377 367 M
+( */) s
+377 359 M
+(  ) s
+377 351 M
+(#define NSUB \(1 << NDIM\)        /* subcells per cell */) s
+377 343 M
+( ) s
+377 335 M
+(typedef struct {) s
+377 327 M
+(    node cellnode;              /* data common to all nodes */) s
+377 319 M
+(#ifndef QUICKSCAN) s
+377 311 M
+(    real rcrit2;                /* critical c-of-m radius^2 */) s
+377 303 M
+(#endif) s
+377 295 M
+(    nodeptr more;               /* link to first descendent */   ) s
+377 287 M
+(    union {) s
+377 279 M
+(        nodeptr subp[NSUB];     /* descendents of cell */) s
+377 271 M
+(        matrix quad;            /* quad. moment of cell */) s
+377 263 M
+(    } sorq;) s
+377 255 M
+(} cell, *cellptr;) s
+377 247 M
+( ) s
+377 239 M
+(#ifndef QUICKSCAN) s
+377 231 M
+(#define Rcrit2\(x\) \(\(\(cellptr\) \(x\)\)->rcrit2\)) s
+377 223 M
+(#endif) s
+377 207 M
+(#define More\(x\)   \(\(\(cellptr\) \(x\)\)->more\)) s
+377 199 M
+(#define Subp\(x\)   \(\(\(cellptr\) \(x\)\)->sorq.subp\)) s
+377 191 M
+(#define Quad\(x\)   \(\(\(cellptr\) \(x\)\)->sorq.quad\)) s
+_R
+S
+%%Page: (2) 17
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 2 def
+/fname (treedefs.h) def
+/fdir () def
+/ftail (treedefs.h) def
+% User defined strings:
+/fmodstr (Wed Mar 07 14:03:36 2012) def
+/pagenumstr (2) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 503 M
+(/* <A NAME="global"></A>) s
+5 495 M
+( * GLOBAL: pseudo-keyword for storage class.) s
+5 487 M
+( */) s
+5 471 M
+(#ifndef global) s
+5 463 M
+(#  define global extern) s
+5 455 M
+(#endif) s
+5 447 M
+( ) s
+5 439 M
+(/*) s
+5 431 M
+( * Parameters for tree construction and force calculation.) s
+5 423 M
+( */) s
+5 415 M
+( ) s
+5 407 M
+(#ifndef QUICKSCAN) s
+5 399 M
+(global real theta;                      /* force accuracy parameter         */) s
+5 391 M
+(#endif) s
+5 375 M
+(global string options;                  /* various option keywords          */) s
+5 367 M
+( ) s
+5 359 M
+(global bool usequad;                    /* use quadrupole corrections       */) s
+5 343 M
+(global real eps;                        /* density smoothing parameter      */) s
+5 327 M
+(/*) s
+5 319 M
+( * Tree construction.) s
+5 311 M
+( */) s
+5 303 M
+( ) s
+5 295 M
+(void maketree\(bodyptr, int\);            /* construct tree structure         */) s
+5 279 M
+(global cellptr root;                    /* pointer to root cell             */) s
+5 271 M
+(global real rsize;                      /* side-length of root cell         */) s
+5 263 M
+(global int ncell;                       /* count of cells in tree           */) s
+5 255 M
+(global int tdepth;                      /* count of levels in tree          */) s
+5 247 M
+(global real cputree;                    /* CPU time to build tree           */) s
+5 239 M
+( ) s
+5 231 M
+(/*) s
+5 223 M
+( * Force calculation.) s
+5 215 M
+( */) s
+5 199 M
+(void gravcalc\(void\);                    /* update force on bodies           */) s
+5 183 M
+(global int nfcalc;                      /* total force calculations         */) s
+5 175 M
+(global int nbbcalc;                     /* total body-body interactions     */) s
+5 167 M
+(global int nbccalc;                     /* total body-cell interactions     */) s
+5 159 M
+(global real cpuforce;                   /* CPU time for force calc          */) s
+5 143 M
+(#endif /* ! _treedefs_h */) s
+_R
+S
+%%Trailer
+%%Pages: 17
+%%DocumentNeededResources: font Courier-Bold Courier 
+%%EOF

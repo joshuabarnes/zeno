@@ -1,0 +1,42 @@
+ReadmeReadmeReadmeReadmeReadmeReadmeReadmeReadmeReadmeReadmeReadmeReadme
+
+			Zeno Source Distribution
+			========================
+
+Zeno is a collection of programs for N-body simulation and analysis.
+Their primary purpose is numerical simulation of galaxies and galactic
+encounters, but other applications both within and outside astrophysics
+are also possible.
+
+See the Instructions file for information on installing Zeno.
+
+These programs are free software; you can redistribute them and/or
+modify them under the terms of the GNU General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+These programs are distributed in the hope that they will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for details.
+
+You should have received a copy of the GNU General Public License along
+with these programs.  If not, see <http://www.gnu.org/licenses/>.
+
+I would be grateful to receive feedback (both positive and negative) and
+reports of bugs or problems as well as suggested improvements.  My free
+time and other resources are relatively limited, so I may not be able to
+correct problems or issue updates promptly, but I will acknowledge all
+constructive comments.
+
+If you use this software in your research, please mention it in the
+acknowledgements of any papers you publish (e.g., "The Zeno software
+package was used in this research.").  I would also be glad to receive
+PDFs of your papers at the email address listed below.
+
+Joshua Barnes <barnes@ifa.hawaii.edu>
+
+						12 July 2008
+						Kyoto, Japan
+
+ReadmeReadmeReadmeReadmeReadmeReadmeReadmeReadmeReadmeReadmeReadmeReadme

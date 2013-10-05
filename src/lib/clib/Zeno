@@ -1,0 +1,27 @@
+# ~/lib/clib/Zeno: install include and library files in Zeno.
+# Copyright (c) 1997  Joshua E. Barnes  Honolulu, Hawai'i.
+
+INCFILES = datatypes.h filestruct.h getparam.h mathfns.h\
+	   phatstruct.h stdinc.h strset.h vectdefs.h vectmath.h
+
+LIBFILES = libClib.a
+
+# Targets used to export things to Zeno.
+
+install: .install_inc .install_lib
+
+include Makefile
+
+.install_inc: $(INCFILES)
+	cp $(INCFILES) $(ZENOPATH)/inc
+	@touch .install_inc
+
+.install_lib: $(LIBFILES)
+	cp $(LIBFILES) $(ZENOPATH)/lib
+	@touch .install_lib
+
+# Targets used to clean up.
+
+reset:
+	make tidy
+	rm -f .install_inc .install_lib $(LIBFILES)
