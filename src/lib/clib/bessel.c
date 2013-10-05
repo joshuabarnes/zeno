@@ -51,7 +51,7 @@ double bessel_I(double nu, double x)
 
 //  bessel_K0: irregular modified cylindrical Bessel function K, order zero.
 //  ________________________________________________________________________
-
+
 double bessel_K0(double x)
 {
   gsl_sf_result res;
