@@ -7,8 +7,8 @@
 
 #include "vectdefs.h"
 
-//  __________________
 //  Vector operations.
+//  __________________
 
 #define CLRV(v)			/* CLeaR Vector */			\
 {									\
@@ -175,8 +175,8 @@
 
 #endif
 
-//  __________________
 //  Matrix operations.
+//  __________________
 
 #define CLRM(p)			/* CLeaR Matrix */			\
 {									\
@@ -292,8 +292,8 @@
 	(s) += (p)[_i][_i];						\
 }
 
-//  ____________________________
 //  Enhancements for tree codes.
+//  ____________________________
 
 #ifdef THREEDIM
 
@@ -327,8 +327,8 @@
 
 #endif
 
-//  ________________________
 //  Misc. impure operations.
+//  ________________________
 
 #define SETVS(v,s)		/* SET Vector to Scalar */		\
 {									\

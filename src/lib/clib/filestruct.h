@@ -13,8 +13,8 @@
 #define SetType    "("          // begin compound item
 #define TesType    ")"          // end of compound item
 
-//  __________________________________________
 //  Routines for direction-symmetric I/O code.
+//  __________________________________________
  
 void copy_item(stream, stream, string);
 
@@ -33,8 +33,8 @@ void get_data_sub(stream, string, string, int *, void *, int *);
 void put_string(stream, string, string);
 string get_string(stream, string);
 
-//  ____________________________________
 //  Routines for data-driven input code.
+//  ____________________________________
  
 bool get_tag_ok(stream, string);
  
@@ -45,8 +45,8 @@ int get_length(stream, string);
 string next_item_tag(stream);
 bool skip_item(stream);
  
-//  _________________________________________
 //  Assorted control routines and parameters.
+//  _________________________________________
  
 void strclose(stream);
  

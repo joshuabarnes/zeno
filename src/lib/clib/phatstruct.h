@@ -5,13 +5,13 @@
 #ifndef _phatstruct_h
 #define _phatstruct_h
 
-//  ___________________________________________________________________
 //  ps_field: structure describing one element of a phat structure.  A
 //  phat structure is described by an array of ps_fields.  The zeroth
 //  field refers to the entire structure and its length is the length
 //  of the whole structure.  The array is terminated by a ps_field with
 //  a NULL name.  Compound data types are supported, but they must be
 //  homogenious.
+//  ___________________________________________________________________
 
 typedef struct {
     string type;		// type code following "datatypes.h"
@@ -20,30 +20,30 @@ typedef struct {
     int length;			// length in bytes of this field
 } ps_field;
 
-//  _____________________________________________________________________
 //  badoffset: offset value for structure fields which aren't actualized.
+//  _____________________________________________________________________
 
 #define BadOffset  -1
 
-//  __________________________________________________________________________
 //  layout_struct: compute offsets and length for structure with named fields.
+//  __________________________________________________________________________
 
 void layout_struct(ps_field *, string *);
 
-//  _____________________________________________________
 //  new_field: define a new field of given type and name.
+//  _____________________________________________________
 
 void new_field(ps_field *, string, string);
 
-//  ________________________________________________________________________
 //  define_struct, define_offset: describe total length and individual field
 //  offsets of static structure.
+//  ________________________________________________________________________
 
 void define_struct(ps_field *, string, int);
 void define_offset(ps_field *, string, int);
 
-//  ________________________
 //  Generic selector macros.
+//  ________________________
 
 #define SelectByte(p,o)    (*((byte *) ((byte *)(p) + (o))))
 #define SelectChar(p,o)    (*((char *) ((byte *)(p) + (o))))

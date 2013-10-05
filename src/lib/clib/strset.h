@@ -5,8 +5,8 @@
 #ifndef _strset_h
 #define _strset_h
 
-//  ___________________________________________________________________
 //  Sets are represented by null-terminated vectors of string pointers.
+//  ___________________________________________________________________
 
 string *set_cons(string, ...);
 

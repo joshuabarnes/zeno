@@ -15,21 +15,21 @@ bool getbparam(string name);			// return value as boolean
 
 double getdparam(string name);			// return value as double
 
-//  _____________________________________________
 //  Macros to obtain name and version of program.
+//  _____________________________________________
 
 #define getprog()     (getparam("argv0"))	// return name of program
 #define getargv0()    (getparam("argv0"))	// return name of program
 
 #define getversion()  (getparam("VERSION"))	// return version as string
 
-//  ___________________________________________
 //  Function to inquire about parameter status.
+//  ___________________________________________
 
 int getparamstat(string name);			// return status flags
 
-//  ________________________________
 //  Bits for parameter status flags.
+//  ________________________________
 
 #define DEFPARAM	001			// param has default value
 

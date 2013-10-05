@@ -11,20 +11,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//  ___________________________________________________________
 //  NULL: value for null pointers, normally defined by stdio.h.
+//  ___________________________________________________________
 
 #if !defined(NULL)
 #  define NULL 0L
 #endif
 
-//  _______________________________________________________________________
 //  local: synonym for static declares an object as local to a source file.
+//  _______________________________________________________________________
 
 #define local static
 
-//  _____________________________________________________
 //  bool, TRUE, FALSE: standard names for logical values.
+//  _____________________________________________________
 
 typedef short int bool;
 
@@ -33,22 +33,21 @@ typedef short int bool;
 #  define FALSE ((bool) 0)
 #endif
 
-//  _________________________________
 //  byte: name a handy chunk of bits.
+//  _________________________________
 
 typedef unsigned char byte;
 
-//  ___________________________________
 //  string: null-terminated char array.
+//  ___________________________________
 
 typedef char *string;
 
-//  ________________________________________
 //  stream: more elegant synonym for FILE *.
+//  ________________________________________
 
 typedef FILE *stream;			// note: stdio.h is included above
 
-//  ____________________________________________________________________
 //  real, realptr: Compile-time precision specification.  Options are:
 //      DOUBLEPREC:     everything (variables & functions) is double.
 //      MIXEDPREC:      user values are float, -lm functions are double.
@@ -56,6 +55,7 @@ typedef FILE *stream;			// note: stdio.h is included above
 //  See <mathfns.h> for a list of real-valued functions.  If single
 //  precision library functions are not availible then use MIXEDPREC
 //  instead of SINGLEPREC.
+//  ____________________________________________________________________
 
 //  Default precision is SINGLEPREC on LINUX and SGI, and MIXEDPREC on Sun.
 
@@ -88,8 +88,8 @@ typedef FILE *stream;			// note: stdio.h is included above
 #  define Precision "SINGLEPREC"
 #endif
 
-//  _________________________________
 //  PI, etc.: mathematical constants.
+//  _________________________________
 
 #define PI         3.14159265358979323846
 #define TWO_PI     6.28318530717958647693
@@ -97,18 +97,18 @@ typedef FILE *stream;			// note: stdio.h is included above
 #define HALF_PI    1.57079632679489661923
 #define FRTHRD_PI  4.18879020478639098462
 
-//  _________________________________________________________________
 //  streq, strne: string-equality macros. strnull: test empty string.
 //  Note that string.h should be included before these are used.
+//  _________________________________________________________________
 
 #define streq(x,y) (strcmp((x), (y)) == 0)
 #define strne(x,y) (strcmp((x), (y)) != 0)
 #define strnull(x) (strcmp((x), "") == 0)
 
-//  _________________________________________________
 //  ABS: returns the absolute value of its argument.
 //  MAX: returns the argument with the highest value.
 //  MIN: returns the argument with the lowest value.
+//  _________________________________________________
 
 #define ABS(x)   (((x)<0)?-(x):(x))
 #define MAX(a,b) (((a)>(b))?(a):(b))

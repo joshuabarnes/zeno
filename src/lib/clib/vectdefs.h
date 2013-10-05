@@ -25,9 +25,9 @@
 typedef real vector[NDIM];
 typedef real matrix[NDIM][NDIM];
 
-//  ____________________________________________________________________
 //  Scalar-valued vector functions.  These pass the number of dimensions
 //  as the last argument so they will work with any value of NDIM.
+//  ____________________________________________________________________
 
 #define dotvp(v,u) (_dotvp((real*)(v),(real*)(u),NDIM))
 #define absv(v)    (_absv((real*)(v),NDIM))
@@ -60,8 +60,8 @@ real _absv(real *, int);
 real _distv(real *, real *, int);
 real _tracem(real *, int);
 
-//  ______________________________________________________
 //  VectType: Datatypes-style type for 3-D or 2-D vectors.
+//  ______________________________________________________
 
 #ifdef THREEDIM
 #define VectType  (RealType RealType RealType)

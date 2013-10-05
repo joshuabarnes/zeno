@@ -5,8 +5,8 @@
 #ifndef _datatypes_h
 #define _datatypes_h
 
-//  ___________________________________________________
 //  Basic data types, and synonyms for bools and reals.
+//  ___________________________________________________
 				
 #define AnyType    "a"          // anything at all
 #define CharType   "c"          // printable chars
@@ -25,8 +25,8 @@
 #  define RealType DoubleType   // long floating point
 #endif
  
-//  ________________________________________
 //  Utility functions for data type package.
+//  ________________________________________
 
 int type_length(string);			// length of data in bytes
 
