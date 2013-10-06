@@ -9,47 +9,47 @@
 
 real _dotvp(real *v, real *u, int n)
 {
-    real s;
+  real s;
 
-    s = 0.0;
-    while (--n >= 0)
-	s += (*v++) * (*u++);
-    return (s);
+  s = 0.0;
+  while (--n >= 0)
+    s += (*v++) * (*u++);
+  return (s);
 }
 
 real _absv(real *v, int n)
 {
-    real s;
+  real s;
 
-    s = 0.0;
-    while (--n >= 0) {
-	s += (*v) * (*v);
-	v++;
-    }
-    return (rsqrt(s));
+  s = 0.0;
+  while (--n >= 0) {
+    s += (*v) * (*v);
+    v++;
+  }
+  return (rsqrt(s));
 }
 
 real _distv(real *v, real *u, int n)
 {
-    real d, s;
+  real d, s;
 
-    s = 0.0;
-    while (--n >= 0) {
-	d = (*v++) - (*u++);
-	s += d * d;
-    }
-    return (rsqrt(s));
+  s = 0.0;
+  while (--n >= 0) {
+    d = (*v++) - (*u++);
+    s += d * d;
+  }
+  return (rsqrt(s));
 }
 
 real _tracem(real *p, int n)
 {
-    real s;
-    int i;
+  real s;
+  int i;
 
-    s = 0.0;
-    for (i = n; --i >= 0; ) {
-	s += (*p);
-	p += (n + 1);			// next diag. element
-    }
-    return (s);
+  s = 0.0;
+  for (i = n; --i >= 0; ) {
+    s += (*p);
+    p += (n + 1);			// next diag. element
+  }
+  return (s);
 }

@@ -7,8 +7,8 @@
 #include "datatypes.h"
 #include <string.h>
 
-//  ___________________________________________
 //  typeinfo: struct for info about data types.
+//  ___________________________________________
 
 typedef struct {
     string type;				// name from datatypes.h
@@ -18,8 +18,8 @@ typedef struct {
     int size;					// size of type in bytes
 } typeinfo;
 
-//  ____________________________________________________
 //  typetable: table of basic types and associated data.
+//  ____________________________________________________
 
 local typeinfo typetable[] = {
   { AnyType,    "any",    "%#o",  "%#o",     sizeof(byte),   },
@@ -36,8 +36,8 @@ local typeinfo typetable[] = {
 local typeinfo *find_type(string);		// lookup by 1st element
 local typeinfo *find_name(string);		// lookup by C-style name
 
-//  __________________________________________________________
 //  type_length: compute total size of basic or compound type.
+//  __________________________________________________________
 
 int type_length(string type)
 {
@@ -50,32 +50,32 @@ int type_length(string type)
     return (count);
 }
 
-//  _______________________________________
 //  type_name: return C-style name of type.
+//  _______________________________________
 
 string type_name(string type)
 {
     return (find_type(type)->name);
 }
 
-//  _____________________________________________
 //  name_type: return basic type of C-style name.
+//  _____________________________________________
 
 string name_type(string name)
 {
     return (find_name(name)->type);
 }
 
-//  ________________________________________
 //  type_fmt: return format string for type.
+//  ________________________________________
 
 string type_fmt(string type, bool lowprec)
 {
     return (lowprec ? find_type(type)->fmt1 : find_type(type)->fmt2);
 }
 
-//  __________________________________________________________
 //  type_base: return basic type of homogenious compound type.
+//  __________________________________________________________
 
 string type_base(string type)
 {
@@ -88,9 +88,9 @@ string type_base(string type)
     return (tp - 1);
 }
 
-//  ______________________________________________________________
 //  find_type: return typeinfo for given type.  Note: for compound
 //  types, the typeinfo for the first element is returned.
+//  ______________________________________________________________
 
 local typeinfo *find_type(string type)
 {
@@ -103,8 +103,8 @@ local typeinfo *find_type(string type)
     return (NULL);
 }
 
-//  __________________________________________
 //  find_name: return typeinfo for named type.
+//  __________________________________________
 
 local typeinfo *find_name(string name)
 {

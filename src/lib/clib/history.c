@@ -20,30 +20,29 @@ local string histbuf[MAXHIST+1];	// history string array
 
 local int nhist = 0;			// count of history data stored
 
-//  __________________________________________________________
 //  get_history: read history information into history buffer.
+//  __________________________________________________________
 
 void get_history(stream instr)
 {
-    bool lpflag, inflag;
+  bool lpflag, inflag;
 
-    lpflag = TRUE;				// get into loop once
-    inflag = TRUE;				// read 1st history item
-    while (lpflag)				// loop reading input data
-	if (get_tag_ok(instr, HistoryTag))	// got a history item?
-	    if (inflag) {			// and first in this file?
-		add_history(get_string(instr, HistoryTag));
+  lpflag = TRUE;				// get into loop once
+  inflag = TRUE;				// read 1st history item
+  while (lpflag)				// loop reading input data
+    if (get_tag_ok(instr, HistoryTag))		// got a history item?
+      if (inflag) {				// and first in this file?
+	add_history(get_string(instr, HistoryTag));
 						// then add to record
-		inflag = FALSE;
-	    } else
-		free(get_string(instr, HistoryTag));
-						// else, skip history data
-	else
-	    lpflag = FALSE;			// don't take next loop
+	inflag = FALSE;
+      } else
+	free(get_string(instr, HistoryTag));	// else, skip history data
+    else
+      lpflag = FALSE;				// don't take next loop
 }
 
-//  ______________________________________
 //  skip_history: read past history items.
+//  ______________________________________
 
 void skip_history(stream instr)
 {
@@ -51,36 +50,36 @@ void skip_history(stream instr)
     (void) skip_item(instr);
 }
 
-//  ________________________________________________________________
 //  put_history:  write current history and headline data to output.
+//  ________________________________________________________________
 
 void put_history(stream outstr)
 {				
-    int i;
+  int i;
 
-    for (i = 0; i < nhist; i++)
-	put_string(outstr, HistoryTag, histbuf[i]);
+  for (i = 0; i < nhist; i++)
+    put_string(outstr, HistoryTag, histbuf[i]);
 }
 
-//  _______________________________________
 //  add_history: add item to history array.
+//  _______________________________________
 
 void add_history(string s)
 {
-    if (nhist < MAXHIST-1)			// enough room for data?
-	histbuf[nhist] = s;
-    else if (nhist == MAXHIST-1)		// just reached maximum?
-	eprintf("[%s.add_history: WARNING: too much history]\n", getprog());
-    nhist++;
-    histbuf[MIN(nhist,MAXHIST-1)] = NULL;	// terminate w/ NULL
+  if (nhist < MAXHIST-1)			// enough room for data?
+    histbuf[nhist] = s;
+  else if (nhist == MAXHIST-1)			// just reached maximum?
+    eprintf("[%s.add_history: WARNING: too much history]\n", getprog());
+  nhist++;
+  histbuf[MIN(nhist,MAXHIST-1)] = NULL;		// terminate w/ NULL
 }
 
-//  ________________________________________
 //  ask_history: enquire about history data.
+//  ________________________________________
 
 string *ask_history(void)
 {
-    return (histbuf);
+  return (histbuf);
 }
 
 #ifdef TESTBED
@@ -98,23 +97,23 @@ stream instr, outstr;
 
 main(int argc, string argv[])
 {
-    int i;
+  int i;
 
-    initparam(argv, defv);              // initialize command line pars
-    iname = getparam("in");
-    oname = getparam("out");
-    instr = stropen(iname, "r");
-    get_history(instr);
-    if (! streq(getparam("history"), ""))
-	add_history(getparam("history"));
-    for (i = 0; i < nhist; i++)
-	printf("%3d: %s\n", i, histbuf[i]);
-    strclose(instr);
-    if (! streq(oname, "")) {
-	outstr = stropen(oname, "w");
-	put_history(outstr);
-	strclose(outstr);
-    }
+  initparam(argv, defv);			// init command line pars
+  iname = getparam("in");
+  oname = getparam("out");
+  instr = stropen(iname, "r");
+  get_history(instr);
+  if (! streq(getparam("history"), ""))
+    add_history(getparam("history"));
+  for (i = 0; i < nhist; i++)
+    printf("%3d: %s\n", i, histbuf[i]);
+  strclose(instr);
+  if (! streq(oname, "")) {
+    outstr = stropen(oname, "w");
+    put_history(outstr);
+    strclose(outstr);
+  }
 }
 
 #endif

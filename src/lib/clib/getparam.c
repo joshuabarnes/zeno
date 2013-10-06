@@ -8,8 +8,8 @@
 
 //  Local routines and definitions.
 
-//  ______________________________________________
 //  param: structure encoding parameter and value.
+//  ______________________________________________
 
 typedef struct {
   string name;					// name of parameter
@@ -36,8 +36,8 @@ local string progname;				// program name, for errors
 
 #define BUFLEN  1025				// storage for comments
 
-//  _________________________________________________________________
 //  initparam: initalize parameter lists and handle special requests.
+//  _________________________________________________________________
 
 void initparam(string *argv, string *defv)
 {
@@ -57,8 +57,8 @@ void initparam(string *argv, string *defv)
   savehistory(pvec);				// save activation record
 }
 
-//  __________________________________________________
 //  countdefaults: count number of default parameters.
+//  __________________________________________________
 
 local int countdefaults(string *defv)
 {
@@ -72,8 +72,8 @@ local int countdefaults(string *defv)
   return (ndefault);
 }
 
-//  _____________________________________________________________
 //  setprogram: initialize the program name as parameter "argv0".
+//  _____________________________________________________________
 
 local void setprogram(param *pvec, string argv0)
 {
@@ -83,8 +83,8 @@ local void setprogram(param *pvec, string argv0)
   pvec->flags = ARGPARAM;			// so user can't reset it
 }
 
-//  ______________________________________________________
 //  copydefaults: install default parameters and comments.
+//  ______________________________________________________
 
 local void copydefaults(param *pvec, string *defv)
 {
@@ -124,8 +124,8 @@ local void copydefaults(param *pvec, string *defv)
   pp->name = NULL;				// end list of parameters
 }
 
-//  __________________________________________________________
 //  checkhelp: if requested, print out help mesaages and exit.
+//  __________________________________________________________
 
 local void checkhelp(param *pvec, string arg1)
 {
@@ -161,8 +161,8 @@ local void checkhelp(param *pvec, string arg1)
   }
 }
 
-//  _______________________________________________
 //  printparam: print parameter and comment string.
+//  _______________________________________________
 
 local void printparam(string item, string comment, bool explain)
 {
@@ -190,8 +190,8 @@ local void printparam(string item, string comment, bool explain)
   }
 }
 
-//  __________________________________________________________
 //  setarguments: replace defaults with commandline arguments.
+//  __________________________________________________________
 
 local void setarguments(param *pvec, string *argv)
 {
@@ -224,8 +224,8 @@ local void setarguments(param *pvec, string *argv)
   }
 }
 
-//  ___________________________________________
 //  checkusage: print out short message on use.
+//  ___________________________________________
 
 local void checkusage(param *pvec)
 {
@@ -252,8 +252,8 @@ local void checkusage(param *pvec)
   }
 }
 
-//  ____________________________________________
 //  savehistory: interface to history mechanism.
+//  ____________________________________________
 
 local void savehistory(param *pvec)
 {
@@ -287,8 +287,8 @@ local void savehistory(param *pvec)
   }
 }
 
-//  ____________________________________
 //  getparam: return value of parameter.
+//  ____________________________________
 
 string getparam(string name)
 {
@@ -306,8 +306,8 @@ string getparam(string name)
   return (par->value);
 }
 
-//  _______________________________________
 //  getiparam: get integer-value parameter.
+//  _______________________________________
 
 int getiparam(string name)
 {
@@ -324,8 +324,8 @@ int getiparam(string name)
   return (val);
 }
 
-//  ______________________________________________
 //  getdparam: get floating-point value parameter.
+//  ______________________________________________
 
 double getdparam(string name)
 {
@@ -340,8 +340,8 @@ double getdparam(string name)
   return (val1);
 }
 
-//  _________________________________
 //  getbparam: get boolean parameter.
+//  _________________________________
 
 bool getbparam(string name)
 {
@@ -355,9 +355,9 @@ bool getbparam(string name)
   return (FALSE);				// keep compiler happy...
 }
 
-//  __________________________________________________________________
 //  getparamstat: return parameter flags, or zero if no such parameter
 //  (note that all defined parameters have at least one bit set).
+//  __________________________________________________________________
 
 int getparamstat(string name)
 {
@@ -367,8 +367,8 @@ int getparamstat(string name)
   return (par != NULL ? par->flags : 0);
 }
 
-//  __________________________________________________________
 //  findparam: look for named parameter in list of parameters.
+//  __________________________________________________________
 
 local param *findparam(string name, param *pvec)
 {
@@ -380,9 +380,9 @@ local param *findparam(string name, param *pvec)
   return (NULL);
 }
 
-//  _____________________________________________
 //  parname: extract name from name=value string.
 //  WARNING:  returns ptr to static storage.
+//  _____________________________________________
 
 local string parname(string arg)
 {
@@ -401,8 +401,8 @@ local string parname(string arg)
   return (namebuf);
 }
 
-//  _______________________________________________
 //  parvalue: extract value from name=value string.
+//  _______________________________________________
 
 local string parvalue(string arg)
 {

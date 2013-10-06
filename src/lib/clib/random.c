@@ -11,10 +11,10 @@
 local gsl_rng *rng = NULL;
 local unsigned long rng_min, rng_max;
 
-//  __________________________________________________________________
 //  init_random: select and initialize random number generator.  For
 //  backward compatibility, default reproduces unix random() function;
 //  set GSL_RNG_TYPE environment variable to select better generators.
+//  __________________________________________________________________
 
 void init_random(unsigned long seed)
 {
@@ -31,9 +31,9 @@ void init_random(unsigned long seed)
   gsl_rng_set(rng, seed);
 }
 
-//  __________________________________________________________________
 //  xrandom: floating-point random number in range [xl,xh], inclusive;
 //  computed by scaling unsigned long, so at most 32 bits are random.
+//  __________________________________________________________________
 
 double xrandom(double xl, double xh)
 {
@@ -45,9 +45,9 @@ double xrandom(double xl, double xh)
 	    (gsl_rng_get(rng) - rng_min) / ((double) (rng_max - rng_min)));
 }
 
-//  ___________________________________________________________
 //  grandom: normally distributed random number (polar method).
 //  Reference: Knuth, vol. 2, p. 104.
+//  ___________________________________________________________
 
 double grandom(double mean, double sdev)
 {
@@ -61,9 +61,9 @@ double grandom(double mean, double sdev)
   return (mean + sdev * v1 * sqrt(-2.0 * log(s) / s));
 }
 
-//  _________________________________________________________________
 //  get_random_state: get snapshot of current random generator state.
 //  State pointer *st must be initialized to NULL before first call.
+//  _________________________________________________________________
 
 void get_random_state(int *nb, void **st)
 {
@@ -75,8 +75,8 @@ void get_random_state(int *nb, void **st)
   memcpy(*st, gsl_rng_state(rng), *nb);
 }
 
-//  _______________________________________________________________
 //  set_random_state: copy state snapshot back to random generator.
+//  _______________________________________________________________
 
 void set_random_state(int *nb, void **st)
 {

@@ -12,29 +12,29 @@
 
 bool within(double val, string range, double fuzz)
 {
-    char *endptr, *subptr, *sepptr, *colptr;
-    double sublow, subhi;
+  char *endptr, *subptr, *sepptr, *colptr;
+  double sublow, subhi;
 
-    endptr = range + strlen(range);		// point to term. NULL
-    for (subptr = range; subptr != endptr; ) {	// for each subrange
-	sepptr = strchr(subptr, ',');		// pnt to subrange end
-	if (sepptr == NULL)			// last subrange listed?
-	    sepptr = endptr;			// fix up subend ptr
-	colptr = strchr(subptr, ':');		// scan subrange for
-	if (colptr > sepptr)			// in another subrange?
-	    colptr = NULL;			// then dont use it
-	sublow = atof(subptr) - fuzz/2.0;	// set low end of range
-	if (colptr != NULL)			// high end specified?
-	    subhi = atof(colptr+1) + fuzz/2.0;	// set high end
-	else
-	    subhi = sublow + fuzz;		// just use low end
-	if (sublow <= val && val <= subhi)	// within subrange?
-	    return (TRUE);
-	subptr = sepptr;			// advance subrange ptr
-	if (*subptr == ',')			// more ranges to do?
-	    subptr++;				// move on to next
-    }
-    return (FALSE);
+  endptr = range + strlen(range);		// point to term. NULL
+  for (subptr = range; subptr != endptr; ) {	// for each subrange
+    sepptr = strchr(subptr, ',');		// pnt to subrange end
+    if (sepptr == NULL)				// last subrange listed?
+      sepptr = endptr;				// fix up subend ptr
+    colptr = strchr(subptr, ':');		// scan subrange for
+    if (colptr > sepptr)			// in another subrange?
+      colptr = NULL;				// then dont use it
+    sublow = atof(subptr) - fuzz/2.0;		// set low end of range
+    if (colptr != NULL)				// high end specified?
+      subhi = atof(colptr+1) + fuzz/2.0;	// set high end
+    else
+      subhi = sublow + fuzz;			// just use low end
+    if (sublow <= val && val <= subhi)		// within subrange?
+      return (TRUE);
+    subptr = sepptr;				// advance subrange ptr
+    if (*subptr == ',')				// more ranges to do?
+      subptr++;					// move on to next
+  }
+  return (FALSE);
 }
 
 #ifdef TESTBED
@@ -50,11 +50,11 @@ string defv[] = {
 
 void main(int argc, string argv[])
 {
-    initparam(argv, defv);
-    if (within(getdparam("val"), getparam("range"), getdparam("fuzz")))
-	printf("within returns TRUE\n");
-    else
-	printf("within returns FALSE\n");
+  initparam(argv, defv);
+  if (within(getdparam("val"), getparam("range"), getdparam("fuzz")))
+    printf("within returns TRUE\n");
+  else
+    printf("within returns FALSE\n");
 }
 
 #endif

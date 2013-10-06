@@ -8,12 +8,12 @@
 #include "phatstruct.h"
 #include <string.h>
 
-//  __________________________________________________________________
 //  layout_struct: compute offsets and length of structure.  The order
 //  of the actual fields is determined by the names argument.  Padding
 //  is computed assuming (1) any type of object can have offset 0, and
 //  (2) identical objects of any type can be stored contiguously
 //  without padding.
+//  __________________________________________________________________
 
 void layout_struct(ps_field *pstab, string *names)
 {
@@ -57,9 +57,9 @@ void layout_struct(ps_field *pstab, string *names)
 	    getprog(), pstab->name, pstab->length, pad);
 }
 
-//  _________________________________________________________________________
 //  new_field: define a new field of given type and name.  Note that it is up
 //  to the client to make sure that the field array is properly terminated.
+//  _________________________________________________________________________
 
 void new_field(ps_field *psptr, string type, string name)
 {
@@ -69,9 +69,9 @@ void new_field(ps_field *psptr, string type, string name)
   psptr->length = 0;				// and length is undefined
 }
 
-//  ___________________________________________________________________
 //  define_struct: set total length of structure; a partial alternative
 //  to layout_struct for the fixed offset interface.
+//  ___________________________________________________________________
 
 void define_struct(ps_field *pstab, string name, int length)
 {
@@ -83,9 +83,9 @@ void define_struct(ps_field *pstab, string name, int length)
 	    getprog(), pstab->name, pstab->length);
 }
 
-//  __________________________________________________________________
 //  define_offset: set offset of known field; a partial alternative to
 //  layout_struct for the fixed offset interface.
+//  __________________________________________________________________
 
 void define_offset(ps_field *pstab, string name, int offset)
 {
@@ -138,22 +138,22 @@ ps_field phatstruct[] = {
 
 main(int argc, string argv[])
 {
-    string *fields;
-    void *xp;
+  string *fields;
+  void *xp;
 
-    initparam(argv, defv);
-    fields = burststring(getparam("fields"), ",");
-    layout_struct(phatstruct, fields);
-    xp = allocate(phatstruct[0].length);
-    Foo(xp) = 'a';
-    Bar(xp) = 123;
-    Fum(xp) = 12345678;
-    Fie(xp) = 3.141592;
-    Baz(xp) = 2.718281;
-    Jojo(xp)[0] = 1.5;
-    Jojo(xp)[1] = -2.5;
-    printf("xp -> { %c  %d  %d  %f  %f [%f %f] }\n", Foo(xp), Bar(xp),
-	   Fum(xp), Fie(xp), Baz(xp), Jojo(xp)[0], Jojo(xp)[1]);
+  initparam(argv, defv);
+  fields = burststring(getparam("fields"), ",");
+  layout_struct(phatstruct, fields);
+  xp = allocate(phatstruct[0].length);
+  Foo(xp) = 'a';
+  Bar(xp) = 123;
+  Fum(xp) = 12345678;
+  Fie(xp) = 3.141592;
+  Baz(xp) = 2.718281;
+  Jojo(xp)[0] = 1.5;
+  Jojo(xp)[1] = -2.5;
+  printf("xp -> { %c  %d  %d  %f  %f [%f %f] }\n", Foo(xp), Bar(xp),
+	 Fum(xp), Fie(xp), Baz(xp), Jojo(xp)[0], Jojo(xp)[1]);
 }
 
 #endif

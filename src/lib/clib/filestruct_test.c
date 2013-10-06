@@ -1,5 +1,5 @@
 /*
- * FILETEST: test filestruct package.
+ * filestruct_test.c: test filestruct package.
  */
 
 #include "stdinc.h"

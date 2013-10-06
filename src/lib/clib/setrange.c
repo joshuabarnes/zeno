@@ -17,22 +17,22 @@
 
 void setrange(real *rval, string rexp)
 {
-    string rptr;
+  string rptr;
     
-    rval[0] = strtod(rexp, &rptr);
+  rval[0] = strtod(rexp, &rptr);
+  if (*rptr == '/')
+    rval[0] = rval[0] / strtod(rptr + 1, &rptr);
+  if (*rptr == ':') {
+    rval[1] = strtod(rptr + 1, &rptr);
     if (*rptr == '/')
-	rval[0] = rval[0] / strtod(rptr + 1, &rptr);
-    if (*rptr == ':') {
-	rval[1] = strtod(rptr + 1, &rptr);
-	if (*rptr == '/')
-	    rval[1] = rval[1] / strtod(rptr + 1, &rptr);
-    } else {
-	rval[1] = rval[0];
-	rval[0] = 0.0;
-    }
-    if (*rptr != (char) NULL)
-	eprintf("[%s.setrange: WARNING: ignoring trailing \"%s\"]\n",
-		getprog(), rptr);
+      rval[1] = rval[1] / strtod(rptr + 1, &rptr);
+  } else {
+    rval[1] = rval[0];
+    rval[0] = 0.0;
+  }
+  if (*rptr != (char) NULL)
+    eprintf("[%s.setrange: WARNING: ignoring trailing \"%s\"]\n",
+	    getprog(), rptr);
 }
 
 #ifdef TESTBED
@@ -46,12 +46,12 @@ string defv[] = {
 
 main(int argc, string *argv)
 {
-    real range[2];
+  real range[2];
 
-    initparam(argv, defv);
-    setrange(range, getparam("range"));
-    printf("%s: %s -> %f,%f\n", getprog(), getparam("range"),
-	   range[0], range[1]);
+  initparam(argv, defv);
+  setrange(range, getparam("range"));
+  printf("%s: %s -> %f,%f\n", getprog(), getparam("range"),
+	 range[0], range[1]);
 }
 
 #endif

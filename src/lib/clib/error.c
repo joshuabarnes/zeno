@@ -8,16 +8,16 @@
 
 local stream errstr = NULL;			// use to report errors
 
-//  _______________________________________________________
 //  set_error_stream: direct error message to given stream.
+//  _______________________________________________________
 
 void set_error_stream(stream str)
 {
   errstr = str;
 }
 
-//  ______________________________
 //  error: scream and die quickly.
+//  ______________________________
 
 void error(string fmt, ...)
 {
@@ -36,8 +36,8 @@ void error(string fmt, ...)
   exit(1);					// quit with error status
 }
 
-//  ____________________________________
 //  fatal: scream and die an ugly death.
+//  ____________________________________
 
 void fatal(string fmt, ...)
 {
@@ -58,9 +58,9 @@ void fatal(string fmt, ...)
   abort();					// quit, leave core image
 }
 
-//  _______________________________________________________________________
 //  eprintf: print messages and warnings.  Uses "ZENO_MSG_OPTION" env. var.
 //  to control printing; "warn" or "none" suppress some or all output.
+//  _______________________________________________________________________
 
 
 void eprintf(string fmt, ...)
