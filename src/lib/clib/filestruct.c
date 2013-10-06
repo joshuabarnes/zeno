@@ -119,9 +119,9 @@ void copy_item(stream ostr, stream istr, string tag)
     dlen = get_length(istr, tag);		// and length in bytes
     buf = allocate(dlen);			// get space for a buffer
     get_data_sub(istr, tag, type, dims, (void *) buf, NULL);
-    // read data from input
+						// read data from input
     put_data_sub(ostr, tag, type, dims, (void *) buf, NULL);
-    // and write it to output
+						// and write it to output
     if (dims != NULL)				// free dimension list
       free(dims);
     free(buf);					// free temporary buffer
@@ -129,7 +129,7 @@ void copy_item(stream ostr, stream istr, string tag)
     get_set(istr, tag);				// access set's contents
     put_set(ostr, tag);				// output set token
     while ((tag1 = next_item_tag(istr)) != NULL) {
-      // loop over set contents
+						// loop over set contents
       copy_item(ostr, istr, tag1);		// copying each item
       free(tag1);				// free up name of item
     }
@@ -398,7 +398,7 @@ void get_data_sub(stream istr, string tag, string type,
     error("%s.%s: %s not found\n", getprog(), iofunc, tag);
   ditem = makeitem(type, tag, dims, data);	// make destination item
   copydata(ditem, mask, istate->buf[indx], istr);
-  // transfer actual data
+						// transfer actual data
   freeitem(ditem);
   if (istate->context > 0)
     istate->context = indx + 1;			// advance context in set
@@ -502,7 +502,7 @@ string next_item_tag(stream istr)
   else
     tag = istate->buf[istate->context]->tag;
   end_iofunc();
-  return (tag != NULL ? copycstr(tag) : NULL);  // return copy of tag
+  return (tag != NULL ? copycstr(tag) : NULL);	// return copy of tag
 }
  
 //  skip_item: advance context within set, or flush item at toplevel.
@@ -775,7 +775,7 @@ local itemptr getitem(stateptr istate)
   if (fread(&magic, sizeof(short), 1, istate->str) != 1)
     return (NULL);				// nothing more to read 
   cigam = ((magic & 0xff) << 8) | ((magic & 0xff00) >> 8);
-  // form swapped version
+						// form swapped version
   if (magic != ScalarMagic && cigam != ScalarMagic &&
       magic != PluralMagic && cigam != PluralMagic)
     error("%s.%s: bad magic number %04x\n",
