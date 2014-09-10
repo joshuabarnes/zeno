@@ -11,19 +11,21 @@
 #include "gsp.h"
 
 string defv[] = {		";Make test disk in a gsp spheroid",
-    "gsp=???",			";Input gsp for mass profile",
-    "out=???",			";Output N-body model of disk",
-    "alpha=12.0",		";Inverse exponential scale length",
-    "rcut=1.0",			";Outer disk cutoff radius",
-    "model=0",			";Select model for disk distribution.",
+  "gsp=???",			";Input gsp for mass profile",
+  "out=???",			";Output N-body model of disk",
+  "alpha=12.0",			";Inverse exponential scale length",
+  "rcut=1.0",			";Outer disk cutoff radius",
+  "model=0",			";Select model for disk distribution.",
+				";model=-3:  quad. surface density,",
+				";model=-2:  linear surface density,",
 				";model=-1:  const. surface density,",
 				";model=0:   normal exponential disk,",
 				";model=1,2: biased exponential disk.",
-    "ndisk=12288",		";Number of disk particles",
-    "randspin=false",		";If true, generate test-particle ball",
-    "seed=54321",		";Seed for random number generator",
-    "VERSION=1.1",		";Josh Barnes  25 June 2012",
-    NULL,
+  "ndisk=12288",		";Number of disk particles",
+  "randspin=false",		";If true, generate test-particle ball",
+  "seed=54321",			";Seed for random number generator",
+  "VERSION=1.1",		";Josh Barnes  28 August 2014",
+  NULL,
 };
 
 // Function prototypes.
@@ -62,8 +64,6 @@ int main(int argc, string argv[])
   alpha = getdparam("alpha");
   rcut = getdparam("rcut");
   model = (alpha <= 0.0 ? -1 : getiparam("model"));
-  if (! (-1 <= model && model <= 2))
-    error("%s: bad choice for model\n", getargv0());
   ndisk = getiparam("ndisk");
   init_random(getiparam("seed"));
   readgsp();
@@ -77,8 +77,8 @@ int main(int argc, string argv[])
   return (0);
 }
 
-//  ___________________________________________
 //  readgsp: read spheroid gsp from input file.
+//  ___________________________________________
 
 void readgsp(void)
 {
@@ -90,8 +90,8 @@ void readgsp(void)
   strclose(istr);
 }
 
-//  ______________________________________________
 //  writemodel: write N-body model to output file.
+//  ______________________________________________
 
 void writemodel(void)
 {
@@ -104,8 +104,8 @@ void writemodel(void)
   strclose(ostr);
 }
 
-//  _________________________________________________________________
 //  setprof: initialize disk tables for radius and circular velocity.
+//  _________________________________________________________________
 
 void setprof(void)
 {
@@ -118,6 +118,12 @@ void setprof(void)
     rdtab[j] = r;
     x = alpha * r;
     switch (model) {
+      case -3:
+        mdtab[j] = rsqr(rsqr(r)) / rsqr(rsqr(rcut));
+	break;
+      case -2:
+        mdtab[j] = rqbe(r) / rqbe(rcut);
+	break;
       case -1:
         mdtab[j] = rsqr(r) / rsqr(rcut);
 	break;
@@ -130,6 +136,8 @@ void setprof(void)
       case 2:
 	mdtab[j] = (6 - 6 * rexp(-x) - (6*x + 3*x*x + x*x*x) * rexp(-x)) / 6;
 	break;
+      default:
+	error("%s: bad choice for model\n", getargv0());
     }
     vctab[j] = rsqrt(mass_gsp(spheroid, r) / r);
   }
@@ -142,8 +150,8 @@ void setprof(void)
   spline(&vctab[NTAB], &rdtab[0], &vctab[0], NTAB);	// for v_c = v_c(r)
 }
 
-//  _____________________________________
 //  makedisk: create realization of disk.
+//  _____________________________________
 
 void makedisk(bool randspin)
 {
@@ -154,7 +162,7 @@ void makedisk(bool randspin)
   vector tmpv;
 
   for (i = 0; i < ndisk; i++) {			// loop initializing bodies
-    bp = NthBody(disk, i);			// set up ptr to disk body
+    bp = NthBody(disk, i);			// set ptr to body number i
     m = mdtab[NTAB-1] * ((real) i + 0.5) / ndisk;
     r = seval(m, &mdtab[0], &rdtab[0], &rdtab[NTAB], NTAB);
     v = seval(r, &rdtab[0], &vctab[0], &vctab[NTAB], NTAB);

@@ -1,7 +1,7 @@
 # ~/nbody/library/Zeno: install include and library files in Zeno.
 # Copyright (c) 1997  Joshua E. Barnes  Honolulu, Hawai'i.
 
-INCFILES = bodytags.h fixbody.h phatbody.h snapcenter.h snapkinem.h
+INCFILES = bodytags.h buildmap.h fixbody.h phatbody.h snapcenter.h snapkinem.h
 LIBFILES = libNBody.a snapmap_s3.o snapmap_m3.o snapmap_d3.o
 
 # Targets used to export things to Zeno.

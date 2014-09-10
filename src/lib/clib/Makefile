@@ -199,3 +199,21 @@ vectmath_test_m: vectmath_test.c vectmath.h vectmath.c stdinc.h
 
 within_test: within.c stdinc.h
 	$(ZCC) $(ZCCFLAGS) -o within_test -DTESTBED within.c libClib.a
+
+# Generate listing of source code.
+
+zeno_clib.ps: stdinc.h allocate.c bessel.c burststring.c cputime.c \
+	      datatypes.h datatypes.c error.c extstring.c filestruct.h \
+	      filestruct.c filestruct_test.c getparam.h getparam.c \
+	      history.c mathfns.h mathfns.c phatstruct.h phatstruct.c \
+	      pickpnt.c random.c scanopt.c setrange.c spline.c stropen.c \
+	      strset.h strset.c vectdefs.h vectmath.h vectmath.c \
+	      vectmath_test.c within.c
+	enscript -M Letterdj -o zeno_clib.ps \
+	      stdinc.h allocate.c bessel.c burststring.c cputime.c \
+	      datatypes.h datatypes.c error.c extstring.c filestruct.h \
+	      filestruct.c filestruct_test.c getparam.h getparam.c \
+	      history.c mathfns.h mathfns.c phatstruct.h phatstruct.c \
+	      pickpnt.c random.c scanopt.c setrange.c spline.c stropen.c \
+	      strset.h strset.c vectdefs.h vectmath.h vectmath.c \
+	      vectmath_test.c within.c

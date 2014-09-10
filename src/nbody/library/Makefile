@@ -22,7 +22,7 @@ bodyio_f3.o: bodyio.c phatbody.h
 bodyio_d3.o: bodyio.c phatbody.h
 	$(ZCC) $(ZCCFLAGS) -DDOUBLEPREC -DNDIM=3 -o bodyio_d3.o -c bodyio.c
 
-buildmap.o: buildmap.c mapdefs.h
+buildmap.o: buildmap.c buildmap.h
 	$(ZCC) $(ZCCFLAGS) -c buildmap.c
 
 phatbody.o: phatbody.c phatbody.h
@@ -57,5 +57,15 @@ snapmap_d3.o: snapmap.c phatbody.h
 
 # Utility program for snapshot mapping.
 
-buildmap: buildmap.c mapdefs.h
+buildmap: buildmap.c buildmap.h
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -DTESTBED -o buildmap buildmap.c -lClib
+
+# Generate listing of source code.
+
+zeno_library.ps: bodyio.c bodytags.h buildmap.c fixbody.h buildmap.h \
+	         phatbody.c phatbody.h snapcenter.c snapcenter.h \
+	         snapkinem.c snapkinem.h snapmap.c
+	enscript -M Letterdj -o zeno_library.ps \
+		 fixbody.h phatbody.h phatbody.c bodytags.h bodyio.c \
+	         buildmap.h buildmap.c snapmap.c snapcenter.h snapcenter.c \
+	         snapkinem.h snapkinem.c

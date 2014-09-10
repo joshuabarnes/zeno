@@ -19,7 +19,7 @@ local void get_particles(stream, bodyptr *, int *, string *);
 local void set_mask(int *, int, int, int);
 
 //  put_snap: write snapshot to structured output stream.
-//  -----------------------------------------------------
+//  _____________________________________________________
 
 void put_snap(stream ostr, bodyptr *btab, int *nbody, real *tnow,
 	      string *tags)
@@ -31,7 +31,7 @@ void put_snap(stream ostr, bodyptr *btab, int *nbody, real *tnow,
 }
 
 //  put_parameters: write snapshot parameters.
-//  ------------------------------------------
+//  __________________________________________
 
 local void put_parameters(stream ostr, int *nbody, real *tnow)
 {
@@ -42,7 +42,7 @@ local void put_parameters(stream ostr, int *nbody, real *tnow)
 }
 
 //  put_particles: write particle data to output file.
-//  --------------------------------------------------
+//  __________________________________________________
 
 local void put_particles(stream ostr, bodyptr *btab, int *nbody, string *tags)
 {
@@ -72,7 +72,7 @@ local void put_particles(stream ostr, bodyptr *btab, int *nbody, string *tags)
 }
 
 //  get_snap: read snapshot from structured input stream.
-//  -----------------------------------------------------
+//  _____________________________________________________
 
 bool get_snap(stream istr, bodyptr *btab, int *nbody, real *tnow,
 	      string *tags, bool expand)
@@ -100,11 +100,11 @@ bool get_snap(stream istr, bodyptr *btab, int *nbody, real *tnow,
 }
 
 #ifndef TimeFuzz
-#  define TimeFuzz  0.001               /* uncertainty in time comparison   */
+#  define TimeFuzz  0.001               // uncertainty in time comparison
 #endif
 
 //  get_snap_t: read snapshot in time range from structured input stream.
-//  ---------------------------------------------------------------------
+//  _____________________________________________________________________
 
 bool get_snap_t(stream istr, bodyptr *btab, int *nbody, real *tnow,
 		string *tags, bool expand, string times)
@@ -136,7 +136,7 @@ bool get_snap_t(stream istr, bodyptr *btab, int *nbody, real *tnow,
 }
 
 //  get_parameters: read snapshot parameters.
-//  -----------------------------------------
+//  _________________________________________
 
 local void get_parameters(stream istr, int *nbody, real *tnow)
 {
@@ -158,7 +158,7 @@ local void get_parameters(stream istr, int *nbody, real *tnow)
 }
 
 //  add_known_fields: add all known body fields present in input set.
-//  -----------------------------------------------------------------
+//  _________________________________________________________________
 
 local void add_known_fields(stream istr)
 {
@@ -178,7 +178,7 @@ local void add_known_fields(stream istr)
 }
 
 //  get_particles: read particle data from input file.
-//  --------------------------------------------------
+//  __________________________________________________
 
 local void get_particles(stream istr, bodyptr *btab, int *nbody, string *tags)
 {
@@ -221,7 +221,7 @@ local void get_particles(stream istr, bodyptr *btab, int *nbody, string *tags)
 }
 
 //  set_mask: initialize byte mask for field.
-//  -----------------------------------------
+//  _________________________________________
 
 local void set_mask(int *mask, int size, int offset, int length)
 {

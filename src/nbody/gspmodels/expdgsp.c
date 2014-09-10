@@ -14,14 +14,14 @@
 #ifdef UTILITY
 
 string defv[] = {		";Generate \"spherical\" exp. disk",
-    "out=???",			";Output file for profile tables",
-    "mtot=1.0",			";Total mass of disk",
-    "alpha=1.0",		";Inverse length scale of disk",
-    "zdisk=0.0",		";Vertical scale height of disk",
-    "npoint=257",		";Number of points in tables",
-    "rrange=1/4096:16",		";Range of radii tabulated",
-    "VERSION=1.1",		";Josh Barnes  26 January 2013",
-    NULL,
+  "out=???",			";Output file for profile tables",
+  "mtot=1.0",			";Total mass of disk",
+  "alpha=1.0",			";Inverse length scale of disk",
+  "zdisk=0.0",			";Vertical scale height of disk",
+  "npoint=257",			";Number of points in tables",
+  "rrange=1/4096:16",		";Range of radii tabulated",
+  "VERSION=1.1",		";Josh Barnes  26 January 2013",
+  NULL,
 };
 
 int main(int argc, string argv[])
@@ -51,8 +51,8 @@ local real dsphr(real, real, real, real, gsl_integration_workspace *);
 local double dsint(double z, void *params);
 local double msint(double z, void *params);
 
-//  ____________________________________________________________
 //  expdgsp: initialize tables for "spherical exponential disk".
+//  ____________________________________________________________
 
 gsprof *expdgsp(real mtot, real alpha, real zdisk,
 		int np, real rmin, real rmax)
@@ -104,9 +104,9 @@ gsprof *expdgsp(real mtot, real alpha, real zdisk,
   return (gsp);
 }
 
-//  _____________________________________________________
 //  dsphr: compute average density at radius r.  Value is
 //  rhoDiskAvg = (4 Pi r^2)^-1 D[massDisk[r], r], 
+//  _____________________________________________________
 
 local real dsphr(real r, real mtot, real alpha, real zdisk,
 		 gsl_integration_workspace *wksp)
@@ -127,9 +127,9 @@ local real dsphr(real r, real mtot, real alpha, real zdisk,
   return (rsqr(alpha) * mtot * result / (4 * M_PI * zdisk * r));
 }
 
-//  ________________________________________________
 //  dsint: integrand for dsphr() function.  Value is
 //  Sech[z/z0]^2 Exp[-alpha Sqrt[r^2 - z^2]]
+//  ________________________________________________
 
 local double dsint(double z, void *params)
 {
@@ -141,9 +141,9 @@ local double dsint(double z, void *params)
   return (exp(- alpha * sqrt(r*r - z*z)) / gsl_pow_2(cosh(z / zdisk)));
 }
 
-//  __________________________________________________________________________
 //  msphr: compute mass interior to radius r by integrating in z.  Value is
 //  massDisk = Integrate[2 Pi R rhoDisk[R,z], {z,-r,r}, {R,0,Sqrt[r^2 - z^2]}]
+//  __________________________________________________________________________
 
 local real msphr(real r, real mtot, real alpha, real zdisk,
 		 gsl_integration_workspace *wksp)
@@ -164,9 +164,9 @@ local real msphr(real r, real mtot, real alpha, real zdisk,
   return (mtot * result / zdisk);
 }
 
-//  __________________________________________________________________________
 //  msint: integrand for msphr() function.  Value is
 //  Sech[z/z0]^2 (1 - (1 + alpha Sqrt[r^2 - z^2]) Exp[-alpha Sqrt[r^2 - z^2]])
+//  __________________________________________________________________________
 
 local double msint(double z, void *params)
 {

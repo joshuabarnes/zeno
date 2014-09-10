@@ -21,3 +21,8 @@ ssf: csf.c
 
 tsf: tsf.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o tsf tsf.c -lClib
+
+# Generate listing of source code.
+
+zeno_util.ps: csf.c rsf.c tsf.c
+	enscript -M Letterdj -o zeno_util.ps csf.c rsf.c tsf.c

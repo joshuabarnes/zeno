@@ -156,3 +156,19 @@ gsptest: gsp.c gsp.h
 gammatest: gammagsp.c gsp.h
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -DTESTBED \
 	   -o gammatest gammagsp.c -lGSP -lClib -lm
+
+# Generate listing of source code.
+
+zeno_gspmodels.ps: gsp.h gsp.c calcphi.c calcsig.c diffstep.c expdgsp.c \
+	           gammagsp.c gspadd.c gspdisk.c gspeval.c gsplist.c \
+	           gspmodel.c gsprealize.c gsprealize_2.0.c gspsmooth.c \
+	           gspsmoothfit.c gspsphere.c gsptestdisk.c gsptrun.c \
+	           halogsp.c isothgsp.c plumgsp.c polygsp.c snapgsp.c \
+	           tablegsp.c
+	enscript -M Letterdj -o zeno_gspmodels.ps \
+	           gsp.h gsp.c calcphi.c calcsig.c diffstep.c expdgsp.c \
+	           gammagsp.c gspadd.c gspdisk.c gspeval.c gsplist.c \
+	           gspmodel.c gsprealize.c gsprealize_2.0.c gspsmooth.c \
+	           gspsmoothfit.c gspsphere.c gsptestdisk.c gsptrun.c \
+	           halogsp.c isothgsp.c plumgsp.c polygsp.c snapgsp.c \
+	           tablegsp.c

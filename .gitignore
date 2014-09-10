@@ -15,3 +15,20 @@
 *.exe
 *.out
 *.app
+
+# Backups
+*~
+*.bak
+
+# Data files
+*.dat
+*.txt
+*.log
+*.gz
+
+# Postscript and PDF files
+*.ps
+*.pdf
+
+# Zeno stuff
+.install_*

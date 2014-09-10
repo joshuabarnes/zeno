@@ -1,5 +1,5 @@
 /*
- * SNAPKINEM.H: routines to compute kinematic parameters.
+ * snapkinem.h: routines to compute kinematic parameters.
  */
 
 #if defined(THREEDIM)

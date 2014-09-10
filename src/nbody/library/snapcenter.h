@@ -1,5 +1,5 @@
 /*
- * SNAPCENTER.H: routines to compute center-of-mass coordinates.
+ * snapcenter.h: routines to compute center-of-mass coordinates.
  */
 
 #if defined(THREEDIM)

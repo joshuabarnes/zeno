@@ -1,5 +1,5 @@
 /*
- * SNAPRECT: transform to coordinates diagonalizing weight tensor.
+ * snaprect.c: transform to coordinates diagonalizing weight tensor.
  */
 
 #include "stdinc.h"
@@ -7,30 +7,32 @@
 #include "vectmath.h"
 #include "filestruct.h"
 #include "phatbody.h"
+#include "buildmap.h"
 #include "snapcenter.h"
-
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_eigen.h>
+#include <unistd.h>
 
-string defv[] = {		";Diagonalize weight tensor",
-    "in=???",                   ";Input snapshot file name",
-    "out=???",                  ";Output snapshot file name",
-    "times=all",                ";Range of times to process",
-    "weight=1.0",		";Weight of each body (expr)",
-    "require=",			";Input items required",
-    "produce=",			";Output items produced",
-    "passall=true",		";If true, pass on input data",
-    "seed=",			";Seed for random number generator",
-    "VERSION=2.2",              ";Josh Barnes  30 July 2011",
-    NULL,
+string defv[] = {		";Rotate snap to diagonalize weight tensor",
+  "in=???",                     ";Input snapshot file name",
+  "out=???",                    ";Output snapshot file name",
+  "times=all",                  ";Range of times to process",
+  "weight=1.0",			";C language expression weighting bodies.",
+				";Bound variables, depending on input, are:",
+				  SNAPMAP_BODY_VARS ".",
+  "require=",			";Input items required",
+  "produce=",			";Output items produced",
+  "passall=true",		";If true, pass on input data",
+  "seed=",			";Seed for random number generator",
+  "VERSION=2.2",                ";Josh Barnes  9 Sep 2014",
+  NULL,
 };
 
-void snaprect(bodyptr, int);			/* transform body array     */
-void eigensolve(vector, vector, vector, matrix);
-void printvec(string, vector);
-stream execmap(string);				/* start snapmap process    */
-void del_tag(string *, string *, string);	/* remove tag from list     */
-void buildmap(string, string *, string *, string *, string, int);
+void snaprect(bodyptr, int);			// transform body array
+void eigenvect(vector, vector, vector, matrix);	// find eigenvectors of matrix
+void printvect(string, vector);			// print vector to stderr
+stream execmap(string);				// start snapmap process
+void del_tag(string *, string *, string);	// remove tag from list
 
 string names[2] = { "Weight", NULL };
 string exprs[2] = { NULL,     NULL };
@@ -38,7 +40,7 @@ string types[2] = { RealType, NULL };
 
 #define WeightField  phatbody[NewBodyFields+0]
 #define Weight(b)  SelectReal(b, WeightField.offset)
-
+
 int main(int argc, string argv[])
 {
   string prog, itags[MaxBodyFields], otags[MaxBodyFields];
@@ -48,9 +50,9 @@ int main(int argc, string argv[])
   real tnow;
 
   initparam(argv, defv);
-  prog = tempnam("/tmp", "sm");
   exprs[0] = getparam("weight");
-  buildmap(prog, names, exprs, types, Precision, NDIM);
+  prog = tempnam("/tmp", "sm");
+  buildmap(prog, names, exprs, types, NULL, Precision, NDIM, TRUE);
   xstr = execmap(prog);
   if (get_tag_ok(xstr, "History"))
     skip_item(xstr);
@@ -86,15 +88,15 @@ void snaprect(bodyptr btab, int nbody)
     MULMS(tmpm, tmpm, Weight(bp));
     ADDM(qmat, qmat, tmpm);
   }
-  eigensolve(frame[0], frame[1], frame[2], qmat);
+  eigenvect(frame[0], frame[1], frame[2], qmat);
   if (dotvp(oldframe[0], frame[0]) < 0.0)
     MULVS(frame[0], frame[0], -1.0);
   if (dotvp(oldframe[2], frame[2]) < 0.0)
     MULVS(frame[2], frame[2], -1.0);
   CROSSVP(frame[1], frame[2], frame[0]);
-  printvec("e_x:", frame[0]);
-  printvec("e_y:", frame[1]);
-  printvec("e_z:", frame[2]);
+  printvect("e_x:", frame[0]);
+  printvect("e_y:", frame[1]);
+  printvect("e_z:", frame[2]);
   for (bp = btab; bp < NthBody(btab, nbody); bp = NextBody(bp)) {
     if (PosField.offset != BadOffset) {
       for (i = 0; i < NDIM; i++)
@@ -121,7 +123,7 @@ void snaprect(bodyptr btab, int nbody)
     SETV(oldframe[i], frame[i]);
 }    
 
-void eigensolve(vector vec1, vector vec2, vector vec3, matrix symmat)
+void eigenvect(vector vec1, vector vec2, vector vec3, matrix symmat)
 {
   int i, j;
   double data[9];
@@ -151,13 +153,14 @@ void eigensolve(vector vec1, vector vec2, vector vec3, matrix symmat)
   gsl_matrix_free(eigvec);
 }
 
-void printvec(string name, vector vec)
+void printvect(string name, vector vec)
 {
   eprintf("[%s: %12s  %10.5f  %10.5f  %10.5f]\n",
 	  getargv0(), name, vec[0], vec[1], vec[2]);
 }
 
-#include <unistd.h>
+//  execmap: start snapmap subprocess, and return snapmap output stream.
+//  ____________________________________________________________________
 
 stream execmap(string prog)
 {
@@ -165,14 +168,14 @@ stream execmap(string prog)
   char handbuf[32], produce[512];
 
   pipe(handle);
-  if (fork() == 0) {                           /* if this is child process */
+  if (fork() == 0) {                           // if this is child process
     close(handle[0]);
     sprintf(handbuf, "-%d", handle[1]);
     sprintf(produce, "%s,Weight", getparam("produce"));
-    execl(prog, getargv0(), getparam("in"), handbuf, getparam("times"),
+    execl(prog, getprog(), getparam("in"), handbuf, getparam("times"),
 	  getparam("require"), produce, getparam("passall"),
 	  getparam("seed"), NULL);
-    error("%s: execl %s failed\n", getargv0(), prog);
+    error("%s: execl %s failed\n", getprog(), prog);
   }
   close(handle[1]);
   sprintf(handbuf, "-%d", handle[0]);

@@ -1,5 +1,5 @@
 /*
- * SNAPKINEM.C: routines to compute kinematic parameters.
+ * snapkinem.c: routines to compute kinematic parameters.
  */
 
 #include "stdinc.h"
@@ -7,108 +7,101 @@
 #include "phatbody.h"
 #include "snapkinem.h"
 
-/*
- * WEIGHT: macro to select weight field for kinematic calculations.
- */
+//  Weight: macro to select weight field for kinematic calculations.
+//  ________________________________________________________________
 
 #define Weight(bp,woff)  SelectReal(bp, woff)
 
-/*
- * SNAPKE: return total kinetic energy.
- */
+//  snapke: return total kinetic energy.
+//  ____________________________________
 
 real snapke(bodyptr btab, int nbody, int woff)
 {
-    real ke;
-    bodyptr bp;
+  real ke;
+  bodyptr bp;
 
-    ke = 0.0;
-    for (bp = btab; bp < NthBody(btab, nbody); bp = NextBody(bp))
-        ke += 0.5 * Weight(bp, woff) * dotvp(Vel(bp), Vel(bp));
-    return (ke);
+  ke = 0.0;
+  for (bp = btab; bp < NthBody(btab, nbody); bp = NextBody(bp))
+    ke += 0.5 * Weight(bp, woff) * dotvp(Vel(bp), Vel(bp));
+  return (ke);
 }
 
-/*
- * SNAPPE: return total potential energy.
- */
+//  snappe: return total potential energy.
+//  ______________________________________
 
 real snappe(bodyptr btab, int nbody, int woff)
 {
-    real pe;
-    bodyptr bp;
+  real pe;
+  bodyptr bp;
 
-    pe = 0.0;
-    for (bp = btab; bp < NthBody(btab, nbody); bp = NextBody(bp))
-        pe += Weight(bp, woff) * Phi(bp);
-    return (pe);
+  pe = 0.0;
+  for (bp = btab; bp < NthBody(btab, nbody); bp = NextBody(bp))
+    pe += Weight(bp, woff) * Phi(bp);
+  return (pe);
 }
 
-/*
- * SNAPAMVEC: compute angular momentum vector.
- */
+//  snapamvec: compute angular momentum vector.
+//  ___________________________________________
 
 void snapamvec(vector amvec, bodyptr btab, int nbody, int woff)
 {
-    bodyptr bp;
-    vector tmpv;
+  bodyptr bp;
+  vector tmpv;
 
-    CLRV(amvec);
-    for (bp = btab; bp < NthBody(btab, nbody); bp = NextBody(bp)) {
-	CROSSVP(tmpv, Vel(bp), Pos(bp));
-	ADDMULVS(amvec, tmpv, Weight(bp, woff));
-    }
+  CLRV(amvec);
+  for (bp = btab; bp < NthBody(btab, nbody); bp = NextBody(bp)) {
+    CROSSVP(tmpv, Vel(bp), Pos(bp));
+    ADDMULVS(amvec, tmpv, Weight(bp, woff));
+  }
 }
 
-/*
- * SNAPKETEN: compute kinetic energy tensor.
- */
+//  snapketen: compute kinetic energy tensor.
+//  _________________________________________
 
 void snapketen(matrix keten, bodyptr btab, int nbody, int woff)
 {
-    bodyptr bp;
-    vector vtmp;
-    matrix mtmp;
+  bodyptr bp;
+  vector vtmp;
+  matrix mtmp;
 
-    CLRM(keten);
-    for (bp = btab; bp < NthBody(btab, nbody); bp = NextBody(bp)) {
-        MULVS(vtmp, Vel(bp), 0.5 * Weight(bp, woff));
-	OUTVP(mtmp, Vel(bp), vtmp);
-	ADDM(keten, keten, mtmp);
-    }
+  CLRM(keten);
+  for (bp = btab; bp < NthBody(btab, nbody); bp = NextBody(bp)) {
+    MULVS(vtmp, Vel(bp), 0.5 * Weight(bp, woff));
+    OUTVP(mtmp, Vel(bp), vtmp);
+    ADDM(keten, keten, mtmp);
+  }
 }
 
-/*
- * SNAPPETEN: compute potential energy tensor.
- */
+//  snappeten: compute potential energy tensor.
+//  ___________________________________________
 
 void snappeten(matrix peten, bodyptr btab, int nbody, int woff)
 {
-    bodyptr bp;
-    vector vtmp;
-    matrix mtmp;
+  bodyptr bp;
+  vector vtmp;
+  matrix mtmp;
 
-    CLRM(peten);
-    for (bp = btab; bp < NthBody(btab, nbody); bp = NextBody(bp)) {
-        MULVS(vtmp, Pos(bp), Weight(bp, woff));
-	OUTVP(mtmp, Acc(bp), vtmp);
-	ADDM(peten, peten, mtmp);
-    }
+  CLRM(peten);
+  for (bp = btab; bp < NthBody(btab, nbody); bp = NextBody(bp)) {
+    MULVS(vtmp, Pos(bp), Weight(bp, woff));
+    OUTVP(mtmp, Acc(bp), vtmp);
+    ADDM(peten, peten, mtmp);
+  }
 }
 
-/*
- * SNAPMITEN: compute moment of inertia tensor.
- */
+//  snapmiten: compute moment of inertia tensor.
+//  ____________________________________________
 
 void snapmiten(matrix miten, bodyptr btab, int nbody, int woff)
 {
-    bodyptr bp;
-    vector vtmp;
-    matrix mtmp;
+  bodyptr bp;
+  vector vtmp;
+  matrix mtmp;
 
-    CLRM(miten);
-    for (bp = btab; bp < NthBody(btab, nbody); bp = NextBody(bp)) {
-        MULVS(vtmp, Pos(bp), Weight(bp, woff));
-	OUTVP(mtmp, Pos(bp), vtmp);
-	ADDM(miten, miten, mtmp);
-    }
+  CLRM(miten);
+  for (bp = btab; bp < NthBody(btab, nbody); bp = NextBody(bp)) {
+    MULVS(vtmp, Pos(bp), Weight(bp, woff));
+    OUTVP(mtmp, Pos(bp), vtmp);
+    ADDM(miten, miten, mtmp);
+  }
 }

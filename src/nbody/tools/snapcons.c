@@ -8,6 +8,7 @@
 #include "vectmath.h"
 #include "filestruct.h"
 #include "phatbody.h"
+#include <string.h>
 
 string defv[] = {		";Construct compound N-body system",
   "in=???",			";Input file with series of models",
@@ -29,7 +30,7 @@ typedef struct _snapshot {
 
 #define get_snapshot(str, snap, tags, ext)				\
   get_snap(str, &(snap).bodies, &(snap).nbody, &(snap).time, tags, ext)
-
+
 int main(int argc, string argv[])
 {
   string *produce, snap_tags[MaxBodyFields], frame_tags[MaxBodyFields];
@@ -64,8 +65,7 @@ int main(int argc, string argv[])
       error("%s: no snapshot in frame file\n", getprog());
     strclose(instr);
     if (frame.nbody < n)
-      error("%s: need at least %d points in frame snapshot\n",
-	    getprog(), n);
+      error("%s: need at least %d points in frame\n", getprog(), n);
   }
   roff = (frame.nbody > 0) && set_member(frame_tags, PosTag);
   voff = (frame.nbody > 0) && set_member(frame_tags, VelTag);

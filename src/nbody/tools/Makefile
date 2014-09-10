@@ -76,3 +76,17 @@ snaptrak: snaptrak.c
 
 snapturn: snapturn.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapturn snapturn.c -lNBody -lClib -lm
+
+# Generate listing of source code.
+
+zeno_tools.ps: makesnap.c snapascii.c snapaux.c snapcenter.c snapcm.c \
+	       snapcollect.c snapcons.c snapforce.c snapkey.c snaplist.c \
+	       snaprect.c snapregister.c snaprotate.c snapset.c snapsift.c \
+	       snapsort.c snapsplit.c snapstack.c snapstream.c snaptrak.c \
+	       snapturn.c
+	enscript -M Letterdj -o zeno_tools.ps \
+	       makesnap.c snapascii.c snapaux.c snapcenter.c snapcm.c \
+	       snapcollect.c snapcons.c snapforce.c snapkey.c snaplist.c \
+	       snaprect.c snapregister.c snaprotate.c snapset.c snapsift.c \
+	       snapsort.c snapsplit.c snapstack.c snapstream.c snaptrak.c \
+	       snapturn.c

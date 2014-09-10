@@ -1,5 +1,5 @@
 /*
- * BODYTAGS.H: definitions for N-body snapshot files.
+ * bodytags.h: definitions for N-body snapshot files.
  */
 
 #ifndef _bodytags_h
@@ -7,9 +7,8 @@
 
 #define BodyTag  "Body"
 
-/* 
- * Item tags for SnapShot components.
- */
+//  Item tags for SnapShot components.
+//  __________________________________
 
 #define SnapShotTag		"SnapShot"
 
@@ -39,18 +38,17 @@
 #define     AuxTag              "Aux"
 #define     AuxVecTag           "AuxVec"
 
+//  Tags from older implementations.
+//  ________________________________
+
+#define     NobjTag             "Nobj"
+#define     PhaseTag            "PhaseSpace"
+
 #define   DiagnosticsTag	"Diagnostics"
 #define     EnergyTag           "Energy"
 #define     KETensorTag         "KETensor"
 #define     PETensorTag		"PETensor"
 #define     AMVectorTag		"AMVector"
 #define     CMPhaseTag	        "CMPhaseSpace"
-
-/*
- * Tags from older implementations.
- */
-
-#define     NobjTag             "Nobj"
-#define     PhaseTag            "PhaseSpace"
 
 #endif /* ! _bodytags_h */

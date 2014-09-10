@@ -8,33 +8,35 @@
 #include "vectdefs.h"
 #include "filestruct.h"
 #include "phatbody.h"
+#include "buildmap.h"
+#include <unistd.h>
 
 string defv[] = {               ";Select bodies obeying predicate",
   "in=???",                     ";Input snapshot file name",
   "out=???",                    ";Output snapshot file name",
   "times=all",                  ";Range of times to process",
-  "sieve=i%4==0",               ";Predicate to select bodies",
+  "sieve=???",                  ";C language predicate to select bodies.",
+				";Bound variables, depending on input, are:",
+				  SNAPMAP_BODY_VARS ".",
   "require=",			";Input items required",
   "produce=",			";Output items produced",
   "passall=true",		";If true, pass on input data",
   "seed=",			";Seed for random number generator",
-  "VERSION=2.1",                ";Josh Barnes  10 February 2011",
+  "VERSION=2.1",                ";Josh Barnes  9 Sep 2014",
   NULL,
 };
 
-void buildmap(string, string *, string *, string *, string, int);
+void snapsift(bodyptr, int *, bodyptr, int);	// sift array of bodies
+stream execmap(string);				// start snapmap process
+void del_tag(string *, string *, string);	// remove tag from list
 
 string names[2] = { "Sieve",  NULL };
 string exprs[2] = { NULL,     NULL };
 string types[2] = { BoolType, NULL };
 
-stream execmap(string);				// start snapmap process
-void snapsift(bodyptr, int *, bodyptr, int);	// sift array of bodies
-void del_tag(string *, string *, string);	// remove tag from list
-
 #define SieveField  phatbody[NewBodyFields+0]
 #define Sieve(b)  SelectBool(b, SieveField.offset)
-
+
 int main(int argc, string argv[])
 {
   string prog, itags[MaxBodyFields], otags[MaxBodyFields];
@@ -44,9 +46,9 @@ int main(int argc, string argv[])
   real tnow;
 
   initparam(argv, defv);
-  prog = tempnam("/tmp", "sm");
   exprs[0] = getparam("sieve");
-  buildmap(prog, names, exprs, types, Precision, NDIM);
+  prog = tempnam("/tmp", "sm");
+  buildmap(prog, names, exprs, types, NULL, Precision, NDIM, TRUE);
   xstr = execmap(prog);			// start map process running
   if (get_tag_ok(xstr, "History"))
     skip_item(xstr);
@@ -70,7 +72,23 @@ int main(int argc, string argv[])
   return (0);
 }
 
-#include <unistd.h>
+void snapsift(bodyptr bout, int *nout, bodyptr btab, int nbody)
+{
+  bodyptr src = btab, dst = bout;
+
+  *nout = 0;
+  while (src < NthBody(btab, nbody)) {
+    if (Sieve(src)) {
+      memcpy(dst, src, SizeofBody);
+      dst = NextBody(dst);
+      (*nout)++;
+    }
+    src = NextBody(src);
+  }
+}
+
+//  execmap: start snapmap subprocess, and return snapmap output stream.
+//  ____________________________________________________________________
 
 stream execmap(string prog)
 {
@@ -90,21 +108,6 @@ stream execmap(string prog)
   close(handle[1]);
   sprintf(handbuf, "-%d", handle[0]);
   return (stropen(handbuf, "r"));
-}
-
-void snapsift(bodyptr bout, int *nout, bodyptr btab, int nbody)
-{
-  bodyptr src = btab, dst = bout;
-
-  *nout = 0;
-  while (src < NthBody(btab, nbody)) {
-    if (Sieve(src)) {
-      memcpy(dst, src, SizeofBody);
-      dst = NextBody(dst);
-      (*nout)++;
-    }
-    src = NextBody(src);
-  }
 }
 
 void del_tag(string *olist, string *ilist, string tag)

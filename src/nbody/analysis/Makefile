@@ -36,3 +36,11 @@ snapstat_new: snapstat_new.c
 
 sm_x.so: sm_x.c
 	$(ZCC) $(ZCCFLAGS) -shared -o sm_x.so -fPIC sm_x.c
+
+# Generate listing of source code.
+
+zeno_analysis.ps: snapavg.c snaphist.c snapobject.c snaprholist.c \
+	          snapshape.c snapstat.c snapstat_new.c
+	enscript -M Letterdj -o zeno_analysis.ps \
+	          snapavg.c snaphist.c snapobject.c snaprholist.c \
+	          snapshape.c snapstat.c snapstat_new.c

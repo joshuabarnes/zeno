@@ -18,22 +18,22 @@
 
 string defv[] = {		";Construct N-body realization of GSP.",
 				";Uses Abel integral to compute DF.",
-    "gsp=???",			";Input GSP for density profile",
-    "out=",			";Output snapshot file with bodies",
-    "grav=",		        ";Input GSP for gravitational potential.",
+  "gsp=???",			";Input GSP for density profile",
+  "out=",			";Output snapshot file with bodies",
+  "grav=",		        ";Input GSP for gravitational potential.",
 				";If blank, use density profile GSP.",
-    "nstep=128",		";Integration steps for DF calculation",
-    "dflist=false",		";Print out distribution function",
-    "copies=1",			";Number of realizations to produce",
-    "nbody=4096",		";Number of bodies per realization",
-    "seed=54321",		";Seed for random number generator",
-    "randrad=true",		";Pick radii randomly from M'(r).",
+  "nstep=128",			";Integration steps for DF calculation",
+  "dflist=false",		";Print out distribution function",
+  "copies=1",			";Number of realizations to produce",
+  "nbody=4096",			";Number of bodies per realization",
+  "seed=54321",			";Seed for random number generator",
+  "randrad=true",		";Pick radii randomly from M'(r).",
 				";If false, sample radii uniformly.",
-    "besort=true",		";Sort particles by binding energy",
-    "zerocm=false",		";Transform to center of mass coords",
-    "hmaxpar=1024,1.25",	";Parameters for hmax function",
-    "VERSION=2.2",		";Josh Barnes  14 July 2012",
-    NULL,
+  "besort=true",		";Sort particles by binding energy",
+  "zerocm=false",		";Transform to center of mass coords",
+  "hmaxpar=1024,1.25",		";Parameters for hmax function",
+  "VERSION=2.2",		";Josh Barnes  14 July 2012",
+  NULL,
 };
 
 // Prototypes for model construction.
@@ -64,8 +64,8 @@ local int nbody;			// number of bodies in array
 
 local string bodyfields[] = { PosTag, VelTag, MassTag, PhiTag, AuxTag, NULL };
 
-//  ________________________________________________
 //  main: handle I/O and call construction routines.
+//  ________________________________________________
 
 int main(int argc, string argv[])
 {
@@ -105,8 +105,8 @@ int main(int argc, string argv[])
   return (0);
 }
 
-//  __________________________________________________________
 //  computedf: numerically integrate F(E) and tabulate result.
+//  __________________________________________________________
 
 local void computedf(void)
 {
@@ -150,8 +150,8 @@ local void computedf(void)
   }
 }    
 
-//  ________________________________________
 //  dfderiv: evaluate dF/dx for computedf().
+//  ________________________________________
 
 local void dfderiv(real *dxFE, real *xFE)
 {
@@ -166,8 +166,8 @@ local void dfderiv(real *dxFE, real *xFE)
 	  getprog(), xFE[0], xFE[2], r);
 }
 
-//  _____________________________________________________
 //  inithmax: initalize the table used to find hmax(phi).
+//  _____________________________________________________
 
 local void inithmax(void)
 {
@@ -194,8 +194,8 @@ local void inithmax(void)
   spline(hcoef, Etab, htab, ntab);
 }
 
-//  _____________________________________________________________
 //  gsprealize: construct realization from distribution function.
+//  _____________________________________________________________
 
 local void gsprealize(void)
 {
@@ -246,8 +246,8 @@ local void gsprealize(void)
     snapcenter(btab, nbody, MassField.offset);
 }
 
-//  _____________________________________________________
 //  pickspeed: chose speed distributed according to h(v).
+//  _____________________________________________________
 
 local bool pickspeed(real *vp, real phi)
 {
@@ -291,8 +291,8 @@ local bool pickspeed(real *vp, real phi)
   return (TRUE);
 }
 
-//  _________________________________________________________
 //  h_v: compute speed distribution (up to a factor of 4 PI).
+//  _________________________________________________________
 
 local real h_v(real v, real phi)
 {
@@ -304,8 +304,8 @@ local real h_v(real v, real phi)
   return (v * v * f_E(E));
 }
 
-//  ___________________________________
 //  f_e: compute distribution function.
+//  ___________________________________
 
 local real f_E(real E)
 {
@@ -320,8 +320,8 @@ local real f_E(real E)
   return (f);
 }
 
-//  ______________________________________
 //  berank: rank bodies by binding energy.
+//  ______________________________________
 
 local int berank(const void *a, const void *b)
 {

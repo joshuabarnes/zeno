@@ -1,6 +1,5 @@
 /*
- * SNAPSHAPE.C: read a snapshot file and calculate shape and rms radius.
- * Note -- this version assumes snapshot has been centered and sorted!
+ * snapshape.c: read a snapshot file and calculate shape and rms radius.
  */
 
 #include "stdinc.h"
@@ -9,28 +8,26 @@
 #include "filestruct.h"
 #include "vectmath.h"
 #include "phatbody.h"
-
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_eigen.h>
 
 string defv[] = {	       	";Estimate ellipticity & r.m.s. radius",
-    "in=???",			";Input snap: already centered, sorted",
-    "nbin=8",			";Number of radial bins to list",
-    "listvec=false",		";List eigen-vectors also",
-    "VERSION=1.2",		";Josh Barnes  30 July 2011",
-    NULL,
+  "in=???",			";Input snapshot, centered and sorted",
+  "nbin=8",			";Number of radial bins to list",
+  "listvec=false",		";If true, ist eigen-vectors also",
+  "VERSION=1.2",		";Josh Barnes  9 Sep 2014",
+  NULL,
 };
 
-void eigensolve(vector vec1, vector vec2, vector vec3,
-		real *vals, matrix symmat);
+void eigensolve(vector, vector, vector,	real *, matrix);
 
 int main(int argc, string argv[])
 {
   stream istr;
+  string bodytags[] = { PosTag, NULL }, intags[MaxBodyFields];
   bodyptr btab = NULL, bp;
   int nbody, nshell, n;
   real tnow, vals[3];
-  string bodytags[] = { PosTag, NULL }, intags[MaxBodyFields];
   matrix tmpm, qmat;
   vector v1, v2, v3;
 
