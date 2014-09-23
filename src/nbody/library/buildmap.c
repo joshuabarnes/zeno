@@ -84,6 +84,14 @@ void buildmap(string prog, string *names, string *exprs, string *types,
     error("%s: can't unlink %s\n", getprog(), src);
 }
 
+//  getmapdefs: return a pointer to the mapdefs table.
+//  __________________________________________________
+
+string *getmapdefs(void)
+{
+  return ((string *) mapdefs);
+}
+
 //  mapdefs: mapping between identifiers used in expressions and macro names.
 //  _________________________________________________________________________
 
@@ -121,14 +129,6 @@ local string mapdefs[][2] = {
   { "auxvz",   "AuxVecZ" },
   { NULL,      NULL      }
 };
-
-//  getmapdefs:
-//  ___________
-
-string *getmapdefs(void)
-{
-  return ((string *) mapdefs);
-}
 
 //  expdefs: quantities derived from basic variables.
 //  _________________________________________________
@@ -149,7 +149,7 @@ local string expdefs[][2] = {
   { "tauz",    "(ax*y - ay*x)"                    },
   { NULL,       NULL                              }
 };
-
+
 #ifdef TESTBED
 
 string defv[] = {		";Invoke buildmap routine",

@@ -88,9 +88,6 @@ int main(int argc, string argv[])
   return (0);
 }
 
-#include <unistd.h>
-#include <sys/wait.h>
-
 //  execmap: use compiled program to map input snap to output snap.
 //  _______________________________________________________________
 
