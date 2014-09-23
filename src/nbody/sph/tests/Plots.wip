@@ -1,0 +1,553 @@
+define limMinMax
+  xcol 1
+  ycol $1
+  limits
+  set \0 y1
+  ycol $2
+  limits
+  limits x1 x2 \0 y2
+end
+
+define limMinMaxLog
+  xcol 1
+  ycol $1
+  log y
+  limits
+  set \0 y1
+  ycol $2
+  log y
+  limits
+  limits x1 x2 \0 y2
+end
+
+define plotRad
+  data r$1/r$1_rad.txt
+  limMinMaxLog 3 9
+  box BCNST BCNST
+  xlabel t
+  ylabel log r
+  xcol 1
+  ycol 3
+  log y
+  conn
+  ycol 4
+  log y
+  conn
+  ycol 5
+  log y
+  conn
+  ycol 6
+  log y
+  conn
+  ycol 7
+  log y
+  conn
+  ycol 8
+  log y
+  conn
+  ycol 9
+  log y
+  conn
+  ycol 10
+  log y
+  lstyle 4
+  conn
+  lstyle 1
+end
+
+define plotEnergy
+  data r$1/r$1_energy.txt
+  limMinMax 5 6
+  set \0 (-1 * y1)
+  limits x1 x2 y1 \0
+  box BCNST BNST
+  xlabel t
+  ylabel E
+  ycol 3
+  color 2
+  connect
+  ycol 4
+  color 3
+  connect
+  ycol 5
+  color 4
+  connect
+  ycol 6
+  color 5
+  connect
+  color 1
+  ycol 2
+  limits
+  box 0 CMST
+  mtext R 2.2 0.5 0.5 E\dtot\u
+  lstyle 2
+  connect
+  lstyle 1
+end
+
+define plotRho
+  data r$1/r$1_rho.txt
+  limMinMaxLog 2 10
+  box BCNST BCNST
+  xlabel t
+  ylabel log \gr
+  xcol 1
+  ycol 2
+  log y
+  lstyle 4
+  conn
+  lstyle 1
+  ycol 3
+  log y
+  conn
+  ycol 4
+  log y
+  conn
+  ycol 5
+  log y
+  conn
+  ycol 6
+  log y
+  conn
+  ycol 7
+  log y
+  conn
+  ycol 8
+  log y
+  conn
+  ycol 9
+  log y
+  conn
+  ycol 10
+  log y
+  lstyle 4
+  conn
+  lstyle 1
+end
+
+define plotTstep
+  data r$1/r$1_tstep.txt
+  xcol 1
+  ycol 2
+  limits
+  limits x1 x2 -5 105
+  box BCNST BNST
+  xlabel t
+  ylabel \gDt bin (%)
+  ycol 6
+  conn
+  ycol 7
+  color 2
+  conn
+  ycol 8
+  color 3
+  conn
+  ycol 9
+  color 4
+  conn
+  ycol 10
+  color 5
+  conn
+  color 1
+  ycol 5
+  log y
+  limits
+  box 0 CMST
+  mtext R 2.2 0.5 0.5 log (1/\gDt)\davg\u
+  lstyle 2
+  connect
+  lstyle 1
+end
+
+define plotUdot
+  data r$1/r$1_udot.txt
+  limMinMax 9 9
+  box BCNST BCNST
+  xlabel t
+  ylabel du/dt
+  xcol 1
+  ycol 2
+  lstyle 4
+  conn
+  lstyle 1
+  ycol 3
+  conn
+  ycol 4
+  conn
+  ycol 5
+  conn
+  ycol 6
+  conn
+  ycol 7
+  conn
+  ycol 8
+  conn
+  ycol 9
+  conn
+  ycol 10
+  lstyle 4
+  conn
+  lstyle 1
+end
+
+define plotEntf
+  data r$1/r$1_entf.txt
+  limMinMaxLog 2 10
+  box BCNST BCNST
+  xlabel t
+  ylabel log a(S)
+  xcol 1
+  ycol 2
+  log y
+  lstyle 4
+  conn
+  lstyle 1
+  ycol 3
+  log y
+  conn
+  ycol 4
+  log y
+  conn
+  ycol 5
+  log y
+  conn
+  ycol 6
+  log y
+  conn
+  ycol 7
+  log y
+  conn
+  ycol 8
+  log y
+  conn
+  ycol 9
+  log y
+  conn
+  ycol 10
+  log y
+  lstyle 4
+  conn
+  lstyle 1
+end
+
+define plotUint
+  data r$1/r$1_uint.txt
+  limMinMaxLog 2 10
+  box BCNST BCNST
+  xlabel t
+  ylabel log u
+  xcol 1
+  ycol 2
+  log y
+  lstyle 4
+  conn
+  lstyle 1
+  ycol 3
+  log y
+  conn
+  ycol 4
+  log y
+  conn
+  ycol 5
+  log y
+  conn
+  ycol 6
+  log y
+  conn
+  ycol 7
+  log y
+  conn
+  ycol 8
+  log y
+  conn
+  ycol 9
+  log y
+  conn
+  ycol 10
+  log y
+  lstyle 4
+  conn
+  lstyle 1
+end
+
+define plotUdotvis
+  data r$1/r$1_udotvis.txt
+  limMinMax 9 9
+  box BCNST BCNST
+  xlabel t
+  ylabel du\dvis\u/dt
+  xcol 1
+  ycol 2
+  lstyle 4
+  conn
+  lstyle 1
+  ycol 3
+  conn
+  ycol 4
+  conn
+  ycol 5
+  conn
+  ycol 6
+  conn
+  ycol 7
+  conn
+  ycol 8
+  conn
+  ycol 9
+  conn
+  ycol 10
+  lstyle 4
+  conn
+  lstyle 1
+end
+
+define plotUdotrad
+  data r$1/r$1_udotrad.txt
+  limMinMax 3 3
+  box BCNST BCNST
+  xlabel t
+  ylabel du\drad\u/dt
+  xcol 1
+  ycol 2
+  lstyle 4
+  conn
+  lstyle 1
+  ycol 3
+  conn
+  ycol 4
+  conn
+  ycol 5
+  conn
+  ycol 6
+  conn
+  ycol 7
+  conn
+  ycol 8
+  conn
+  ycol 9
+  conn
+  ycol 10
+  lstyle 4
+  conn
+  lstyle 1
+end
+
+define plotTau
+  data r$1/r$1_tau.txt
+  limMinMaxLog 2 10
+  box BCNST BCNST
+  xlabel t
+  ylabel log \gt
+  xcol 1
+  ycol 2
+  log y
+  lstyle 4
+  conn
+  lstyle 1
+  ycol 3
+  log y
+  conn
+  ycol 4
+  log y
+  conn
+  ycol 5
+  log y
+  conn
+  ycol 6
+  log y
+  conn
+  ycol 7
+  log y
+  conn
+  ycol 8
+  log y
+  conn
+  ycol 9
+  log y
+  conn
+  ycol 10
+  log y
+  lstyle 4
+  conn
+  lstyle 1
+end
+
+define plot121
+  dev r121.ps/vcps
+  mtext T 2.0 0.5 0.5 Run 121
+  panel 2 4 7
+  plotRad 121
+  panel 2 4 8
+  plotEnergy 121
+  panel 2 4 5
+  plotRho 121
+  panel 2 4 6
+  plotTstep 121
+  panel 2 4 3
+  plotUdot 121
+  panel 2 4 4
+  plotEntf 121
+  dev /null
+end
+
+define plot122
+  dev r122.ps/vcps
+  mtext T 2.0 0.5 0.5 Run 122
+  panel 2 4 7
+  plotRad 122
+  panel 2 4 8
+  plotEnergy 122
+  panel 2 4 5
+  plotRho 122
+  panel 2 4 6
+  plotTstep 122
+  panel 2 4 3
+  plotUdot 122
+  dev /null
+end
+
+define plot123
+  dev r123.ps/vcps
+  mtext T 2.0 0.5 0.5 Run 123
+  panel 2 4 7
+  plotRad 123
+  panel 2 4 8
+  plotEnergy 123
+  panel 2 4 5
+  plotRho 123
+  panel 2 4 6
+  plotTstep 123
+  panel 2 4 3
+  plotUdotvis 123
+  panel 2 4 4
+  plotUint 123
+  dev /null
+end
+
+define plot124
+  dev r124.ps/vcps
+  mtext T 2.0 0.5 0.5 Run 124
+  panel 2 4 7
+  plotRad 124
+  panel 2 4 8
+  plotEnergy 124
+  panel 2 4 5
+  plotRho 124
+  panel 2 4 6
+  plotTstep 124
+  panel 2 4 3
+  plotUdotvis 124
+  dev /null
+end
+
+define plot125
+  dev r125.ps/vcps
+  mtext T 2.0 0.5 0.5 Run 125
+  panel 2 4 7
+  plotRad 125
+  panel 2 4 8
+  plotEnergy 125
+  panel 2 4 5
+  plotRho 125
+  panel 2 4 6
+  plotTstep 125
+  panel 2 4 3
+  plotUdotvis 125
+  panel 2 4 4
+  plotUint 125
+  dev /null
+end
+
+define plot126
+  dev r126.ps/vcps
+  mtext T 2.0 0.5 0.5 Run 126
+  panel 2 4 7
+  plotRad 126
+  panel 2 4 8
+  plotEnergy 126
+  panel 2 4 5
+  plotRho 126
+  panel 2 4 6
+  plotTstep 126
+  panel 2 4 3
+  plotUdotvis 126
+  panel 2 4 4
+  plotUint 126
+  panel 2 4 1
+  plotUdotrad 126
+  dev /null
+end
+
+define plot127
+  dev r127.ps/vcps
+  mtext T 2.0 0.5 0.5 Run 127
+  panel 2 4 7
+  plotRad 127
+  panel 2 4 8
+  plotEnergy 127
+  panel 2 4 5
+  plotRho 127
+  panel 2 4 6
+  plotTstep 127
+  panel 2 4 3
+  plotUdotvis 127
+  panel 2 4 4
+  plotUint 127
+  panel 2 4 1
+  plotUdotrad 127
+  panel 2 4 2
+  plotTau 127
+  dev /null
+end
+
+define plot128
+  dev r128.ps/vcps
+  mtext T 2.0 0.5 0.5 Run 128
+  panel 2 4 7
+  plotRad 128
+  panel 2 4 8
+  plotEnergy 128
+  panel 2 4 5
+  plotRho 128
+  panel 2 4 6
+  plotTstep 128
+  panel 2 4 3
+  plotUdotvis 128
+  panel 2 4 4
+  plotUint 128
+  panel 2 4 1
+  plotUdotrad 128
+  panel 2 4 2
+  plotTau 128
+  dev /null
+end
+
+define plot129
+  dev r129.ps/vcps
+  mtext T 2.0 0.5 0.5 Run 129
+  panel 2 4 7
+  plotRad 129
+  panel 2 4 8
+  plotEnergy 129
+  panel 2 4 5
+  plotRho 129
+  panel 2 4 6
+  plotTstep 129
+  panel 2 4 3
+  plotUdotvis 129
+  panel 2 4 4
+  plotUint 129
+  dev /null
+end
+
+define plot12X
+  plot121
+  plot122
+  plot123
+  plot124
+  plot125
+  plot126
+  plot127
+  plot128
+  plot129
+end

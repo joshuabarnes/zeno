@@ -1,0 +1,86 @@
+# ~/zeno/src/nbody/tree/treecode1.4/tests/TreeTests
+
+err2_005_8q.txt: grav2_005_ds.dat grav2_005_8q.dat
+	$(MAKE) -f TreeTests list_errors EC=005 FC=8q
+
+err2_005_8e.txt: grav2_005_ds.dat grav2_005_8e.dat
+	$(MAKE) -f TreeTests list_errors EC=005 FC=8e
+
+err2_005_8m.txt: grav2_005_ds.dat grav2_005_8m.dat
+	$(MAKE) -f TreeTests list_errors EC=005 FC=8m
+
+err2_005_5q.txt: grav2_005_ds.dat grav2_005_5q.dat
+	$(MAKE) -f TreeTests list_errors EC=005 FC=5q
+
+err2_005_5e.txt: grav2_005_ds.dat grav2_005_5e.dat
+	$(MAKE) -f TreeTests list_errors EC=005 FC=5e
+
+err2_005_5m.txt: grav2_005_ds.dat grav2_005_5m.dat
+	$(MAKE) -f TreeTests list_errors EC=005 FC=5m
+
+err2_025_8q.txt: grav2_025_ds.dat grav2_025_8q.dat
+	$(MAKE) -f TreeTests list_errors EC=025 FC=8q
+
+err2_025_8e.txt: grav2_025_ds.dat grav2_025_8e.dat
+	$(MAKE) -f TreeTests list_errors EC=025 FC=8e
+
+err2_025_8m.txt: grav2_025_ds.dat grav2_025_8m.dat
+	$(MAKE) -f TreeTests list_errors EC=025 FC=8m
+
+list_errors: 
+	(snapsift grav2_$(EC)_$(FC).dat - sieve="i<4096" | \
+	   snapset - - produce=Aux,AuxVec aux=phi auxvx=ax auxvy=ay auxvz=az ; \
+	 cat grav2_$(EC)_ds.dat ) | \
+	  snapcollect - - | \
+	    snapset - - auxvx=r auxvy="aux/phi-1" auxvz="distv(auxv,acc)/absv(acc)" | \
+	      snaplist - AuxVec auxhead=aux,r,errPhi,errAcc > err2_$(EC)_$(FC).txt
+
+########################################################################################
+
+cusp2.dat:
+	makesnap out=cusp2.dat shape=cusp nbody=1m
+
+grav2_005_ds.dat: cusp2.dat
+	snapforce in=cusp2.dat out=grav2_005_ds.dat nforce=4k eps=0.005
+
+grav2_005_8q.dat: cusp2.dat
+	treecode cusp2.dat grav2_005_8q.dat eps=0.005 theta=0.8 usequad=t \
+	         tstop=0 outputs=Position,Velocity,Mass,Potential,Acceleration
+
+grav2_005_8m.dat: cusp2.dat
+	treecode cusp2.dat grav2_005_8m.dat eps=0.005 theta=0.8 usequad=f \
+	         tstop=0 outputs=Position,Velocity,Mass,Potential,Acceleration
+
+grav2_005_5q.dat: cusp2.dat
+	treecode cusp2.dat grav2_005_5q.dat eps=0.005 theta=0.5 usequad=t \
+	         tstop=0 outputs=Position,Velocity,Mass,Potential,Acceleration
+
+grav2_005_5m.dat: cusp2.dat
+	treecode cusp2.dat grav2_005_5m.dat eps=0.005 theta=0.5 usequad=f \
+	         tstop=0 outputs=Position,Velocity,Mass,Potential,Acceleration
+
+grav2_025_ds.dat: cusp2.dat
+	snapforce in=cusp2.dat out=grav2_025_ds.dat nforce=4k eps=0.025
+
+grav2_025_8q.dat: cusp2.dat
+	treecode cusp2.dat grav2_025_8q.dat eps=0.025 theta=0.8 usequad=t \
+	         tstop=0 outputs=Position,Velocity,Mass,Potential,Acceleration
+
+grav2_025_8m.dat: cusp2.dat
+	treecode cusp2.dat grav2_025_8m.dat eps=0.025 theta=0.8 usequad=f \
+	         tstop=0 outputs=Position,Velocity,Mass,Potential,Acceleration
+
+# Bias MUCH reduced by opening all cells smaller than epsilon.  To build code,
+# do 'make treecode_ec X=_ec OPTIONS="-DEPSCRITR -DFACTIVE=10"'
+
+grav2_005_8e.dat: cusp2.dat
+	treecode_ec cusp2.dat grav2_005_8e.dat eps=0.005 theta=0.8 usequad=t \
+	         tstop=0 outputs=Position,Velocity,Mass,Potential,Acceleration
+
+grav2_005_5e.dat: cusp2.dat
+	treecode_ec cusp2.dat grav2_005_5e.dat eps=0.005 theta=0.5 usequad=t \
+	         tstop=0 outputs=Position,Velocity,Mass,Potential,Acceleration
+
+grav2_025_8e.dat: cusp2.dat
+	treecode_ec cusp2.dat grav2_025_8e.dat eps=0.025 theta=0.8 usequad=t \
+	         tstop=0 outputs=Position,Velocity,Mass,Potential,Acceleration

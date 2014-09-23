@@ -1,0 +1,26 @@
+# ~/nbody/fspmodels/Zeno: mantain Zeno directories.
+
+install: .install_inc .install_lib .install_bin
+
+INCFILES = fsp.h
+LIBFILES = libFSP.a
+
+include Makefile
+
+.install_inc: $(INCFILES)
+	cp $(INCFILES) $(ZENOPATH)/inc
+	@touch .install_inc
+
+.install_lib: $(LIBFILES)
+	cp $(LIBFILES) $(ZENOPATH)/lib
+	@touch .install_lib
+
+.install_bin: $(BINFILES)
+	mv $(BINFILES) $(ZENOPATH)/bin
+	@touch .install_bin
+
+# Targets used to clean up.
+
+reset:
+	make tidy
+	rm -f .install_inc .install_lib $(LIBFILES) $(BINFILES)

@@ -1,0 +1,25 @@
+# ~/lib/nrec/Zeno: mantain Zeno directories.
+
+INCFILES = nrutil.h
+
+LIBFILES = libNumRec.a
+
+# Targets used to export things to Zeno.
+
+install: .install_inc .install_lib
+
+include Makefile
+
+.install_inc: $(INCFILES)
+	cp $(INCFILES) $(ZENOPATH)/inc
+	@touch .install_inc
+
+.install_lib: $(LIBFILES)
+	cp $(LIBFILES) $(ZENOPATH)/lib
+	@touch .install_lib
+
+# Targets used to clean up.
+
+reset:
+	make tidy
+	rm -f .install_inc .install_lib $(LIBFILES)

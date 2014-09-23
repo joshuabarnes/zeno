@@ -26,6 +26,9 @@ string defv[] = {		";Rotate N-body configuration",
   NULL,
 };
 
+//  snapshot: prototype of high-level snapshot structure, and some macros.
+//  ______________________________________________________________________
+
 typedef struct {
   bodyptr bodies;
   int nbody;
