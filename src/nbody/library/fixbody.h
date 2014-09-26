@@ -51,7 +51,7 @@ bool get_snap_t(stream, bodyptr *, int *, real *, string *, bool, string);
 //  _____________________________________________________________
 
 #define MaxBodyFields  25			// total number of fields
-#define NewBodyFields  16			// index of 1st free field
+#define NewBodyFields  20			// index of 1st free field
 
 extern ps_field phatbody[MaxBodyFields];	// describe phat bodies
 

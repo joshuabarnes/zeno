@@ -22,8 +22,8 @@ void layout_body(string *, string, int);
 //  Snapshot i/o functions.
 //  _______________________
 
-#if defined(threedim)
-#  if defined(singleprec) || defined(mixedprec)
+#if defined(THREEDIM)
+#  if defined(SINGLEPREC) || defined(MIXEDPREC)
 #    define put_snap    f3put_snap
 #    define get_snap    f3get_snap
 #    define get_snap_t  f3get_snap_t
