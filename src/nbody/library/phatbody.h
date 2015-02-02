@@ -17,7 +17,9 @@ typedef void *bodyptr;
 //  layout_body: structure definition routine.
 //  __________________________________________
 
-void layout_body(string *, string, int);
+void layout_body(string *tags,		// list of body fields to define
+		 string prec,		// determines size of real value
+		 int ndim);		// determines length of vectors
 
 //  Snapshot i/o functions.
 //  _______________________
@@ -65,9 +67,11 @@ extern ps_field phatbody[MaxBodyFields];	// describe phat bodies
 #define BirthField     phatbody[15]
 #define DeathField     phatbody[16]
 #define KeyField       phatbody[17]
-#define AuxField       phatbody[18]
-#define AuxVecField    phatbody[19]
-#define NewBodyFields		20		// index of 1st free field
+#define KeyArrField    phatbody[18]
+#define AuxField       phatbody[19]
+#define AuxVecField    phatbody[20]
+#define AuxArrField    phatbody[21]
+#define NewBodyFields		22		// index of 1st free field
 
 //  SizeofBody: number of bytes per body.
 //  _____________________________________
@@ -81,16 +85,16 @@ extern ps_field phatbody[MaxBodyFields];	// describe phat bodies
 #define PrevBody(bp)  ((bodyptr) ((byte *)(bp) - SizeofBody))
 #define NthBody(bp,n) ((bodyptr) ((byte *)(bp) + SizeofBody * (n)))
 
-//  SafeOffset: If SafeSelect is defined, referencing an nonexistent
-//  body component will produce an intelligible error message, else
-//  if not, the result is undefined.
-//  ________________________________________________________________
+//  SafeOffset: If SafeSelect is defined, referencing a body component
+//  which is not defined will produce an intelligible error message.
+//  If not, the result is undefined.
+//  __________________________________________________________________
 
 #if defined(SafeSelect)
 #  include "getparam.h"
 #  define SafeOffset(field) \
 	    (field.offset != BadOffset ? field.offset :	\
-	      (error("%s: %s undefined\n", getargv0(), field.name), 0))
+	      (error("%s: %s undefined\n", getprog(), field.name), 0))
 #else
 #  define SafeOffset(field) (field.offset)
 #endif
@@ -124,10 +128,12 @@ extern ps_field phatbody[MaxBodyFields];	// describe phat bodies
 #define Birth(b)     SelectReal(b, SafeOffset(BirthField))
 #define Death(b)     SelectReal(b, SafeOffset(DeathField))
 #define Key(b)       SelectInt(b,  SafeOffset(KeyField))
+#define KeyArr(b)    SelectIArr(b, SafeOffset(KeyArrField))
 #define Aux(b)       SelectReal(b, SafeOffset(AuxField))
 #define AuxVec(b)    SelectVect(b, SafeOffset(AuxVecField))
 #define AuxVecX(b)   (AuxVec(b)[0])
 #define AuxVecY(b)   (AuxVec(b)[1])
 #define AuxVecZ(b)   (AuxVec(b)[2])
+#define AuxArr(b)    SelectRArr(b, SafeOffset(AuxArrField))
 
 #endif /* ! _phatbody_h */
