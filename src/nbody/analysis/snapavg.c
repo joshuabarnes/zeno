@@ -51,7 +51,7 @@ int main(int argc, string argv[])
 
   initparam(argv, defv);
   exprs[0] = getparam("value");
-  prog = tempnam("/tmp", "sm");
+  prog = mktemp((string) copxstr("/tmp/sm_XXXXXX", sizeof(char)));
   buildmap(prog, names, exprs, types, NULL, Precision, NDIM, TRUE);
   xstr = execmap(prog);
   if (get_tag_ok(xstr, "History"))

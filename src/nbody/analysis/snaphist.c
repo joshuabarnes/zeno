@@ -57,7 +57,7 @@ int main(int argc, string argv[])
     exprs[1] = getparam("weight");
   else
     names[1] = exprs[1] = types[1] = NULL;
-  prog = tempnam("/tmp", "sm");
+  prog = mktemp((string) copxstr("/tmp/sm_XXXXXX", sizeof(char)));
   buildmap(prog, names, exprs, types, NULL, Precision, NDIM, TRUE);
   xstr = execmap(prog, exprs[1] != NULL);
   get_history(xstr);

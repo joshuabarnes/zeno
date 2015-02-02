@@ -42,7 +42,7 @@ int main(int argc, string argv[])
 
   initparam(argv, defv);
   layout_body(fields, Precision, NDIM);
-  prog = tempnam("/tmp", "sm");
+  prog = mktemp((string) copxstr("/tmp/sm_XXXXXX", sizeof(char)));
   xstr = execmap(prog);
   get_history(xstr);
   nprof = getiparam("nprof");
