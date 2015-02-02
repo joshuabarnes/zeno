@@ -64,10 +64,10 @@ void put_history(stream outstr)
 //  add_history: add item to history array.
 //  _______________________________________
 
-void add_history(string s)
+void add_history(string str)
 {
   if (nhist < MAXHIST-1)			// enough room for data?
-    histbuf[nhist] = s;
+    histbuf[nhist] = str;
   else if (nhist == MAXHIST-1)			// just reached maximum?
     eprintf("[%s.add_history: WARNING: too much history]\n", getprog());
   nhist++;
