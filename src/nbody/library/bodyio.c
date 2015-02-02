@@ -1,5 +1,5 @@
 /*
- * bodyio.c: Input/Output code for phat body arrays.
+ * bodyio.c: Input/output code for phat body arrays.
  */
 
 #include "stdinc.h"
@@ -13,11 +13,16 @@ local void put_parameters(stream, int *, real *);
 local void put_particles(stream, bodyptr *, int *, string *);
 
 local void get_parameters(stream, int *, real *);
-local void add_known_fields(stream);
 local void get_particles(stream, bodyptr *, int *, string *);
 
+local void add_body_fields(stream);
 local void set_mask(int *, int, int, int);
+local string clean_tag(string tag);
 
+#ifndef TimeFuzz
+#  define TimeFuzz  0.001		// tolerance in time comparison
+#endif
+
 //  put_snap: write snapshot to structured output stream.
 //  _____________________________________________________
 
@@ -40,53 +45,56 @@ local void put_parameters(stream ostr, int *nbody, real *tnow)
   put_data(ostr, TimeTag, RealType, tnow, 0);
   put_tes(ostr, ParametersTag);
 }
-
-//  put_particles: write particle data to output file.
-//  __________________________________________________
+
+//  put_particles: write particle data.
+//  ___________________________________
 
 local void put_particles(stream ostr, bodyptr *btab, int *nbody, string *tags)
 {
-  string *tp, type;
+  string *tp, tag1, type;
   ps_field *pbf;
   int mask[32];
 
   if (*nbody > 0) {
     put_set(ostr, ParticlesTag);
     for (tp = tags; *tp != NULL; tp++) {	// loop over list of tags
+      tag1 = clean_tag(*tp);
       for (pbf = phatbody; pbf->name != NULL; pbf++)
-	if (streq(pbf->name, *tp))		// look for name in struct
+	if (streq(pbf->name, tag1))		// look for name in struct
 	  break;
       if (pbf->name == NULL)
-	error("%s.put_particles: field %s unknown\n", getprog(), *tp);
+	error("%s.put_particles: field %s unknown\n", getprog(), tag1);
       if (pbf->offset == BadOffset)
-	error("%s.put_particles: field %s undefined\n", getprog(), *tp);
+	error("%s.put_particles: field %s undefined\n", getprog(), tag1);
       set_mask(mask, SizeofBody, pbf->offset, type_length(pbf->type));
       type = type_base(pbf->type);		// get base type of datum
       if (strlen(pbf->type) == 1)
-	put_data_masked(ostr, *tp, type, *btab, *nbody, 0, mask);
+	put_data_masked(ostr, tag1, type, *btab, *nbody, 0, mask);
       else
-	put_data_masked(ostr, *tp, type, *btab, *nbody, NDIM, 0, mask);
+	put_data_masked(ostr, tag1, type, *btab, *nbody,
+			strlen(pbf->type), 0, mask);
+      free(tag1);
     }
     put_tes(ostr, ParticlesTag);
   }
 }
-
+
 //  get_snap: read snapshot from structured input stream.
 //  _____________________________________________________
 
 bool get_snap(stream istr, bodyptr *btab, int *nbody, real *tnow,
 	      string *tags, bool expand)
 {
-  int nbody0;
+  int nbody1;
 
   if (get_tag_ok(istr, SnapShotTag)) {
     get_set(istr, SnapShotTag);
     if (*btab != NULL)
-      nbody0 = *nbody;				// save previous value
+      nbody1 = *nbody;				// save previous value
     get_parameters(istr, nbody, tnow);
-    if (expand && *btab == NULL)		// don't expand after alloc
-      add_known_fields(istr);
-    if (*btab != NULL && *nbody > nbody0) {	// not enough room for bodies?
+    if (*btab == NULL && expand)		// permit expand before alloc
+      add_body_fields(istr);
+    if (*btab != NULL && *nbody > nbody1) {	// not enough room for bodies?
       eprintf("[%s.get_snap: WARNING: deallocating old body array]\n",
 	      getprog());
       free(*btab);
@@ -98,10 +106,6 @@ bool get_snap(stream istr, bodyptr *btab, int *nbody, real *tnow,
   } else
     return (FALSE);    
 }
-
-#ifndef TimeFuzz
-#  define TimeFuzz  0.001               // uncertainty in time comparison
-#endif
 
 //  get_snap_t: read snapshot in time range from structured input stream.
 //  _____________________________________________________________________
@@ -117,8 +121,8 @@ bool get_snap_t(stream istr, bodyptr *btab, int *nbody, real *tnow,
     get_set(istr, SnapShotTag);
     get_parameters(istr, &nbody1, &tnow1);
     if (streq(times, "all") || within(tnow1, times, TimeFuzz)) {
-      if (expand && *btab == NULL)		// don't expand after alloc
-	add_known_fields(istr);
+      if (*btab == NULL && expand)		// permit expand before alloc
+	add_body_fields(istr);
       if (*btab != NULL && nbody1 > *nbody) {	// not enough room for bodies?
 	eprintf("[%s.get_snap_t: WARNING: deallocating old body array]\n",
 		getprog());
@@ -134,7 +138,7 @@ bool get_snap_t(stream istr, bodyptr *btab, int *nbody, real *tnow,
   }
   return (success);
 }
-
+
 //  get_parameters: read snapshot parameters.
 //  _________________________________________
 
@@ -156,35 +160,15 @@ local void get_parameters(stream istr, int *nbody, real *tnow)
   }
   get_tes(istr, ParametersTag);
 }
-
-//  add_known_fields: add all known body fields present in input set.
-//  _________________________________________________________________
 
-local void add_known_fields(stream istr)
-{
-  string *tp, tags[MaxBodyFields];
-  ps_field *pbf;
-  
-  if (get_tag_ok(istr, ParticlesTag)) {
-    get_set(istr, ParticlesTag);
-    tp = tags;
-    for (pbf = phatbody; pbf->name != NULL; pbf++)
-      if (get_tag_ok(istr, pbf->name))
-	*tp++ = pbf->name;
-    *tp = NULL;
-    get_tes(istr, ParticlesTag);
-    layout_body(tags, Precision, NDIM);
-  }
-}
-
-//  get_particles: read particle data from input file.
-//  __________________________________________________
+//  get_particles: read particle data.
+//  __________________________________
 
 local void get_particles(stream istr, bodyptr *btab, int *nbody, string *tags)
 {
-  string *tp = tags, type;
-  int len, mask[32];
   ps_field *pbf;
+  string type, *tp = tags;
+  int mask[32], *dims;
 
   if (*nbody > 0) {
     if (*btab == NULL) {
@@ -193,18 +177,6 @@ local void get_particles(stream istr, bodyptr *btab, int *nbody, string *tags)
 	      getprog(), *nbody, SizeofBody);
     }
     get_set(istr, ParticlesTag);
-    if (get_tag_ok(istr, PhaseTag) &&
-	PosField.offset != BadOffset && VelField.offset != BadOffset) {
-      len = type_length(PosField.type);
-      if (VelField.offset - PosField.offset != len)
-	error("%s.get_particles: %s and %s not contiguous",
-	      getprog(), PosTag, VelTag);
-      set_mask(mask, SizeofBody, PosField.offset, 2 * len);
-      type = type_base(PosField.type);
-      get_data_masked(istr, PhaseTag, type, *btab, *nbody, 2, NDIM, 0, mask);
-      *tp++ = PosTag;
-      *tp++ = VelTag;
-    }
     for (pbf = phatbody; pbf->name != NULL; pbf++)
       if (get_tag_ok(istr, pbf->name) && pbf->offset != BadOffset) {
 	set_mask(mask, SizeofBody, pbf->offset, type_length(pbf->type));
@@ -212,16 +184,53 @@ local void get_particles(stream istr, bodyptr *btab, int *nbody, string *tags)
 	if (strlen(pbf->type) == 1)
 	  get_data_masked(istr, pbf->name, type, *btab, *nbody, 0, mask);
 	else
-	  get_data_masked(istr, pbf->name, type, *btab, *nbody, NDIM, 0, mask);
-	*tp++ = pbf->name;
+	  get_data_masked(istr, pbf->name, type, *btab, *nbody,
+			  strlen(pbf->type), 0, mask);
+	if (strne(pbf->name, AuxArrTag) && strne(pbf->name, KeyArrTag))
+	  *tp++ = pbf->name;
+	else {
+	  dims = get_dimensions(istr, pbf->name);
+	  asprintf(tp++, "%s[%d]", pbf->name, dims[1]);
+	  free(dims);
+	}
       }
     get_tes(istr, ParticlesTag);
   }
   *tp = NULL;
 }
 
-//  set_mask: initialize byte mask for field.
-//  _________________________________________
+//  add_body_fields: add all known body fields present in input set.
+//  ________________________________________________________________
+
+local void add_body_fields(stream istr)
+{
+  string tags[MaxBodyFields], *tp;
+  ps_field *pbf;
+  int *dims;
+  
+  if (get_tag_ok(istr, ParticlesTag)) {
+    if (getenv("ZENO_PHSTR_DEBUG") != NULL)
+      eprintf("[%s.add_body_fields: scanning items in %s set]\n",
+	      getprog(), ParticlesTag);
+    get_set(istr, ParticlesTag);
+    tp = tags;
+    for (pbf = phatbody; pbf->name != NULL; pbf++)
+      if (get_tag_ok(istr, pbf->name)) {
+	if (strne(pbf->name, AuxArrTag) && strne(pbf->name, KeyArrTag))
+	  *tp++ = pbf->name;
+	else {
+	  dims = get_dimensions(istr, pbf->name);
+	  asprintf(tp++, "%s[%d]", pbf->name, dims[1]);
+	}
+      }
+    *tp = NULL;
+    get_tes(istr, ParticlesTag);
+    layout_body(tags, Precision, NDIM);
+  }
+}
+
+//  set_mask: initialize byte mask to read or write specified field.
+//  ________________________________________________________________
 
 local void set_mask(int *mask, int size, int offset, int length)
 {
@@ -233,4 +242,15 @@ local void set_mask(int *mask, int size, int offset, int length)
   mask[i++] = length;				// copy field itself
   mask[i++] = -(size - offset - length);	// skip rest of structure
   mask[i] = 0;
+}
+
+//  clean_tag: copy tag without length specification.
+//  _________________________________________________
+
+local string clean_tag(string tag0)
+{
+  string tag1 = (string) copxstr(tag0, sizeof(char));
+  if (index(tag1, '[') != NULL)
+    *index(tag1, '[') = (char) NULL;
+  return (tag1);
 }
