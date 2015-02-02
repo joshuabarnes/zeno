@@ -9,7 +9,7 @@
 
 real diffstep(real *, real *, int, void (*)(real *, real *), real);
 
-local real index;			/* index of polytropic gas sphere   */
+local real indx;			/* index of polytropic gas sphere   */
 
 local void polydiff(real *, real *);	/* compute derivatives for model    */
 
@@ -23,7 +23,7 @@ local void polydiff(real *drdm, real *rdm)
 {
     drdm[0] = 1.0;
     if (rdm[0] > 0.0 && rdm[1] > 0.0) {
-	drdm[1] = - (index / FOUR_PI) * rpow(rdm[1], 1.0 - 1.0/index) *
+	drdm[1] = - (indx / FOUR_PI) * rpow(rdm[1], 1.0 - 1.0/indx) *
 		  rdm[2] / rsqr(rdm[0]);
 	drdm[2] = FOUR_PI * rsqr(rdm[0]) * rdm[1];
     } else {
@@ -36,20 +36,20 @@ local void polydiff(real *drdm, real *rdm)
  * POLYGSP: initialize tables for polytropic spheres.
  */
 
-gsprof *polygsp(real index0, real mtot, real rsur, int np)
+gsprof *polygsp(real indx0, real mtot, real rsur, int np)
 {
     gsprof *gsp;
     real dr, rdm[3], rtab[MSTEP], dtab[MSTEP], mtab[MSTEP];
     real r0, m0, dcoef[3*MSTEP], mcoef[3*MSTEP], *rptr, *dptr, *mptr;
     int n, i;
 
-    if (! (0 < index0 && index0 <= 4.5))
+    if (! (0 < indx0 && indx0 <= 4.5))
 	error("%s: must have 0 < index <= 4.5\n", getargv0());
-    index = index0;
+    indx = indx0;
     rdm[0] = rtab[0] = 0.0;
     rdm[1] = dtab[0] = 1.0;
     rdm[2] = mtab[0] = 0.0;
-    dr = (index <= 4 ? 16.0 : 32.0) / MSTEP;
+    dr = (indx <= 4 ? 16.0 : 32.0) / MSTEP;
     for (n = 1; n < MSTEP && rdm[1] > 0; n++) {
 	(void) diffstep(rdm, rdm, 3, polydiff, dr);
 	rtab[n] = rdm[0];
