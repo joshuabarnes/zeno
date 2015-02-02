@@ -6,10 +6,11 @@
 #ifndef _stdinc_h
 #define _stdinc_h
 
-//  Always include stdio.h and stdlib.h.
+//  Always include stdio.h, stdlib.h, and string.h.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 //  NULL: value for null pointers, normally defined by stdio.h.
 //  ___________________________________________________________
@@ -137,9 +138,10 @@ bool scanopt(string, string);		// scan options for keyword
 
 stream stropen(string, string);		// arguments are much like fopen
 
-void get_history(stream);		// read history data from stream
-void put_history(stream);		// write history data to stream
-void add_history(string);		// append item to history data
+void get_history(stream instr);		// read history data from stream
+void put_history(stream outstr);	// write history data to stream
+void add_history(string str);		// append item to history data
+void skip_history(stream instr);
 string *ask_history(void);		// return vector of history entries
 
 bool within(double, string, double);	// test if value lies in range(s)
