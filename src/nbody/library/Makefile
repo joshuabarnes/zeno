@@ -60,12 +60,22 @@ snapmap_d3.o: snapmap.c phatbody.h
 buildmap: buildmap.c buildmap.h
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -DTESTBED -o buildmap buildmap.c -lClib
 
+# Test routines.
+
+phatbody_test: phatbody.c phatbody.h libNBody.a
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -DTESTBED -o phatbody_test \
+	      phatbody.c -lClib libNBody.a
+
+fixbody_test: fixbody_test.c fixbody.h phatbody.o
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o fixbody_test \
+	      fixbody_test.c phatbody.o -lClib
+
 # Generate listing of source code.
 
-zeno_library.ps: bodyio.c bodytags.h buildmap.c fixbody.h buildmap.h \
-	         phatbody.c phatbody.h snapcenter.c snapcenter.h \
-	         snapkinem.c snapkinem.h snapmap.c
+zeno_library.ps: bodytags.h phatbody.h phatbody.c fixbody.h fixbody_test.c \
+	         bodyio.c buildmap.h buildmap.c snapmap.c \
+	         snapcenter.h snapcenter.c snapkinem.h snapkinem.c
 	enscript -M Letterdj -o zeno_library.ps \
-		 fixbody.h phatbody.h phatbody.c bodytags.h bodyio.c \
-	         buildmap.h buildmap.c snapmap.c snapcenter.h snapcenter.c \
-	         snapkinem.h snapkinem.c
+		 bodytags.h phatbody.h phatbody.c fixbody.h fixbody_test.c \
+	         bodyio.c buildmap.h buildmap.c snapmap.c \
+	         snapcenter.h snapcenter.c snapkinem.h snapkinem.c
