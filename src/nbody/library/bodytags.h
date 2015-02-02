@@ -14,7 +14,6 @@
 
 #define   ParametersTag		"Parameters"
 #define     NBodyTag            "NBody"
-#define     NGasTag		"NGas"
 #define     TimeTag             "Time"
 
 #define   ParticlesTag		"Particles"
@@ -35,13 +34,16 @@
 #define     BirthTag		"BirthDate"
 #define     DeathTag		"DeathDate"
 #define     KeyTag              "Key"
+#define     KeyArrTag           "KeyArray"
 #define     AuxTag              "Aux"
 #define     AuxVecTag           "AuxVec"
+#define     AuxArrTag		"AuxArray"
 
-//  Tags from older implementations.
-//  ________________________________
+//  Tags from older implementations are deprecated.
+//  _______________________________________________
 
 #define     NobjTag             "Nobj"
+#define     NGasTag		"NGas"
 #define     PhaseTag            "PhaseSpace"
 
 #define   DiagnosticsTag	"Diagnostics"
