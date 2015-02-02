@@ -7,7 +7,10 @@
 #include "getparam.h"
 #include "buildmap.h"
 #include <ctype.h>
-#include <string.h>
+#include <unistd.h>
+
+local void codemap(stream sstr, string *names, string *exprs, string *types,
+		   string tmap);
 
 local string mapdefs[][2];
 local string expdefs[][2];
@@ -19,17 +22,47 @@ local string expdefs[][2];
 void buildmap(string prog, string *names, string *exprs, string *types,
 	      string tmap, string prec, int ndim, bool cleanup)
 {
-  char src[80], cmd[512];
+  string src, cmd;
   stream sstr;
-  string *tp, *np, *ep, tn, zss = getenv("ZENO_SAFE_SELECT");
+
+  asprintf(&src, "%s.c", prog);
+  sstr = stropen(src, "w");
+  codemap(sstr, names, exprs, types, tmap);
+  fclose(sstr);
+  asprintf(&cmd, "%s %s %s -D%s -DNDIM=%d -o %s %s.c %s/lib/snapmap_%c%d.o "
+	   "-lNBody -lClib -lgsl -lgslcblas -lm", getenv("ZCC"), 
+	   getenv("ZCCFLAGS"), getenv("ZLDFLAGS"), prec, ndim, prog, prog,
+	   getenv("ZENOPATH"), tolower(prec[0]), ndim);
+  eprintf("[%s: compiling snapmap: %s]\n", getprog(), cmd);
+  if (system(cmd) != 0)
+    error("%s: command \"%s\" failed\n", getprog(), cmd);
+  if (cleanup && unlink(src) != 0)
+    error("%s: can't unlink %s\n", getprog(), src);
+  free(src);
+  free(cmd);
+}
+
+//  getmapdefs: return a pointer to the mapdefs table.
+//  __________________________________________________
+
+string *getmapdefs(void)
+{
+  return ((string *) mapdefs);
+}
+
+//  codemap: generate actual code for mapping operation.
+//  ____________________________________________________
+
+local void codemap(stream sstr, string *names, string *exprs, string *types,
+		   string tmap)
+{
+  string zss = getenv("ZENO_SAFE_SELECT"), *tp, *np, *ep, tn, *arrexp;
   int i;
 
-  sprintf(src, "%s.c", prog);
-  sstr = stropen(src, "w");
   fprintf(sstr, "#include \"stdinc.h\"\n");
   fprintf(sstr, "#include \"mathfns.h\"\n");
   fprintf(sstr, "#include \"vectdefs.h\"\n");
-  if (zss == NULL || strne(zss, "FALSE"))	// skip only if set to FALSE
+  if (zss == NULL || strne(zss, "FALSE"))	// check unless set to FALSE
     fprintf(sstr, "#define SafeSelect TRUE\n");
   fprintf(sstr, "#include \"phatbody.h\"\n\n");
   for (i = 0; mapdefs[i][0] != NULL; i++)
@@ -51,45 +84,32 @@ void buildmap(string prog, string *names, string *exprs, string *types,
     fprintf(sstr, "void extendbody(void)\n");
     fprintf(sstr, "{\n");
     for (tp = types, np = names; *tp != NULL; tp++, np++)
-      fprintf(sstr, "    new_field(&phatbody[NewBodyFields+%d], "
+      fprintf(sstr, "  new_field(&phatbody[NewBodyFields+%d], "
 	      "\"%s\", \"%s\");\n", (int) (tp - types), *tp, *np);
-    fprintf(sstr, "    new_field(&phatbody[NewBodyFields+%d],"
+    fprintf(sstr, "  new_field(&phatbody[NewBodyFields+%d],"
 	    " NULL, NULL);\n", (int) (tp - types));
     fprintf(sstr, "}\n\n");
   } else
     fprintf(sstr, "void extendbody(void)\n{ }\n\n");
-
   fprintf(sstr,
 	  "void computemap(bodyptr _q, bodyptr _p, real t, int i, int n)\n");
   fprintf(sstr, "{\n");
   for (ep = exprs, np = names; *ep != NULL; ep++, np++) {
     if (*np == NULL)
       error("%s.buildmap: more exprs than names\n", getprog());
-    fprintf(sstr, "    %s(_q) = (%s);\n", *np, *ep);
+    if (index(*ep, ';') == NULL)
+      fprintf(sstr, "  %s(_q) = (%s);\n", *np, *ep);
+    else {
+      arrexp = burststring(*ep, ";");
+      for (i = 0; arrexp[i] != NULL; i++)
+	fprintf(sstr, "%s(_q)[%d] = (%s);\n", *np, i, arrexp[i]);
+    }
   }
   fprintf(sstr, "}\n\n");
   fprintf(sstr, "real computetime(real t, int n)\n");
   fprintf(sstr, "{\n");
   fprintf(sstr, "  return (%s);\n", tmap != NULL ? tmap : "t");
   fprintf(sstr, "}\n");
-  fclose(sstr);
-  sprintf(cmd, "%s %s %s -D%s -DNDIM=%d -o %s %s.c %s/lib/snapmap_%c%d.o "
-	  "-lNBody -lClib -lgsl -lgslcblas -lm", getenv("ZCC"), 
-	  getenv("ZCCFLAGS"), getenv("ZLDFLAGS"), prec, ndim, prog, prog,
-	  getenv("ZENOPATH"), tolower(prec[0]), ndim);
-  eprintf("[%s: compiling snapmap: %s]\n", getprog(), cmd);
-  if (system(cmd) != 0)
-    error("%s: command \"%s\" failed\n", getprog(), cmd);
-  if (cleanup && unlink(src) != 0)
-    error("%s: can't unlink %s\n", getprog(), src);
-}
-
-//  getmapdefs: return a pointer to the mapdefs table.
-//  __________________________________________________
-
-string *getmapdefs(void)
-{
-  return ((string *) mapdefs);
 }
 
 //  mapdefs: mapping between identifiers used in expressions and macro names.
@@ -122,11 +142,13 @@ local string mapdefs[][2] = {
   { "birth",   "Birth"   },
   { "death",   "Death"   },
   { "key",     "Key"     },
+  { "keyarr",  "KeyArr"  },
   { "aux",     "Aux"     },
   { "auxv",    "AuxVec"  },
   { "auxvx",   "AuxVecX" },
   { "auxvy",   "AuxVecY" },
   { "auxvz",   "AuxVecZ" },
+  { "auxarr",  "AuxArr"  },
   { NULL,      NULL      }
 };
 
@@ -144,9 +166,6 @@ local string expdefs[][2] = {
   { "jy",      "(vz*x - vx*z)"                    },
   { "jz",      "(vx*y - vy*x)"                    },
   { "jtot",    "rsqrt(jx*jx + jy*jy + jz*jz)"     },
-  { "taux",    "(ay*z - az*y)"                    },
-  { "tauy",    "(az*x - ax*z)"                    },
-  { "tauz",    "(ax*y - ay*x)"                    },
   { NULL,       NULL                              }
 };
 
@@ -155,13 +174,17 @@ local string expdefs[][2] = {
 string defv[] = {		";Invoke buildmap routine",
   "prog=sm",			";Name of program to compile",
   "names=XPlot,YPlot,Color",	";Names of output variables",
-  "exprs=x;y;1+i%2",		";Expressions for output vars",
+  "exprs=x;y;1+i%2",		";Expressions for output variables.",
+				";Bound variables, depending on input, are:",
+				  SNAPMAP_BODY_VARS ".",
   "types=" FloatType "," FloatType "," IntType,
 				";Data types of output vars",
   "tmap=t+1",			";Expression used to map time",
+				";Bound variables are: "
+				  SNAPMAP_TIME_VARS ".",
   "prec=SINGLEPREC",		";Specify precision option",
   "ndim=3",			";Number of space dimensions",
-  "VERSION=1.4",		";Josh Barnes  8 Sep 2014",
+  "VERSION=1.5",		";Josh Barnes  2 February 2015",
   NULL,
 };
 
