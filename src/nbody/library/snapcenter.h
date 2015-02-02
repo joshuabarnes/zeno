@@ -20,4 +20,6 @@ void snapcmpos(vector, bodyptr, int, int);
 
 void snapcmvel(vector, bodyptr, int, int);
 
+void snapcmacc(vector, bodyptr, int, int);
+
 void snapcenter(bodyptr, int, int);

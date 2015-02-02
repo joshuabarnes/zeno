@@ -4,10 +4,9 @@
 
 #include "stdinc.h"
 #include "getparam.h"
+#include "mathfns.h"
 #include "vectdefs.h"
 #include "phatbody.h"
-
-#include <string.h>
 
 string defv[] = {
   "in=???",			";N-body snapshot input file",
