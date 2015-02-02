@@ -45,15 +45,17 @@ void define_offset(ps_field *, string, int);
 //  Generic selector macros.
 //  ________________________
 
-#define SelectByte(p,o)    (*((byte *) ((byte *)(p) + (o))))
-#define SelectChar(p,o)    (*((char *) ((byte *)(p) + (o))))
-#define SelectShort(p,o)   (*((short *) ((byte *)(p) + (o))))
-#define SelectBool(p,o)    (*((bool *) ((byte *)(p) + (o))))
-#define SelectInt(p,o)     (*((int *) ((byte *)(p) + (o))))
-#define SelectLong(p,o)    (*((long *) ((byte *)(p) + (o))))
-#define SelectFloat(p,o)   (*((float *) ((byte *)(p) + (o))))
-#define SelectDouble(p,o)  (*((double *) ((byte *)(p) + (o))))
-#define SelectReal(p,o)    (*((real *) ((byte *)(p) + (o))))
-#define SelectVect(p,o)    ((real *) ((byte *)(p) + (o)))
+#define SelectByte(ptr,off)    (*((byte *)   ((byte *)(ptr) + (off))))
+#define SelectChar(ptr,off)    (*((char *)   ((byte *)(ptr) + (off))))
+#define SelectShort(ptr,off)   (*((short *)  ((byte *)(ptr) + (off))))
+#define SelectBool(ptr,off)    (*((bool *)   ((byte *)(ptr) + (off))))
+#define SelectInt(ptr,off)     (*((int *)    ((byte *)(ptr) + (off))))
+#define SelectLong(ptr,off)    (*((long *)   ((byte *)(ptr) + (off))))
+#define SelectFloat(ptr,off)   (*((float *)  ((byte *)(ptr) + (off))))
+#define SelectDouble(ptr,off)  (*((double *) ((byte *)(ptr) + (off))))
+#define SelectReal(ptr,off)    (*((real *)   ((byte *)(ptr) + (off))))
+#define SelectVect(ptr,off)    ( (real *)    ((byte *)(ptr) + (off)))
+#define SelectIArr(ptr,off)    ( (int *)     ((byte *)(ptr) + (off)))
+#define SelectRArr(ptr,off)    ( (real *)    ((byte *)(ptr) + (off)))
 
 #endif  // ! _phatstruct_h

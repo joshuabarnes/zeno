@@ -11,13 +11,12 @@
 //  layout_struct: compute offsets and length of structure.  The order
 //  of the actual fields is determined by the names argument.  Padding
 //  is computed assuming (1) any type of object can have offset 0, and
-//  (2) identical objects of any type can be stored contiguously
-//  without padding.
+//  (2) identical objects can be stored contiguously without padding.
 //  __________________________________________________________________
 
 void layout_struct(ps_field *pstab, string *names)
 {
-  bool debug = (getenv("PHATSTRUCT_DEBUG") != NULL);
+  bool debug = (getenv("ZENO_PHSTR_DEBUG") != NULL);
   int pad, len;
   ps_field *psp;
 
@@ -38,9 +37,8 @@ void layout_struct(ps_field *pstab, string *names)
       psp->length = type_length(psp->type);
       pstab->length += psp->length;		// increment struct length
       if (debug)
-	eprintf("[%s.layout_struct: defining %s field %s at offset %d]\n",
-		getprog(), strlen(psp->type) == 1 ? "scalar" : "vector",
-		*names, psp->offset);
+	eprintf("[%s.layout_struct: name = %s  offset = %d  length = %d]\n",
+		getprog(), *names, psp->offset, psp->length);
     }
     names++;
   }
@@ -67,6 +65,8 @@ void new_field(ps_field *psptr, string type, string name)
   psptr->type = type;				// type is given by caller
   psptr->offset = BadOffset;			// offset is yet unknown
   psptr->length = 0;				// and length is undefined
+  if (getenv("ZENO_PHSTR_DEBUG") != NULL)
+    eprintf("[%s.new_field: type = %s  name = %s]\n", getprog(), type, name);
 }
 
 //  define_struct: set total length of structure; a partial alternative
@@ -78,9 +78,9 @@ void define_struct(ps_field *pstab, string name, int length)
   if (! streq(pstab->name, name))
     error("%s.define_struct: structure %s not found\n", getprog(), name);
   pstab->length = length;
-  if (getenv("PHATSTRUCT_DEBUG") != NULL)
+  if (getenv("ZENO_PHSTR_DEBUG") != NULL)
     eprintf("[%s.define_struct: sizeof(%s) = %d bytes]\n",
-	    getprog(), pstab->name, pstab->length);
+	    getprog(), name, length);
 }
 
 //  define_offset: set offset of known field; a partial alternative to
@@ -101,10 +101,9 @@ void define_offset(ps_field *pstab, string name, int offset)
 	  getprog(), name);
   psp->offset = offset;				// store supplied offset
   psp->length = type_length(psp->type);
-  if (getenv("PHATSTRUCT_DEBUG") != NULL)
-    eprintf("[%s.define_field: defining %s field %s at offset %d]\n",
-	    getprog(), strlen(psp->type) == 1 ? "scalar" : "vector",
-	    name, psp->offset);
+  if (getenv("ZENO_PHSTR_DEBUG") != NULL)
+    eprintf("[%s.define_offset: name = %s  offset = %d  length = %d]\n",
+	    getprog(), name, psp->offset, psp->length);
 }    
 
 #ifdef TESTBED
