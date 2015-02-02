@@ -6,6 +6,7 @@
 #include "mathfns.h"
 #include "getparam.h"
 #include "vectmath.h"
+#include "filestruct.h"
 #include "phatbody.h"
 #include <string.h>
 #include <ctype.h>
@@ -22,7 +23,7 @@ string defv[] = {		";Rotate N-body configuration",
   "vectors=" PosTag "," VelTag "," AccTag "," AuxVecTag,
 				";List of vectors to rotate",
   "produce=*",			";List of items to produce",
-  "VERSION=3.1",		";Josh Barnes  23 Sep 2014",
+  "VERSION=3.1",		";Josh Barnes  2 February 2015",
   NULL,
 };
 
@@ -49,8 +50,10 @@ typedef struct {
 
 void snaprotate(snapshot *snap, string *tags, string *vecs, string order,
 		bool invert, real thetax, real thetay, real thetaz);
+
 void rotate(snapshot *snap, string *tags, string *vecs, char axis,
 	    real thetax, real thetay, real thetaz);
+
 void xmatrix(matrix rmat, real theta);
 void ymatrix(matrix rmat, real theta);
 void zmatrix(matrix rmat, real theta);
@@ -76,9 +79,11 @@ int main(int argc, string argv[])
     layout_body(produce, Precision, NDIM);
   }
   while (get_snapshot_timed(istr, snap, iotags, expand, times)) {
+    eprintf("[%s: rotating time %f]\n", getprog(), snap.time);
     snaprotate(&snap, iotags, vecs, getparam("order"), getbparam("invert"),
 	       getdparam("thetax"), getdparam("thetay"), getdparam("thetaz"));
     put_snapshot(ostr, snap, iotags);
+    skip_history(istr);
   }
   strclose(ostr);
   return (0);
