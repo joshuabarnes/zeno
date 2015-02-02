@@ -13,12 +13,12 @@
 string defv[] = {		";Track centroids of specified groups",
   "in=???",			";Input snapshot file name",
   "out=???",			";Output snapshot file name",
-  "group=???",			";C language expression for group membership",
+  "group=???",			";Expression (C code) for group membership",
 				";Bound variables, depending on input, are:",
 				  SNAPMAP_BODY_VARS ".",
   "times=all",			";Range of times to process",
-  "seed=",			";Seed for random number generator",
-  "VERSION=2.1",                ";Josh Barnes  9 Sep 2014",
+  "seed=",			";Generator seed for random values",
+  "VERSION=2.1",                ";Josh Barnes  2 February 2015",
   NULL,
 };
 
@@ -47,7 +47,7 @@ int main(int argc, string argv[])
 
   initparam(argv, defv);
   exprs[0] = getparam("group");
-  prog = tempnam("/tmp", "sm");
+  prog = mktemp((string) copxstr("/tmp/sm_XXXXXX", sizeof(char)));
   buildmap(prog, names, exprs, types, NULL, Precision, NDIM, TRUE);
   xstr = execmap(prog);
   if (get_tag_ok(xstr, "History"))

@@ -14,14 +14,14 @@ string defv[] = {               ";Set key value for each body in snapshot",
   "in=???",                     ";Input snapshot file name",
   "out=???",                    ";Output snapshot file name",
   "times=all",                  ";Range of times to process",
-  "key=???",                    ";C language expression for key value.",
-				";Bound variables, depending on input, are:",
+  "key=???",                    ";Expression (C code) for key value.",
+				";May use these values (if given in input):",
 				  SNAPMAP_BODY_VARS ".",
   "require=",			";List of input items necessary",
   "produce=" KeyTag,            ";List of output items produced",
   "passall=true",		";If true, pass on input data",
-  "seed=",			";Seed for random number generator",
-  "VERSION=2.1",                ";Josh Barnes  9 Sep 2014",
+  "seed=",			";Generator seed for random values",
+  "VERSION=2.1",                ";Josh Barnes  2 February 2015",
   NULL,
 };
 
@@ -32,7 +32,7 @@ int main(int argc, string argv[])
   string prog, names[2] = { KeyTag, NULL }, exprs[2] = { NULL, NULL };
 
   initparam(argv, defv);
-  prog = tempnam("/tmp", "sm");
+  prog = mktemp((string) copxstr("/tmp/sm_XXXXXX", sizeof(char)));
   exprs[0] = getparam("key");
   buildmap(prog, names, exprs, NULL, NULL, Precision, NDIM, TRUE);
   execmap(prog);

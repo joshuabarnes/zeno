@@ -17,15 +17,15 @@ string defv[] = {		";Center snapshot on weighted bodies",
   "in=???",                     ";Input snapshot file name",
   "out=???",                    ";Output snapshot file name",
   "times=all",                  ";Range of times to process",
-  "weight=1.0",			";C language expression weighting bodies.",
-				";Bound variables, depending on input, are:",
+  "weight=1.0",			";Expression (C code) for body weight.",
+				";May use these values (if given in input):",
 				  SNAPMAP_BODY_VARS ".",
   "coords=" PosTag "," VelTag,	";Coordinate data to center",
   "require=",			";Input items required",
   "produce=",			";Output items produced",
   "passall=true",		";If true, pass on input data",
-  "seed=",			";Seed for random number generator",
-  "VERSION=2.3",		";Josh Barnes  9 Sep 2014",
+  "seed=",			";Generator seed for random values",
+  "VERSION=2.3",		";Josh Barnes  2 February 2015",
   NULL,
 };
 
@@ -50,7 +50,7 @@ int main(int argc, string argv[])
 
   initparam(argv, defv);
   exprs[0] = getparam("weight");
-  prog = tempnam("/tmp", "sm");
+  prog = mktemp((string) copxstr("/tmp/sm_XXXXXX", sizeof(char)));
   buildmap(prog, names, exprs, types, NULL, Precision, NDIM, TRUE);
   xstr = execmap(prog);
   if (get_tag_ok(xstr, "History"))
