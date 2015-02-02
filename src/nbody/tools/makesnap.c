@@ -3,7 +3,6 @@
  */
 
 #include "stdinc.h"
-#include <string.h>
 #include "mathfns.h"
 #include "getparam.h"
 #include "vectmath.h"
