@@ -1,6 +1,6 @@
 /*
  * burststring.c: break a string of the form "word1, word2, ..." into
- * seperate strings "word1", "word2", ... and return them in an
+ * separate strings "word1", "word2", ... and return them in an
  * extended-string (ie, NULL-terminated sequence of pointers).
  */
 
@@ -8,35 +8,42 @@
 #include "getparam.h"
 #include <string.h>
 
-#define MWRD  64	// max words in list
-#define MSTR 256	// max chars per word
-
 string *burststring(string lst, string sep)
 {
-  string wrdbuf[MWRD], *wp;
-  char strbuf[MSTR], *sp, *lp;
-
-  wp = wrdbuf;
-  sp = strbuf;
-  lp = lst;
-  do {							// scan over string
-    if (*lp == (char) NULL ||
-	  strchr(sep, *lp) != NULL) {			// is this a sep?
-      if (sp > strbuf) {				// and got a word?
-	*sp = (char) NULL;
-	*wp++ = (string) copxstr(strbuf, sizeof(char));
-	if (wp == &wrdbuf[MWRD])			// no room in buf?
-	  error("%s.burststring: too many words\n", getprog());
-	sp = strbuf;					// ready for next
+  char *lp, *fp;
+  int nwrd = 0;
+  string *wlst, *wp;
+  
+  for (lp = lst, fp = NULL; *lp != NULL; lp++)	// count words in list
+    if (strchr(sep, *lp) == NULL) {		// part of a word?
+      if (fp == NULL) {				// and first char?
+	fp = lp;				// save ptr to start
+	nwrd++;					// count another word
       }
-    } else {						// part of word
-      *sp++ = *lp;					// so copy it over
-      if (sp == &strbuf[MSTR])				// no room left?
-	error("%s.burststring: word too long\n", getprog());
+    } else					// not part of word
+      fp = NULL;				// change scan state
+  wp = wlst = (string *) allocate((nwrd + 1) * sizeof(string));
+						// get space for list
+  for (lp = lst, fp = NULL; *lp != NULL; lp++)	// store words in list
+    if (strchr(sep, *lp) == NULL) {		// part of a word?
+      if (fp == NULL)				// and first char?
+	fp = lp;				// save ptr to start
+    } else {					// not part of word
+      if (fp != NULL) {				// but prev char was
+	*wp = (char *) allocate((1 + lp - fp) * sizeof(char));
+						// get space for word
+	(void) strncpy(*wp, fp, lp - fp);	// copy word to space
+	(*wp++)[lp - fp] = NULL;		// make sure it ended
+      }
+      fp = NULL;				// change scan state
     }
-  } while (*lp++ != (char) NULL);			// until list ends
-  *wp = NULL;						// end word list
-  return ((string *) copxstr(wrdbuf, sizeof(string)));
+  if (fp != NULL) {				// handle final word
+    *wp = (char *) allocate((1 + lp - fp) * sizeof(char));
+    (void) strncpy(*wp, fp, lp - fp);
+    (*wp++)[lp - fp] = NULL;
+  }
+  *wp = NULL;					// terminate word list
+  return (wlst);
 }
 
 #ifdef TESTBED
