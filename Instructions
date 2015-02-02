@@ -64,7 +64,9 @@ behavior of Zeno software.  Undefining "ZENO_SAFE_SELECT" makes access
 to particle data slightly faster, but sacrifices detection of references
 to undefined data fields.  Setting "ZENO_MSG_OPTION" to "warn" limits
 informational messages to urgent warnings, while setting it to "none"
-suppresses even these.
+suppresses even these.  Other environment flags you can set include
+"ZENO_PHSTR_DEBUG", which produces debug messages from the phatstruct
+package (set "ZENO_MSG_OPTION" to "all" to see them).
 
 
 6.  Finally, change to "~/zeno" and build the system:
