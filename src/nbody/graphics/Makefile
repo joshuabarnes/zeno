@@ -13,7 +13,7 @@ snapsmooth: snapsmooth.c
 	    -lNBody -lClib -lm
 
 snapview: snapview.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -L/usr/X11R6/lib \
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -L/opt/X11/lib \
 	    -o snapview snapview.c -lNBody -lClib \
 	    -lglut -lGLU -lGL -lXmu -lX11 -lm
 
