@@ -117,7 +117,7 @@ typedef FILE *stream;			// note: stdio.h is included above
 
 //  Prototypes for misc. functions in Clib.
 
-void *allocate(int);			// alloc, zero, & check for errors
+void *allocate(size_t nbyte);		// alloc, zero, & check for errors
 
 string *burststring(string, string);	// burst string into token list
 
