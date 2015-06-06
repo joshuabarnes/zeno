@@ -57,7 +57,7 @@ void startoutput(void)
   if (! strnull(logfile))
     logstr = stropen(logfile, "w!");		// always open file if given
   else
-    logstr = (streq(strfile, "-") ? stdout : NULL);	// don't hog stdout
+    logstr = (streq(strfile, "-") ? NULL : stdout);	// don't hog stdout
   if (logstr != NULL) {
     fprintf(logstr, "\n%s\n", headline);	// print headline, params
     fprintf(logstr, "\n%9s%9s%9s%9s", "nbody", "dtime", "nstatic", "eps");
