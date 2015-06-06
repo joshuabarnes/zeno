@@ -55,55 +55,62 @@ void layout_struct(ps_field *pstab, string *names)
 	    getprog(), pstab->name, pstab->length, pad);
 }
 
-//  new_field: define a new field of given type and name.  Note that it is up
-//  to the client to make sure that the field array is properly terminated.
-//  _________________________________________________________________________
+//  new_field: define a new field of given type and name.
+//  _____________________________________________________
 
-void new_field(ps_field *psptr, string type, string name)
+void new_field(ps_field *psp, string type, string name)
 {
-  psptr->name = name;				// name is given by caller
-  psptr->type = type;				// type is given by caller
-  psptr->offset = BadOffset;			// offset is yet unknown
-  psptr->length = 0;				// and length is undefined
-  if (getenv("ZENO_PHSTR_DEBUG") != NULL)
+  bool debug = (getenv("ZENO_PHSTR_DEBUG") != NULL);
+
+  if (debug)
     eprintf("[%s.new_field: type = %s  name = %s]\n", getprog(), type, name);
+  psp->name = name;				// name is given by caller
+  psp->type = type;				// type is given by caller
+  psp->offset = BadOffset;			// offset is yet unknown
+  psp->length = 0;				// and length is undefined
+  if (name != NULL && type != NULL)		// defining real field?
+    (psp+1)->name = NULL;			// next field ends array
 }
 
-//  define_struct: set total length of structure; a partial alternative
-//  to layout_struct for the fixed offset interface.
-//  ___________________________________________________________________
+//  define_struct: set total length of structure.
+//  Partial alternative to layout_struct for fixed-offset interface.
+//  ________________________________________________________________
 
 void define_struct(ps_field *pstab, string name, int length)
 {
-  if (! streq(pstab->name, name))
-    error("%s.define_struct: structure %s not found\n", getprog(), name);
-  pstab->length = length;
-  if (getenv("ZENO_PHSTR_DEBUG") != NULL)
+  bool debug = (getenv("ZENO_PHSTR_DEBUG") != NULL);
+
+  if (debug)
     eprintf("[%s.define_struct: sizeof(%s) = %d bytes]\n",
 	    getprog(), name, length);
+  if (! streq(pstab->name, name))		// check given name matches
+    error("%s.define_struct: structure %s unknown\n", getprog(), name);
+  pstab->length = length;			// set total structure length
 }
 
-//  define_offset: set offset of known field; a partial alternative to
-//  layout_struct for the fixed offset interface.
-//  __________________________________________________________________
+//  define_offset: set offset of pre-defined field.
+//  Partial alternative to layout_struct for fixed-offset interface.
+//  ________________________________________________________________
 
 void define_offset(ps_field *pstab, string name, int offset)
 {
+  bool debug = (getenv("ZENO_PHSTR_DEBUG") != NULL);
   ps_field *psp;
 
+  if (debug)
+    eprintf("[%s.define_offset: name = %s  offset = %d\n",
+	    getprog(), name, offset);
   for (psp = pstab + 1; psp->name != NULL; psp++)
     if (streq(psp->name, name))			// find name in struct tab
       break;
   if (psp->name == NULL)			// must be already known
     error("%s.define_field: field %s not found\n", getprog(), name);
-  if (psp->offset != BadOffset)			// but not actual
-    error("%s.define_field: field %s already defined\n",
-	  getprog(), name);
+  if (psp->offset != BadOffset)			// but not already defined
+    error("%s.define_field: can't redefine field %s\n", getprog(), name);
   psp->offset = offset;				// store supplied offset
   psp->length = type_length(psp->type);
-  if (getenv("ZENO_PHSTR_DEBUG") != NULL)
-    eprintf("[%s.define_offset: name = %s  offset = %d  length = %d]\n",
-	    getprog(), name, psp->offset, psp->length);
+  if (debug)
+    eprintf(" type = %s  length = %d]\n", psp->type, psp->length);
 }    
 
 #ifdef TESTBED
