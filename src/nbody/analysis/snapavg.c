@@ -25,7 +25,7 @@ string defv[] = {		";Find averages or std. devs. over time.",
   "produce=",                   ";Output items produced",
   "passall=true",               ";If true, pass on input data",
   "seed=",			";Seed for random number generator",
-  "VERSION=1.1",		";Josh Barnes  9 Sep 2014",
+  "VERSION=1.1",		";Josh Barnes  24 May 2015",
   NULL,
 };
 
@@ -47,7 +47,7 @@ int main(int argc, string argv[])
   bodyptr btab = NULL;
   int nbody, nsnap, i;
   real tnow;
-  double *sum = NULL, *sum2 = NULL;
+  double *sum = NULL, *sum2 = NULL, std2;
 
   initparam(argv, defv);
   exprs[0] = getparam("value");
@@ -83,9 +83,10 @@ int main(int argc, string argv[])
     for (i = 0; i < nbody; i++)
       Aux(NthBody(btab, i)) = sum[i] / nsnap;
   } else {
-    for (i = 0; i < nbody; i++)
-      Aux(NthBody(btab, i)) =
-	sqrt(sum2[i] / nsnap - (sum[i] / nsnap) * (sum[i] / nsnap));
+    for (i = 0; i < nbody; i++) {
+      std2 = sum2[i] / nsnap - (sum[i] / nsnap) * (sum[i] / nsnap);
+      Aux(NthBody(btab, i)) = sqrt(MAX(std2, 0.0));
+    }
   }
   if (unlink(prog) != 0)
     error("%s: can't unlink %s\n", getargv0(), prog);
