@@ -21,8 +21,9 @@ string defv[] = {               ";Select bodies obeying predicate",
   "require=",			";Input items required",
   "produce=",			";Output items produced",
   "passall=true",		";If true, pass on input data",
+  "outempty=false",		";If true, output empty snapshots",
   "seed=",			";Generator seed for random values",
-  "VERSION=2.1",                ";Josh Barnes  2 February 2015",
+  "VERSION=2.1",                ";Josh Barnes  7 May 2015",
   NULL,
 };
 
@@ -63,7 +64,8 @@ int main(int argc, string argv[])
     del_tag(otags, itags, "Sieve");
     if (nout != nold)
       eprintf("[%s: writing %d bodies at time %f]\n", getprog(), nout, tnow);
-    put_snap(ostr, &btab, &nout, &tnow, otags);
+    if (nout > 0 || getbparam("outempty"))
+      put_snap(ostr, &btab, &nout, &tnow, otags);
     nold = nout;
   }
   strclose(ostr);
