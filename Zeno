@@ -13,7 +13,7 @@ install_all:
 	(cd src/nbody/tools;		$(MAKE) -f Zeno install)
 	(cd src/nbody/analysis;		$(MAKE) -f Zeno install)
 	(cd src/nbody/graphics;		$(MAKE) -f Zeno install)
-	(cd src/nbody/tree/treecode1.5;	$(MAKE) -f Zeno install)
+	(cd src/nbody/tree/treecode1.6;	$(MAKE) -f Zeno install)
 	(cd src/nbody/sph/sphcode1.5;	$(MAKE) -f Zeno install)
 
 ########################################################################
@@ -28,7 +28,7 @@ reset_all:
 	(cd src/nbody/tools;		$(MAKE) -f Zeno reset)
 	(cd src/nbody/analysis;		$(MAKE) -f Zeno reset)
 	(cd src/nbody/graphics;		$(MAKE) -f Zeno reset)
-	(cd src/nbody/tree/treecode1.5;	$(MAKE) -f Zeno reset)
+	(cd src/nbody/tree/treecode1.6;	$(MAKE) -f Zeno reset)
 	(cd src/nbody/sph/sphcode1.5;	$(MAKE) -f Zeno reset)
 
 ########################################################################
@@ -51,7 +51,7 @@ archive_all:
 	     zeno/src/nbody/models/{Makefile,Zeno,*.c} \
 	     zeno/src/nbody/sph/sphcode1.5/{Makefile,Zeno,*.h,*.c} \
 	     zeno/src/nbody/tools/{Makefile,Zeno,*.c} \
-	     zeno/src/nbody/tree/treecode1.5/{Makefile,Zeno,*.h,*.c} \
+	     zeno/src/nbody/tree/treecode1.6/{Makefile,Zeno,*.h,*.c} \
 	     zeno/src/util/{Makefile,Zeno,*.c} \
 	     zeno/doc/* \
 	     zeno/inc zeno/lib zeno/bin)
