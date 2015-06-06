@@ -76,7 +76,7 @@ extern ps_field phatbody[MaxBodyFields];	// describe phat bodies
 //  SizeofBody: number of bytes per body.
 //  _____________________________________
 
-#define SizeofBody (BodyField.length)
+#define SizeofBody ((size_t) BodyField.length)
 
 //  NextBody, PrevBody, NthBody: macros for stepping through body arrays.
 //  _____________________________________________________________________
