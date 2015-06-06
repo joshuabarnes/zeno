@@ -1,72 +1,69 @@
 /*
- * burststring.c: break a string of the form "word1, word2, ..." into
- * separate strings "word1", "word2", ... and return them in an
- * extended-string (ie, NULL-terminated sequence of pointers).
+ * burststring.c: break a string of the form "word1<sep>word2<sep>..."
+ * into separate strings "word1", "word2", ... and return them in an
+ * xstr of strings (ie, NULL-terminated sequence of string pointers).
+ * Words may have length zero if two separator characters are adjacent
+ * (or if the string begins or ends with a separator).  However, if a
+ * blank space counts as a separator, then zero-length words are not
+ * returned; thus, if str = "spam, eggs" and sep = ", ", the result is
+ * ["spam", "eggs", NULL] instead of ["spam", "", "eggs", NULL].  This
+ * seems more likely to yield the right behavior in most applications.
  */
 
 #include "stdinc.h"
 #include "getparam.h"
 #include <string.h>
 
-string *burststring(string lst, string sep)
+string *burststring(string str, string sep)
 {
-  char *lp, *fp;
-  int nwrd = 0;
-  string *wlst, *wp;
-  
-  for (lp = lst, fp = NULL; *lp != NULL; lp++)	// count words in list
-    if (strchr(sep, *lp) == NULL) {		// part of a word?
-      if (fp == NULL) {				// and first char?
-	fp = lp;				// save ptr to start
-	nwrd++;					// count another word
+  char *sp, *fp;
+  int nsep;
+  string *wrdlst, *wp;
+  bool keepnull = (strchr(sep, ' ') == NULL);
+
+  nsep = 0;					// init separator count 
+  for (sp = str; *sp != (char) NULL; sp++)	// loop over string
+    if (strchr(sep, *sp) != NULL)		// identify separator chars
+      nsep++;					// and count them up
+  wp = wrdlst = (string *) allocate((nsep + 2) * sizeof(string));
+						// reserve adequate storage
+						// (some may not be used...)
+  for (fp = sp = str; *fp != (char) NULL; sp++)	// scan along string
+    if (strchr(sep, *sp) != NULL) {		// found next separator
+						// (or end, if *sp == NULL)
+      if (sp > fp || keepnull) {		// check length of word
+	*wp = (string) allocate(MAX(sp - fp, 1) * sizeof(char));
+						// get room for word
+	(void) strncpy(*wp++, fp, sp - fp);	// make copy of text
       }
-    } else					// not part of word
-      fp = NULL;				// change scan state
-  wp = wlst = (string *) allocate((nwrd + 1) * sizeof(string));
-						// get space for list
-  for (lp = lst, fp = NULL; *lp != NULL; lp++)	// store words in list
-    if (strchr(sep, *lp) == NULL) {		// part of a word?
-      if (fp == NULL)				// and first char?
-	fp = lp;				// save ptr to start
-    } else {					// not part of word
-      if (fp != NULL) {				// but prev char was
-	*wp = (char *) allocate((1 + lp - fp) * sizeof(char));
-						// get space for word
-	(void) strncpy(*wp, fp, lp - fp);	// copy word to space
-	(*wp++)[lp - fp] = NULL;		// make sure it ended
-      }
-      fp = NULL;				// change scan state
+      fp = (*sp == (char) NULL ? sp : sp + 1);	// advance to next word
     }
-  if (fp != NULL) {				// handle final word
-    *wp = (char *) allocate((1 + lp - fp) * sizeof(char));
-    (void) strncpy(*wp, fp, lp - fp);
-    (*wp++)[lp - fp] = NULL;
-  }
-  *wp = NULL;					// terminate word list
-  return (wlst);
+  if ((strnull(str) || strchr(sep, *(fp - 1)) != NULL) && keepnull)
+						// if last char was a sep
+    *wp = (string) allocate(1 * sizeof(char));	// tack on an empty word
+  return (wrdlst);
 }
 
 #ifdef TESTBED
 
 string defv[] = {
-    "lst=foo, bar,waldo ,",
-    "sep= ,",
+    "lst=foo,bar,spam;eggs",
+    "sep=,;",
     NULL,
 };
 
-main(argc, argv)
-int argc;
-string argv[];
+int main(int argc, string argv[])
 {
-    string getparam(), lst, sep, *wrds;
+  string getparam(), lst, sep, *wrds;
 
-    initparam(argv, defv);
-    lst = getparam("lst");
-    sep = getparam("sep");
-    wrds = burststring(lst, sep);
-    while (*wrds != NULL)
-	printf("\"%s\"  ", *wrds++);
-    printf("\n");
+  initparam(argv, defv);
+  lst = getparam("lst");
+  sep = getparam("sep");
+  wrds = burststring(lst, sep);
+  while (*wrds != NULL)
+    printf("\"%s\"  ", *wrds++);
+  printf("\n");
+  return (0);
 }
 
 #endif
