@@ -3,7 +3,7 @@ InstructionsInstructionsInstructionsInstructionsInstructionsInstructions
 			Zeno Source Distribution
 			========================
 
-Here's a BRIEF outline of how to install Zeno on a Mac under OS 10.6 (or
+Here's a BRIEF outline of how to install Zeno on a Mac (OS 10.6 or
 higher).  With trivial modifications, Zeno can also be installed under
 Linux or Unix; see the notes at the end for details.
 
@@ -47,7 +47,7 @@ files with newer versions.
 
 	export ZENOPATH="/Users/<yourname>/zeno"
 	export ZCC="gcc"
-	export ZCCFLAGS="-DMACOSX -I$ZENOPATH/inc"
+	export ZCCFLAGS="-std=gnu99 -DMACOSX -I$ZENOPATH/inc"
 	export ZLDFLAGS="-L$ZENOPATH/lib"
 	export ZENO_SAFE_SELECT="true"
 	export ZENO_MSG_OPTION="all"
@@ -78,17 +78,17 @@ Currently, the last line in zenomake.log shows several versions of
 sphcode being moved to the zeno bin directory; if the build got that far
 then chances are everything is OK!
 
-If you examine zenomake.log, you may find warnings about comparisons or
-casts between pointers and integers, use of tempnam, etc.  None of these
-appear to indicate serious problems.  Eventually I hope to fix them.
+If you examine zenomake.log, you may find warnings about comparisons
+or casts between pointers and integers, etc.  None of these appear to
+indicate serious problems.  Eventually I hope to fix them.
 
 
 If you have problems or questions, email me at the address below.
 
 Joshua Barnes <barnes@ifa.hawaii.edu>
 
-						3 June 2013
-						Honolulu, Hawaii
+						7 June 2015
+						Kyoto, Japan
 
 ________________________________________________________________________
 

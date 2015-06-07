@@ -1,10 +1,11 @@
 # ~/zeno/Zeno: toplevel Zeno system makefile.
-# Copyright (c) 2012  Joshua E. Barnes  Honolulu, Hawaii
+# Copyright (c) 2015  Joshua E. Barnes  Kyoto, Japan
 
 ########################################################################
 # Install Zeno software.
 
 install_all:
+	mkdir -p inc lib bin
 	(cd src/lib/clib;		$(MAKE) -f Zeno install)
 	(cd src/util;			$(MAKE) -f Zeno install)
 	(cd src/nbody/library;		$(MAKE) -f Zeno install)
