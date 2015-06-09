@@ -224,36 +224,44 @@ local void gspforces(bodyptr btab, int nbody, gsprof *gravgsp)
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_errno.h>
 
+//  a2, b2, R, z: access macros for parameter block passed to integrands.
+//  _____________________________________________________________________
+
 #define a2(par)  (((double *) par)[0])
 #define b2(par)  (((double *) par)[1])
 #define R(par)   (((double *) par)[2])
 #define z(par)   (((double *) par)[3])
 
+//  int_Phi, int_aR, int_az: Integrands for potential, radial, and vertical
+//  acceleration.  Coded entirely in double precision to improve behavior
+//  of integration routines, which expect accurate integrands.
+//  _______________________________________________________________________
+
 local double intPhi(double u, void *par)
 {
-  real Delta, mu;
+  double Delta, mu;
 
-  Delta = (a2(par) + u) * rsqrt(b2(par) + u);
-  mu = rsqrt(rsqr(R(par)) / (a2(par) + u) + rsqr(z(par)) / (b2(par) + u));
-  return (0.5 / (Delta * rsqr(1 + mu)));
+  Delta = (a2(par) + u) * sqrt(b2(par) + u);
+  mu = sqrt(R(par)*R(par) / (a2(par) + u) + z(par)*z(par) / (b2(par) + u));
+  return (0.5 / (Delta * (1+mu)*(1+mu)));
 }
 
 local double int_aR(double u, void *par)
 {
-  real Delta, mu;
+  double Delta, mu;
 
-  Delta = (a2(par) + u) * rsqrt(b2(par) + u);
-  mu = rsqrt(rsqr(R(par)) / (a2(par) + u) + rsqr(z(par)) / (b2(par) + u));
-  return (R(par) / ((a2(par) + u) * Delta * mu * rqbe(1 + mu)));
+  Delta = (a2(par) + u) * sqrt(b2(par) + u);
+  mu = sqrt(R(par)*R(par) / (a2(par) + u) + z(par)*z(par) / (b2(par) + u));
+  return (R(par) / ((a2(par) + u) * Delta * mu * (1+mu)*(1+mu)*(1+mu)));
 }
 
 local double int_az(double u, void *par)
 {
-  real Delta, mu;
+  double Delta, mu;
 
-  Delta = (a2(par) + u) * rsqrt(b2(par) + u);
-  mu = rsqrt(rsqr(R(par)) / (a2(par) + u) + rsqr(z(par)) / (b2(par) + u));
-  return (z(par) / ((b2(par) + u) * Delta * mu * rqbe(1 + mu)));
+  Delta = (a2(par) + u) * sqrt(b2(par) + u);
+  mu = sqrt(R(par)*R(par) / (a2(par) + u) + z(par)*z(par) / (b2(par) + u));
+  return (z(par) / ((b2(par) + u) * Delta * mu * (1+mu)*(1+mu)*(1+mu)));
 }
 
 local void hqmforces(bodyptr btab, int nbody, real M, real a, real b,
