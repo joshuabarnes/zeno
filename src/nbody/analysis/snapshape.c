@@ -12,15 +12,15 @@
 #include <gsl/gsl_eigen.h>
 
 string defv[] = {	       	";Estimate ellipticity & r.m.s. radius",
-  "in=???",			";Input snapshot, centered and sorted",
+  "in=???",			";Input snapshots, centered and sorted",
   "nbin=8",			";Number of radial bins to list",
-  "listvec=false",		";If true, ist eigen-vectors also",
-  "VERSION=1.2",		";Josh Barnes  9 Sep 2014",
+  "listvec=false",		";If true, list eigen-vectors also",
+  "VERSION=1.3",		";Josh Barnes  19 June 2015",
   NULL,
 };
 
 void eigensolve(vector, vector, vector,	real *, matrix);
-
+
 int main(int argc, string argv[])
 {
   stream istr;
@@ -35,27 +35,30 @@ int main(int argc, string argv[])
   istr = stropen(getparam("in"), "r");
   get_history(istr);
   layout_body(bodytags, Precision, NDIM);
-  if (! get_snap(istr, &btab, &nbody, &tnow, intags, FALSE) ||
-      ! set_member(intags, PosTag))
-    error("%s: %s data missing\n", getargv0(), PosTag);
-  if (nbody % getiparam("nbin") != 0)
-    error("%s: nbin does not divide number of bodies\n", getargv0());
-  nshell = nbody / getiparam("nbin");
-  printf("%10s  %8s  %8s\n", "r_rms", "c/a", "b/a");
-  for (n = 0; n < nbody; n += nshell) {
-    CLRM(qmat);
-    for (bp = NthBody(btab, n); bp < NthBody(btab, n + nshell);
-	 bp = NextBody(bp)) {
-      OUTVP(tmpm, Pos(bp), Pos(bp));
-      ADDM(qmat, qmat, tmpm);
-    }
-    eigensolve(v1, v2, v3, vals, qmat);
-    printf("%10.5f  %8.5f  %8.5f\n", rsqrt(tracem(qmat) / nshell),
-	   rsqrt(vals[2] / vals[0]), rsqrt(vals[1] / vals[0]));
-    if (getbparam("listvec")) {
-      printf("\t\t\t\t%8.5f  %8.5f  %8.5f\n", v1[0], v1[1], v1[2]);
-      printf("\t\t\t\t%8.5f  %8.5f  %8.5f\n", v2[0], v2[1], v2[2]);
-      printf("\t\t\t\t%8.5f  %8.5f  %8.5f\n", v3[0], v3[1], v3[2]);
+  printf("#%11s %3s %11s %11s %11s\n",
+	 "time", "n", "r_rms", "c/a", "b/a");
+  while (get_snap(istr, &btab, &nbody, &tnow, intags, FALSE)) {
+    if (! set_member(intags, PosTag))
+      error("%s: %s data missing\n", getargv0(), PosTag);
+    if (nbody % getiparam("nbin") != 0)
+      error("%s: nbin does not divide number of bodies\n", getargv0());
+    nshell = nbody / getiparam("nbin");
+    for (n = 0; n < nbody; n += nshell) {
+      CLRM(qmat);
+      for (bp = NthBody(btab, n); bp < NthBody(btab, n + nshell);
+	   bp = NextBody(bp)) {
+	OUTVP(tmpm, Pos(bp), Pos(bp));
+	ADDM(qmat, qmat, tmpm);
+      }
+      eigensolve(v1, v2, v3, vals, qmat);
+      printf(" %11.6f %3d %11.6f %11.6f %11.6f\n",
+	     tnow, n / nshell, rsqrt(tracem(qmat) / nshell),
+	     rsqrt(vals[2] / vals[0]), rsqrt(vals[1] / vals[0]));
+      if (getbparam("listvec")) {
+	printf("#\t\t\t\t\t\t\t%8.5f  %8.5f  %8.5f\n", v1[0], v1[1], v1[2]);
+	printf("#\t\t\t\t\t\t\t%8.5f  %8.5f  %8.5f\n", v2[0], v2[1], v2[2]);
+	printf("#\t\t\t\t\t\t\t%8.5f  %8.5f  %8.5f\n", v3[0], v3[1], v3[2]);
+      }
     }
   }
   return (0);
