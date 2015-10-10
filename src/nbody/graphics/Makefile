@@ -31,3 +31,9 @@ viewfile: viewfile.c
 snapinterpolate: snapinterpolate.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapinterpolate snapinterpolate.c \
 	    -lNBody -lClib -lm
+
+# Generate listing of source code.
+
+zeno_graphics.ps: snapppm.c snapsmooth.c snapview.c viewfile.c
+	enscript -M Letterdj -o zeno_graphics.ps \
+	          snapppm.c snapsmooth.c snapview.c viewfile.c
