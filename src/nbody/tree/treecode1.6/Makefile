@@ -43,9 +43,10 @@ treecode_x.o: treecode.c treedefs.h treecode.h
 ########################################################################
 # Generate listing.
 
-treecode.ps: treecode.c treeio.c treeload.c treegrav.c treecode.h treedefs.h
-	enscript -M Letterdj -o treecode.ps treecode.c treecode.h treeio.c \
-	         treeload.c treegrav.c treedefs.h
+zeno_treecode.ps: treecode.c treeio.c treeload.c treegrav.c \
+	          treecode.h treedefs.h
+	enscript -M Letterdj -o zeno_treecode.ps treecode.c treecode.h \
+	         treeio.c treeload.c treegrav.c treedefs.h
 
 ########################################################################
 # Build treepeek utility.
