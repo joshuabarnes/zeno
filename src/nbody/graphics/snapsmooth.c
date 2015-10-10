@@ -138,8 +138,8 @@ int main(int argc, string argv[])
   return (0);
 }
 
-//  __________________________________________
 //  get_bodies: read snapshot from input file.
+//  __________________________________________
 
 bool get_bodies(stream instr, string times, bool rhovalue)
 {
@@ -166,8 +166,8 @@ bool get_bodies(stream instr, string times, bool rhovalue)
   return (TRUE);
 }
 
-//  _________________________________________________
 //  smooth_rho: interpolate density onto sample grid.
+//  _________________________________________________
 
 void smooth_rho(real *grid, bool threedim, real zval)
 {
@@ -207,8 +207,8 @@ void smooth_rho(real *grid, bool threedim, real zval)
   }
 }
 
-//  _____________________________________________
 //  smooth_aux: interpolate aux onto sample grid.
+//  _____________________________________________
 
 void smooth_aux(real *grid, bool threedim, real zval)
 {
@@ -248,8 +248,8 @@ void smooth_aux(real *grid, bool threedim, real zval)
   }
 }
 
-//  _______________________________________________________
 //  smooth_bright: interpolate brightness onto sample grid.
+//  _______________________________________________________
 
 void smooth_bright(real *grid, int indx)
 {
@@ -288,8 +288,8 @@ void smooth_bright(real *grid, int indx)
   }
 }
 
-//  ________________________________________________
 //  put_pgm: output pixel data in linear pgm format.
+//  ________________________________________________
 
 #define BUFSIZE  256			// size of temp buffer
 
@@ -327,8 +327,8 @@ void put_pgm(string out, int count, string color,
   }
 }
 
-//  ________________________________________________
 //  put_ppm: output pixel data in linear ppm format.
+//  ________________________________________________
 
 void put_ppm(string out, int count, bool logmap, real midval, real slope,
 	     int depth, real *grid1, real *grid2, real *grid3)
@@ -374,8 +374,8 @@ void put_ppm(string out, int count, bool logmap, real midval, real slope,
   }
 }
 
-// _________________________________________________________
 // pixmap: transform real grid value to integer pixel value.
+// _________________________________________________________
 
 int pixmap(real gridval, bool logmap, real slope, real midval, int maxpix)
 {
@@ -388,8 +388,8 @@ int pixmap(real gridval, bool logmap, real slope, real midval, int maxpix)
     return (rfloor(slope * (gridval / midval - 1) + (maxpix + 1) / 2));
 }
 
-// __________________________________________________________________
 // pixclip: limit pixel value to allowed range, and count exceptions.
+// __________________________________________________________________
 
 void pixclip(int *pixval, int *lowcount, int *highcount, int maxpix)
 {
@@ -402,8 +402,8 @@ void pixclip(int *pixval, int *lowcount, int *highcount, int maxpix)
   }
 }
 
-//  ______________________________________________________
 //  set_aux_value: set aux() value of each body from grid.
+//  ______________________________________________________
 
 void set_aux_value(real *grid)
 {
