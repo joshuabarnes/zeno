@@ -1,5 +1,5 @@
 /*
- * snapstat.c: calculate statistics for input snapshots.
+ * snapstat.c: compute statistics of snapshot data.
  */
 
 #include "stdinc.h"
@@ -11,10 +11,10 @@
 #include "buildmap.h"
 #include <unistd.h>
 
-string defv[] = {		";Analyze statistics of snapshot data",
-  "in=???",			";Input file with snapshot stream",
+string defv[] = {		";Compute statistics of snapshot data",
+  "in=???",			";Input file: one or more snapshots",
   "times=all",			";Range of times to analyze",
-  "value=???",			";C language expression for analyzed value.",
+  "value=???",			";C language expression for value analyzed.",
 			        ";Bound variables, depending on input, are:",
 				  SNAPMAP_BODY_VARS ".",
   "require=",			";Input data items required",
@@ -29,32 +29,35 @@ string defv[] = {		";Analyze statistics of snapshot data",
   "seed=",			";Random number seed for value computation",
   "formats=%11s,%#11.5g,%11d,%9s,%#9.3g",
 				";Format specifications for output table",
-  "VERSION=2.4",		";Josh Barnes  31 Jan 2015",
+  "output=",			";Output file; uses stdout if blank",
+  "stream=",			";Output stream copies input snapshots",
+  "VERSION=2.5",		";Josh Barnes  26 June 2015",
   NULL,
 };
 
-void snapstat(bodyptr, int, real, string, string*);
-void snapavg(bodyptr, int, real, bool, bool, string*);
-void snapsum(bodyptr, int, real, bool, bool, string*);
-void snapmed(bodyptr, int, real, bool, bool, string*);
-void snapoct(bodyptr, int, real, bool, bool, string*);
-void snapOCT(bodyptr, int, real, bool, bool, string*);
+void snapstat(stream, bodyptr, int, real, string, string*);
+void snapavg(stream, bodyptr, int, real, bool, bool, string*);
+void snapsum(stream, bodyptr, int, real, bool, bool, string*);
+void snapmed(stream, bodyptr, int, real, bool, bool, string*);
+void snapoct(stream, bodyptr, int, real, bool, bool, string*);
+void snapOCT(stream, bodyptr, int, real, bool, bool, string*);
 
 int cmpvalue(const void *, const void *);
 
 stream execmap(string);				// start snapmap process
 
-string names[2] = { "Value",  NULL };
+#define ValueTag    "Value"
+#define ValueField  phatbody[NewBodyFields+0]
+#define Value(b)    SelectReal(b, ValueField.offset)
+
+string names[2] = { ValueTag, NULL };
 string exprs[2] = { NULL,     NULL };
 string types[2] = { RealType, NULL };
-
-#define ValueField  phatbody[NewBodyFields+0]
-#define Value(b)  SelectReal(b, ValueField.offset)
 
 int main(int argc, string argv[])
 {
-  string  *formats, prog, itags[MaxBodyFields];
-  stream xstr;
+  string  *formats, prog, itags[MaxBodyFields], *otags;
+  stream xstr, outstr, strstr;
   bodyptr btab = NULL;
   int nbody;
   real tnow;
@@ -68,40 +71,53 @@ int main(int argc, string argv[])
   buildmap(prog, names, exprs, types, NULL, Precision, NDIM, TRUE);
   xstr = execmap(prog);
   get_history(xstr);
-  new_field(&ValueField, RealType, "Value");
+  new_field(&ValueField, RealType, ValueTag);
   new_field(&ValueField + 1, NULL, NULL);
   layout_body(names, Precision, NDIM);
-  while (get_snap(xstr, &btab, &nbody, &tnow, itags, FALSE))
-    snapstat(btab, nbody, tnow, getparam("options"), formats);
+  outstr = (streq(getparam("output"), "") ?
+	    stdout : stropen(getparam("output"), "w"));
+  strstr = (streq(getparam("stream"), "") ?
+	    NULL : stropen(getparam("stream"), "w"));
+  while (get_snap(xstr, &btab, &nbody, &tnow, itags, strstr != NULL)) {
+    snapstat(outstr, btab, nbody, tnow, getparam("options"), formats);
+    if (strstr != NULL) {
+      otags = set_diff(itags, names);
+      put_snap(strstr, &btab, &nbody, &tnow, otags);
+      free(otags);
+    }
+    fflush(NULL);
+  }
   if (unlink(prog) != 0)
     error("%s: can't unlink %s\n", getargv0(), prog);
   return (0);
 }
-
-void snapstat(bodyptr btab, int nbody, real tnow, string opts, string *fmts)
+
+void snapstat(stream outstr, bodyptr btab, int nbody, real tnow,
+	      string opts, string *fmts)
 {
   static bool showhead = TRUE;
+  bool showtime = scanopt(opts, "time");
   int nopt;
 
   nopt = 0;
   if (scanopt(opts, "avg")) {
-    snapavg(btab, nbody, tnow, scanopt(opts, "time"), showhead, fmts);
+    snapavg(outstr, btab, nbody, tnow, showtime, showhead, fmts);
     nopt++;
   }
   if (scanopt(opts, "sum")) {
-    snapsum(btab, nbody, tnow, scanopt(opts, "time"), showhead, fmts);
+    snapsum(outstr, btab, nbody, tnow, showtime, showhead, fmts);
     nopt++;
   }
   if (scanopt(opts, "med")) {
-    snapmed(btab, nbody, tnow, scanopt(opts, "time"), showhead, fmts);
+    snapmed(outstr, btab, nbody, tnow, showtime, showhead, fmts);
     nopt++;
   }
   if (scanopt(opts, "oct")) {
-    snapoct(btab, nbody, tnow, scanopt(opts, "time"), showhead, fmts);
+    snapoct(outstr, btab, nbody, tnow, showtime, showhead, fmts);
     nopt++;
   }
   if (scanopt(opts, "OCT")) {
-    snapOCT(btab, nbody, tnow, scanopt(opts, "time"), showhead, fmts);
+    snapOCT(outstr, btab, nbody, tnow, showtime, showhead, fmts);
     nopt++;
   }
   if (nopt == 0)
@@ -109,7 +125,7 @@ void snapstat(bodyptr btab, int nbody, real tnow, string opts, string *fmts)
   showhead = (nopt > 1);
 }
 
-void snapavg(bodyptr btab, int nbody, real tnow,
+void snapavg(stream outstr, bodyptr btab, int nbody, real tnow,
 	     bool showtime, bool showhead, string *fmts)
 {
   double avg1, avg2, avg3, avg4;
@@ -127,25 +143,28 @@ void snapavg(bodyptr btab, int nbody, real tnow,
     if (showhead) {
       snprintf(fmtbuf, sizeof(fmtbuf), "#%s %s %s %s %s %s\n",
 	       fmts[0], fmts[0], fmts[0], fmts[0], fmts[0], fmts[0]);
-      printf(fmtbuf, "time", "values", "average", "r.m.s.", "avg^3", "avg^4");
+      fprintf(outstr, fmtbuf, "time",
+	      "values", "average", "r.m.s.", "avg^3", "avg^4");
     }
     snprintf(fmtbuf, sizeof(fmtbuf), " %s %s %s %s %s %s\n",
 	     fmts[1], fmts[2], fmts[1], fmts[1], fmts[1], fmts[1]);
-    printf(fmtbuf, tnow, nbody, avg1, rsqrt(avg2), rcbrt(avg3),
-	   rsqrt(rsqrt(avg4)));
+    fprintf(outstr, fmtbuf, tnow,
+	    nbody, avg1, rsqrt(avg2), rcbrt(avg3), rsqrt(rsqrt(avg4)));
   } else {
     if (showhead) {
       snprintf(fmtbuf, sizeof(fmtbuf), "#%s %s %s %s %s\n",
 	       fmts[0], fmts[0], fmts[0], fmts[0], fmts[0]);
-      printf(fmtbuf, "values", "average", "r.m.s.", "avg^3", "avg^4");
+      fprintf(outstr, fmtbuf,
+	      "values", "average", "r.m.s.", "avg^3", "avg^4");
     }
     snprintf(fmtbuf, sizeof(fmtbuf), " %s %s %s %s %s\n",
 	     fmts[2], fmts[1], fmts[1], fmts[1], fmts[1]);
-    printf(fmtbuf, nbody, avg1, rsqrt(avg2), rcbrt(avg3), rsqrt(rsqrt(avg4)));
+    fprintf(outstr, fmtbuf,
+	    nbody, avg1, rsqrt(avg2), rcbrt(avg3), rsqrt(rsqrt(avg4)));
   }
 }
 
-void snapsum(bodyptr btab, int nbody, real tnow,
+void snapsum(stream outstr, bodyptr btab, int nbody, real tnow,
 	     bool showtime, bool showhead, string *fmts)
 {
   double sum1, sum2, sum3, sum4;
@@ -163,24 +182,25 @@ void snapsum(bodyptr btab, int nbody, real tnow,
     if (showhead) {
       snprintf(fmtbuf, sizeof(fmtbuf), "#%s %s %s %s %s %s\n",
 	       fmts[0], fmts[0], fmts[0], fmts[0], fmts[0], fmts[0]);
-      printf(fmtbuf, "time", "values", "sum", "sum^2", "sum^3", "sum^4");
+      fprintf(outstr, fmtbuf, "time",
+	      "values", "sum", "sum^2", "sum^3", "sum^4");
     }
     snprintf(fmtbuf, sizeof(fmtbuf), " %s %s %s %s %s %s\n",
 	     fmts[1], fmts[2], fmts[1], fmts[1], fmts[1], fmts[1]);
-    printf(fmtbuf, tnow, nbody, sum1, sum2, sum3, sum4);
+    fprintf(outstr, fmtbuf, tnow, nbody, sum1, sum2, sum3, sum4);
   } else {
     if (showhead) {
       snprintf(fmtbuf, sizeof(fmtbuf), "#%s %s %s %s %s\n",
 	       fmts[0], fmts[0], fmts[0], fmts[0], fmts[0]);
-      printf(fmtbuf, "values", "sum", "sum^2", "sum^3", "sum^4");
+      fprintf(outstr, fmtbuf, "values", "sum", "sum^2", "sum^3", "sum^4");
     }
     snprintf(fmtbuf, sizeof(fmtbuf), " %s %s %s %s %s\n",
 	     fmts[2], fmts[1], fmts[1], fmts[1], fmts[1]);
-    printf(fmtbuf, nbody, sum1, sum2, sum3, sum4);
+    fprintf(outstr, fmtbuf, nbody, sum1, sum2, sum3, sum4);
   }
 }
 
-void snapmed(bodyptr btab, int nbody, real tnow,
+void snapmed(stream outstr, bodyptr btab, int nbody, real tnow,
 	     bool showtime, bool showhead, string *fmts)
 {
   real *valarr = (real*) allocate(nbody * sizeof(real));
@@ -193,36 +213,37 @@ void snapmed(bodyptr btab, int nbody, real tnow,
     if (showhead) {
       snprintf(fmtbuf, sizeof(fmtbuf), "#%s %s %s %s %s %s\n",
 	       fmts[0], fmts[0], fmts[0], fmts[0], fmts[0], fmts[0]);
-      printf(fmtbuf,
-	     "time", "minimum", "1st quart", "median", "3rd quart", "maximum");
+      fprintf(outstr, fmtbuf, "time",
+	      "minimum", "1st quart", "median", "3rd quart", "maximum");
     }
     snprintf(fmtbuf, sizeof(fmtbuf), " %s %s %s %s %s %s\n",
 	     fmts[1], fmts[1], fmts[1], fmts[1], fmts[1], fmts[1]);
-    printf(fmtbuf, tnow,
-	   valarr[0], 
-	   valarr[nbody/4],
-	   valarr[nbody/2],
-	   valarr[3*nbody/4],
-	   valarr[nbody - 1]);
+    fprintf(outstr, fmtbuf, tnow,
+	    valarr[0], 
+	    valarr[nbody/4],
+	    valarr[nbody/2],
+	    valarr[3*nbody/4],
+	    valarr[nbody - 1]);
   } else {
     if (showhead) {
       snprintf(fmtbuf, sizeof(fmtbuf), "#%s %s %s %s %s\n",
 	       fmts[0], fmts[0], fmts[0], fmts[0], fmts[0]);
-      printf(fmtbuf, "minimum", "1st quart", "median", "3rd quart", "maximum");
+      fprintf(outstr, fmtbuf,
+	      "minimum", "1st quart", "median", "3rd quart", "maximum");
     }
     snprintf(fmtbuf, sizeof(fmtbuf), " %s %s %s %s %s\n",
 	     fmts[1], fmts[1], fmts[1], fmts[1], fmts[1]);
-    printf(fmtbuf,
-	   valarr[0], 
-	   valarr[nbody/4],
-	   valarr[nbody/2],
-	   valarr[3*nbody/4],
-	   valarr[nbody - 1]);
+    fprintf(outstr, fmtbuf,
+	    valarr[0], 
+	    valarr[nbody/4],
+	    valarr[nbody/2],
+	    valarr[3*nbody/4],
+	    valarr[nbody - 1]);
   }
   free(valarr);
 }
 
-void snapoct(bodyptr btab, int nbody, real tnow,
+void snapoct(stream outstr, bodyptr btab, int nbody, real tnow,
 	     bool showtime, bool showhead, string *fmts)
 {
   real *valarr = (real*) allocate(nbody * sizeof(real));
@@ -235,40 +256,41 @@ void snapoct(bodyptr btab, int nbody, real tnow,
     if (showhead) {
       snprintf(fmtbuf, sizeof(fmtbuf), "#%s %s %s %s %s %s %s %s\n", fmts[3],
 	       fmts[3], fmts[3], fmts[3], fmts[3], fmts[3], fmts[3], fmts[3]);
-      printf(fmtbuf, "time",
-	     "oct1", "oct2", "oct3", "oct4", "oct5", "oct6", "oct7");
+      fprintf(outstr, fmtbuf, "time",
+	      "oct1", "oct2", "oct3", "oct4", "oct5", "oct6", "oct7");
     }
     snprintf(fmtbuf, sizeof(fmtbuf), " %s %s %s %s %s %s %s %s\n", fmts[4],
 	     fmts[4], fmts[4], fmts[4], fmts[4], fmts[4], fmts[4], fmts[4]);
-    printf(fmtbuf, tnow,
-	   valarr[(1*nbody)/8],
-	   valarr[(2*nbody)/8],
-	   valarr[(3*nbody)/8],
-	   valarr[(4*nbody)/8],
-	   valarr[(5*nbody)/8],
-	   valarr[(6*nbody)/8],
-	   valarr[(7*nbody)/8]);
+    fprintf(outstr, fmtbuf, tnow,
+	    valarr[(1*nbody)/8],
+	    valarr[(2*nbody)/8],
+	    valarr[(3*nbody)/8],
+	    valarr[(4*nbody)/8],
+	    valarr[(5*nbody)/8],
+	    valarr[(6*nbody)/8],
+	    valarr[(7*nbody)/8]);
   } else {
     if (showhead) {
       snprintf(fmtbuf, sizeof(fmtbuf), "#%s %s %s %s %s %s %s\n",
 	       fmts[3], fmts[3], fmts[3], fmts[3], fmts[3], fmts[3], fmts[3]);
-      printf(fmtbuf, "oct1", "oct2", "oct3", "oct4", "oct5", "oct6", "oct7");
+      fprintf(outstr, fmtbuf,
+	      "oct1", "oct2", "oct3", "oct4", "oct5", "oct6", "oct7");
     }
     snprintf(fmtbuf, sizeof(fmtbuf), " %s %s %s %s %s %s %s\n",
 	     fmts[4], fmts[4], fmts[4], fmts[4], fmts[4], fmts[4], fmts[4]);
-    printf(fmtbuf,
-	   valarr[(1*nbody)/8],
-	   valarr[(2*nbody)/8],
-	   valarr[(3*nbody)/8],
-	   valarr[(4*nbody)/8],
-	   valarr[(5*nbody)/8],
-	   valarr[(6*nbody)/8],
-	   valarr[(7*nbody)/8]);
+    fprintf(outstr, fmtbuf,
+	    valarr[(1*nbody)/8],
+	    valarr[(2*nbody)/8],
+	    valarr[(3*nbody)/8],
+	    valarr[(4*nbody)/8],
+	    valarr[(5*nbody)/8],
+	    valarr[(6*nbody)/8],
+	    valarr[(7*nbody)/8]);
   }
   free(valarr);
 }
 
-void snapOCT(bodyptr btab, int nbody, real tnow,
+void snapOCT(stream outstr, bodyptr btab, int nbody, real tnow,
 	     bool showtime, bool showhead, string *fmts)
 {
   real *valarr = (real*) allocate(nbody * sizeof(real));
@@ -282,43 +304,43 @@ void snapOCT(bodyptr btab, int nbody, real tnow,
       snprintf(fmtbuf, sizeof(fmtbuf), "#%s %s %s %s %s %s %s %s %s %s\n",
 	       fmts[3], fmts[3], fmts[3], fmts[3], fmts[3], fmts[3], fmts[3],
 	       fmts[3], fmts[3], fmts[3]);
-      printf(fmtbuf, "time", "min", "oct1", "oct2", "oct3", "oct4", "oct5",
-	     "oct6", "oct7", "max");
+      fprintf(outstr, fmtbuf, "time", "min", "oct1", "oct2", "oct3", "oct4",
+	      "oct5", "oct6", "oct7", "max");
     }
     snprintf(fmtbuf, sizeof(fmtbuf), " %s %s %s %s %s %s %s %s %s %s\n",
 	     fmts[4], fmts[4], fmts[4], fmts[4], fmts[4], fmts[4], fmts[4],
 	     fmts[4], fmts[4], fmts[4]);
-    printf(fmtbuf, tnow,
-	   valarr[0],
-	   valarr[(1*nbody)/8],
-	   valarr[(2*nbody)/8],
-	   valarr[(3*nbody)/8],
-	   valarr[(4*nbody)/8],
-	   valarr[(5*nbody)/8],
-	   valarr[(6*nbody)/8],
-	   valarr[(7*nbody)/8],
-	   valarr[nbody - 1]);
+    fprintf(outstr, fmtbuf, tnow,
+	    valarr[0],
+	    valarr[(1*nbody)/8],
+	    valarr[(2*nbody)/8],
+	    valarr[(3*nbody)/8],
+	    valarr[(4*nbody)/8],
+	    valarr[(5*nbody)/8],
+	    valarr[(6*nbody)/8],
+	    valarr[(7*nbody)/8],
+	    valarr[nbody - 1]);
   } else {
     if (showhead) {
       snprintf(fmtbuf, sizeof(fmtbuf), "#%s %s %s %s %s %s %s %s %s\n",
 	       fmts[3], fmts[3], fmts[3], fmts[3], fmts[3], fmts[3],
 	       fmts[3], fmts[3], fmts[3]);
-      printf(fmtbuf, "min", "oct1", "oct2", "oct3", "oct4", "oct5",
-	     "oct6", "oct7", "max");
+      fprintf(outstr, fmtbuf, "min", "oct1", "oct2", "oct3", "oct4", "oct5",
+	      "oct6", "oct7", "max");
     }
     snprintf(fmtbuf, sizeof(fmtbuf), " %s %s %s %s %s %s %s %s %s\n",
 	     fmts[4], fmts[4], fmts[4], fmts[4], fmts[4], fmts[4],
 	     fmts[4], fmts[4], fmts[4]);
-    printf(fmtbuf,
-	   valarr[0],
-	   valarr[(1*nbody)/8],
-	   valarr[(2*nbody)/8],
-	   valarr[(3*nbody)/8],
-	   valarr[(4*nbody)/8],
-	   valarr[(5*nbody)/8],
-	   valarr[(6*nbody)/8],
-	   valarr[(7*nbody)/8],
-	   valarr[nbody - 1]);
+    fprintf(outstr, fmtbuf,
+	    valarr[0],
+	    valarr[(1*nbody)/8],
+	    valarr[(2*nbody)/8],
+	    valarr[(3*nbody)/8],
+	    valarr[(4*nbody)/8],
+	    valarr[(5*nbody)/8],
+	    valarr[(6*nbody)/8],
+	    valarr[(7*nbody)/8],
+	    valarr[nbody - 1]);
   }
   free(valarr);
 }
@@ -339,7 +361,7 @@ stream execmap(string prog)
     close(handle[0]);
     sprintf(handbuf, "-%d", handle[1]);
     execl(prog, getargv0(), getparam("in"), handbuf, getparam("times"),
-	  getparam("require"), "Value",
+	  getparam("require"), ValueTag,
 	  strnull(getparam("require")) ? "true" : "false",
 	  getparam("seed"), NULL);
     error("%s: execl %s failed\n", getargv0(), prog);
