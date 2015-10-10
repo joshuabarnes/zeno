@@ -1,5 +1,5 @@
 /*
- * SNAPTESTDISK.C: set up a uniform-density test disk in a spherical galaxy.
+ * snaptestdisk.c: set up a uniform-density test disk in a spherical galaxy.
  */
 
 #include <string.h>
@@ -8,6 +8,7 @@
 #include "mathfns.h"
 #include "getparam.h"
 #include "vectmath.h"
+#include "filestruct.h"
 #include "phatbody.h"
 #include "snapcenter.h"
 
@@ -39,14 +40,14 @@ void writegal(string);
 
 int main(int argc, string argv[])
 {
-    initparam(argv, defv);
-    layout_body(bodyfields, Precision, NDIM);
-    readsphr(getparam("in"));
-    sphrprof();
-    testdisk();
-    if (! strnull(getparam("out")))
-        writegal(getparam("out"));
-    return (0);
+  initparam(argv, defv);
+  layout_body(bodyfields, Precision, NDIM);
+  readsphr(getparam("in"));
+  sphrprof();
+  testdisk();
+  if (! strnull(getparam("out")))
+    writegal(getparam("out"));
+  return (0);
 }
 
 /*
