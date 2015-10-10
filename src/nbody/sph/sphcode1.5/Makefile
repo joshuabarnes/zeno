@@ -205,3 +205,11 @@ kdtree_ss.o: kdtree.c kdtree.h sphdefs.h
 smooth_ss.o: smooth.c smooth.h kdtree.h sphdefs.h
 	$(ZCC) $(ZCCFLAGS) $(OPT) $(FSF) $(FLAGS) \
 	    -o smooth_ss.o -c smooth.c
+
+# Generate source code listing.
+
+zeno_sphcode.ps: kdtree.c kdtree.h smooth.c smooth.h sphcode.c sphcode.h \
+	         sphdefs.h sphdensity.c sphgrav.c sphio.c  sphload.c
+	enscript -M Letterdj -o zeno_sphcode.ps \
+	         sphcode.c sphcode.h sphdefs.h kdtree.c kdtree.h \
+	         smooth.c smooth.h sphgrav.c sphio.c sphload.c sphdensity.c
