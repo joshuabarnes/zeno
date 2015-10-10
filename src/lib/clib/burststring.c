@@ -32,7 +32,7 @@ string *burststring(string str, string sep)
     if (strchr(sep, *sp) != NULL) {		// found next separator
 						// (or end, if *sp == NULL)
       if (sp > fp || keepnull) {		// check length of word
-	*wp = (string) allocate(MAX(sp - fp, 1) * sizeof(char));
+	*wp = (string) allocate((sp - fp + 1) * sizeof(char));
 						// get room for word
 	(void) strncpy(*wp++, fp, sp - fp);	// make copy of text
       }
