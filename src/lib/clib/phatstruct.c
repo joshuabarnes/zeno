@@ -14,13 +14,16 @@
 //  (2) identical objects can be stored contiguously without padding.
 //  __________________________________________________________________
 
+// Lines with TEST commants are prototyping construction of type string
+// for structure as realized in memory.
+
 void layout_struct(ps_field *pstab, string *names)
 {
   bool debug = (getenv("ZENO_PHSTR_DEBUG") != NULL);
-  int pad, len;
+  int pad = 0, len;
   ps_field *psp;
 
-  pad = 0;
+  pstab->type = (string) allocate(512);		// TEST: alloc lots of space
   while (*names != NULL) {			// loop over field names
     for (psp = pstab + 1; psp->name != NULL; psp++)
       if (streq(psp->name, *names))		// find name in struct tab
@@ -32,6 +35,7 @@ void layout_struct(ps_field *pstab, string *names)
       while (pstab->length % len != 0) {	// align on proper boundary
 	pstab->length++;
 	pad++;
+	strcat(pstab->type, "b");		// TEST: store padding byte
       }
       psp->offset = pstab->length;		// assign offset and length
       psp->length = type_length(psp->type);
@@ -39,6 +43,7 @@ void layout_struct(ps_field *pstab, string *names)
       if (debug)
 	eprintf("[%s.layout_struct: name = %s  offset = %d  length = %d]\n",
 		getprog(), *names, psp->offset, psp->length);
+      strcat(pstab->type, psp->type);	// TEST: append field type
     }
     names++;
   }
@@ -49,10 +54,12 @@ void layout_struct(ps_field *pstab, string *names)
   while (pstab->length % len != 0) {		// align complete structure
     pstab->length++;
     pad++;
+    strcat(pstab->type, "b");			// TEST: store padding byte
   }
   if (debug)
-    eprintf("[%s.layout_struct: sizeof(%s) = %d bytes (%d padding)]\n",
-	    getprog(), pstab->name, pstab->length, pad);
+    eprintf("[%s.layout_struct: struct %s: size = %d   pad = %d  type = %s]\n",
+	    getprog(), pstab->name, pstab->length, pad, pstab->type);
+						// TEST: print combined type
 }
 
 //  new_field: define a new field of given type and name.
@@ -116,50 +123,65 @@ void define_offset(ps_field *pstab, string name, int offset)
 #ifdef TESTBED
 
 #include "getparam.h"
+#include "filestruct.h"
 
 string defv[] = {		";Test phat structures",
-    "fields=foo,bar,fum,fie,baz,jojo",
+  "fields=foo,bar,fum,fie,baz,jojo",
 				";List of structure fields",
-    "VERSION=1.0",		";Josh Barnes  18 July 1994",
-    NULL,
+  "out=",			";Optional output file",
+  "VERSION=1.1",		";Josh Barnes  16 July 2015",
+  NULL,
 };
 
-ps_field phatstruct[] = {
-    { NULL,               "foobar",  0,          0 },
-    { CharType,           "foo",     BadOffset,  0 },
-    { ShortType,          "bar",     BadOffset,  0 },
-    { IntType,            "fum",     BadOffset,  0 },
-    { FloatType,          "fie",     BadOffset,  0 },
-    { DoubleType,         "baz",     BadOffset,  0 },
-    { RealType RealType,  "jojo",    BadOffset,  0 },
-    { NULL,               NULL,      0,          0 },
+ps_field pstab[] = {
+  { NULL,               "foobar",  0,          0 },
+  { CharType,           "foo",     BadOffset,  0 },
+  { ShortType,          "bar",     BadOffset,  0 },
+  { IntType,            "fum",     BadOffset,  0 },
+  { FloatType,          "fie",     BadOffset,  0 },
+  { DoubleType,         "baz",     BadOffset,  0 },
+  { RealType RealType,  "jojo",    BadOffset,  0 },
+  { NULL,               NULL,      0,          0 },
 };
 
-#define Foo(x)  SelectChar(x, phatstruct[1].offset)
-#define Bar(x)  SelectShort(x, phatstruct[2].offset)
-#define Fum(x)  SelectInt(x, phatstruct[3].offset)
-#define Fie(x)  SelectFloat(x, phatstruct[4].offset)
-#define Baz(x)  SelectDouble(x, phatstruct[5].offset)
-#define Jojo(x) SelectVect(x, phatstruct[6].offset)
+#define Foo(x)  SelectChar(x, pstab[1].offset)
+#define Bar(x)  SelectShort(x, pstab[2].offset)
+#define Fum(x)  SelectInt(x, pstab[3].offset)
+#define Fie(x)  SelectFloat(x, pstab[4].offset)
+#define Baz(x)  SelectDouble(x, pstab[5].offset)
+#define Jojo(x) SelectVect(x, pstab[6].offset)
 
-main(int argc, string argv[])
+int main(int argc, string argv[])
 {
   string *fields;
   void *xp;
+  stream outstr;
 
   initparam(argv, defv);
   fields = burststring(getparam("fields"), ",");
-  layout_struct(phatstruct, fields);
-  xp = allocate(phatstruct[0].length);
-  Foo(xp) = 'a';
-  Bar(xp) = 123;
-  Fum(xp) = 12345678;
-  Fie(xp) = 3.141592;
-  Baz(xp) = 2.718281;
-  Jojo(xp)[0] = 1.5;
-  Jojo(xp)[1] = -2.5;
-  printf("xp -> { %c  %d  %d  %f  %f [%f %f] }\n", Foo(xp), Bar(xp),
-	 Fum(xp), Fie(xp), Baz(xp), Jojo(xp)[0], Jojo(xp)[1]);
+  layout_struct(pstab, fields);
+  xp = allocate(pstab[0].length);
+  if (pstab[1].offset != BadOffset) Foo(xp) = 'a';
+  if (pstab[2].offset != BadOffset) Bar(xp) = 123;
+  if (pstab[3].offset != BadOffset) Fum(xp) = 12345678;
+  if (pstab[4].offset != BadOffset) Fie(xp) = 3.141592;
+  if (pstab[5].offset != BadOffset) Baz(xp) = 2.718281;
+  if (pstab[6].offset != BadOffset) Jojo(xp)[0] = 1.5;
+  if (pstab[6].offset != BadOffset) Jojo(xp)[1] = -2.5;
+  printf("xp -> { ");
+  if (pstab[1].offset != BadOffset) printf("%c ", Foo(xp));
+  if (pstab[2].offset != BadOffset) printf("%d ", Bar(xp));
+  if (pstab[3].offset != BadOffset) printf("%d ", Fum(xp));
+  if (pstab[4].offset != BadOffset) printf("%f ", Fie(xp));
+  if (pstab[5].offset != BadOffset) printf("%f ", Baz(xp));
+  if (pstab[6].offset != BadOffset) 
+    printf("[%f %f] ", Jojo(xp)[0], Jojo(xp)[1]);
+  printf("}\n");
+  if (! strnull(getparam("out"))) {
+    outstr = stropen(getparam("out"), "w");
+    put_data(outstr, pstab[0].name,  pstab[0].type, xp, NULL);
+  }
+  return (0);
 }
 
 #endif
