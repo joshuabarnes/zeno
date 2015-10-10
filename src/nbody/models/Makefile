@@ -29,3 +29,9 @@ extforce: extforce.c
 exptest: exptest.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -DTESTBED -o exptest exptest.c \
 	      -lNBody -lClib -lm
+
+# Generate listing of source code.
+
+zeno_models.ps: kepsnap.c plumsnap.c polysnap.c snaptestdisk.c
+	enscript -M Letterdj -o zeno_models.ps \
+	          kepsnap.c plumsnap.c polysnap.c snaptestdisk.c
