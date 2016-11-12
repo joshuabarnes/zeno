@@ -21,10 +21,11 @@ string defv[] = {		PURPOSE,
     "in=???",                   ";Input file name",
     "out=???",                  ";Output file name",
     "options=" MassTag "," PosTag "," VelTag,
-				";Others are " PhiTag "," AuxTag "," KeyTag,
+				";Others are " PhiTag "," AuxTag "," AuxVecTag "," KeyTag,
     "iformat=  %d",		";Output format for integers",
     "rformat= " RFORMAT,	";Output format for floating-point",
-    "VERSION=2.3",		";Josh Barnes  11 June 1998",
+    "VERSION=2.3mod",		";Josh Barnes  11 June 1998",
+                            ";George Privon  12 Nov 2016",
     NULL,
 };
 
@@ -108,6 +109,12 @@ local void snapascii(void)
 	    get_data(instr, AuxTag, RealType, rbuf, nbody, 0);
 	    out_rdata(rbuf, nbody);
 	    free(rbuf);
+        }
+        if (scanopt(options, AuxVecTag)) {     /* auxilary vector data?    */
+        rbuf = (real *) allocate(nbody * NDIM * sizeof(real));
+        get_data(instr, AuxVecTag, RealType, rbuf, nbody, NDIM, 0);
+        out_vdata(vbuf, nbody);
+        free(vbuf);
         }
         if (scanopt(options, KeyTag)) {		/* key data?                */
 	    ibuf = (int *) allocate(nbody * sizeof(int));
