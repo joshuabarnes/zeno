@@ -1,20 +1,29 @@
-# zeno/src/nbody/tree/treecode1.6/Makefile: compile tree-code program.
-# Copyright (c) 2015, Joshua E. Barnes, Kyoto, Japan.
+##  zeno/src/nbody/tree/treecode1.6/Makefile: compile tree-code program.
+##  Copyright (c) 2017, Joshua E. Barnes, Honolulu, Hawaii.
+##  ____________________________________________________________________
 
-BINFILES = treecode treecode_x treepeek
+BINFILES = treecode$X treecode_x$X treepeek$X
 
-# Optimization flags; use second version for SunOS.
+##  Compilation options are selected by changing OPTIONS (and X):
+##	make make_all OPTIONS="-DDOUBLEPREC" X=_dp
+##  compiles BINFILES in double precision, with "_dp" suffixes.
+##  _____________________________________________________________
+
+OPTIONS =
+
+##  Optimization flags.
+##  ___________________
+
 OPT = -O3
-# OPT = -xO3
 
-########################################################################
-# Build vanilla treecode; by default, includes softening correction.
+make_all: $(BINFILES)
 
-OPTIONS = -DSOFTCORR
+##  Build vanilla treecode; by default, includes softening correction.
+##  __________________________________________________________________
 
-treecode$X: treecode$X.o treeio$X.o treeload$X.o treegrav$X.o
-	$(ZCC) $(ZLDFLAGS) -o treecode$X \
-	    treecode$X.o treeio$X.o treeload$X.o treegrav$X.o \
+treecode$Y$X: treecode$X.o treeio$X.o treeload$X.o treegrav$Y$X.o
+	$(ZCC) $(ZLDFLAGS) -o treecode$Y$X \
+	    treecode$X.o treeio$X.o treeload$X.o treegrav$Y$X.o \
 	    -lNBody -lClib -lgsl -lgslcblas -lm
 
 treecode$X.o: treecode.c treedefs.h treecode.h
@@ -26,30 +35,33 @@ treeio$X.o: treeio.c treedefs.h
 treeload$X.o: treeload.c treedefs.h
 	$(ZCC) $(ZCCFLAGS) $(OPTIONS) $(OPT) -o treeload$X.o -c treeload.c
 
-treegrav$X.o: treegrav.c treedefs.h
-	$(ZCC) $(ZCCFLAGS) $(OPTIONS) $(OPT) -o treegrav$X.o -c treegrav.c
+treegrav$Y$X.o: treegrav.c treedefs.h
+	$(ZCC) $(ZCCFLAGS) $(OPTIONS) $(OPT) -o treegrav$Y$X.o -c treegrav$Y.c
 
-########################################################################
-# Build treecode with external force.
 
-treecode_x: treecode_x.o treeio.o treeload.o treegrav.o
-	$(ZCC) $(ZLDFLAGS) -o treecode_x \
-	    treecode_x.o treeio.o treeload.o treegrav.o \
+##  Build treecode with external force.
+##  ___________________________________
+
+treecode_x$X: treecode_x$X.o treeio$X.o treeload$X.o treegrav$X.o
+	$(ZCC) $(ZLDFLAGS) -o treecode_x$X \
+	    treecode_x$X.o treeio$X.o treeload$X.o treegrav$X.o \
 	    -lGSP -lNBody -lClib -lgsl -lgslcblas -lm
 
-treecode_x.o: treecode.c treedefs.h treecode.h
-	$(ZCC) $(ZCCFLAGS) -DEXTGRAV -o treecode_x.o -c treecode.c
+treecode_x$X.o: treecode.c treedefs.h treecode.h
+	$(ZCC) $(ZCCFLAGS) $(OPTIONS) -DEXTGRAV -o treecode_x$X.o -c treecode.c
 
-########################################################################
-# Generate listing.
+##  Generate listing.
+##  _________________
 
 zeno_treecode.ps: treecode.c treeio.c treeload.c treegrav.c \
 	          treecode.h treedefs.h
-	enscript -M Letterdj -o zeno_treecode.ps treecode.c treecode.h \
-	         treeio.c treeload.c treegrav.c treedefs.h
+	enscript -r2 -M Letterdj -o zeno_treecode.ps \
+	         treecode.c treecode.h treeload.c treegrav.c \
+	         treeio.c treedefs.h
 
 ########################################################################
 # Build treepeek utility.
 
-treepeek: treepeek.c treedefs.h treecode.h
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o treepeek treepeek.c -lNBody -lClib
+treepeek$X: treepeek.c treedefs.h treecode.h
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o treepeek$X \
+	       treepeek.c -lNBody -lClib
