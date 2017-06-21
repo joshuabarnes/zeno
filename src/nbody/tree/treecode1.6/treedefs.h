@@ -56,11 +56,20 @@ typedef struct {
   vector vel;                   // velocity of body
   vector acc;                   // acceleration of body
   real phi;                     // potential at body
+#ifdef TESTBED
+  int key;			// integer-valued data from force calc.
+  real aux;			// real-valued data from force calc.
+#endif
 } body, *bodyptr;
 
 #define Vel(x)    (((bodyptr) (x))->vel)
 #define Acc(x)    (((bodyptr) (x))->acc)
 #define Phi(x)    (((bodyptr) (x))->phi)
+
+#ifdef TESTBED
+#define Key(x)    (((bodyptr) (x))->key)
+#define Aux(x)    (((bodyptr) (x))->aux)
+#endif
 
 //  cell: structure used to represent internal nodes of tree.
 //  _________________________________________________________
@@ -77,7 +86,10 @@ typedef struct {
     real trace;			// saved trace for softening correction
   } mort;
   union {
-    nodeptr subp[NSUB];         // descendents of cell
+    struct {
+      nodeptr subp[NSUB];       // descendents of cell
+      int ndesc;		// count particles in cell
+    } desc;
     matrix quad;                // quad. moment of cell
   } sorq;
 } cell, *cellptr;
@@ -88,7 +100,8 @@ typedef struct {
 
 #define More(x)   (((cellptr) (x))->mort.more)
 #define Trace(x)  (((cellptr) (x))->mort.trace)
-#define Subp(x)   (((cellptr) (x))->sorq.subp)
+#define Subp(x)   (((cellptr) (x))->sorq.desc.subp)
+#define Ndesc(x)  (((cellptr) (x))->sorq.desc.ndesc)
 #define Quad(x)   (((cellptr) (x))->sorq.quad)
 
 //  global: pseudo-keyword for storage class.

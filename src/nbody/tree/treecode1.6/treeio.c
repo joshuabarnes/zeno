@@ -37,7 +37,7 @@ void inputdata(void)
   bodytab = NULL;				// request new input data
   instr = stropen(infile, "r");			// open input stream
   get_history(instr);				// read file history data
-  if (! get_snap(instr, &bodytab, &nbody, &tnow, intags, FALSE))
+  if (! get_snap(instr, &bodytab, &nbody, &tnow, intags, FALSE, NULL))
     error("%s.inputdata: no data in input file\n", getprog());
   strclose(instr);				// close input stream
   if (! set_member(intags, MassTag) || ! set_member(intags, PosTag) ||
@@ -132,6 +132,10 @@ void output(void)
       outtags[n++] = PhiTag;			// select potential data
     if (scanopt(outputs, AccTag))
       outtags[n++] = AccTag;			// select acceleration data
+#ifdef TESTBED
+    outtags[n++] = KeyTag;
+    outtags[n++] = AuxTag;
+#endif
     outtags[n] = NULL;
     sprintf(namebuf, outfile, nstep);		// make up output file name
     if (stat(namebuf, &buf) != 0) {		// no output file exists?

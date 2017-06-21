@@ -51,7 +51,7 @@ void maketree(bodyptr btab, int nbody)
   theff = scanopt(options, "theta-eff");
   if ((bh86 && sw94) || (sw94 && theff) || (theff && bh86))
 						// allow just one at a time
-    error("%s.maketree: pick one bh86, sw94, theta-eff\n", getprog());
+    error("%s.maketree: pick one of bh86, sw94, theta-eff\n", getprog());
   tdepth = 0;					// init count of levels
   for (i = 0; i < MAXLEVEL; i++)		// and init tree histograms
     cellhist[i] = subnhist[i] = 0;
@@ -103,7 +103,7 @@ local cellptr makecell(void)
   Update(c) = FALSE;				// and force update flag
   for (i = 0; i < NSUB; i++)			// loop over subcells
     Subp(c)[i] = NULL;				// and empty each one
-  ncell++;					// count one more cell
+  ncell++;					// count cells in use
   return (c);					// return pointer to cell
 }
 
@@ -146,7 +146,8 @@ local void loadbody(bodyptr p)
       if (Pos(p)[0] == Pos(Subp(q)[qind])[0] &&
 	  Pos(p)[1] == Pos(Subp(q)[qind])[1] &&
 	  Pos(p)[2] == Pos(Subp(q)[qind])[2])
-	fatal("%s.loadbody: two bodies have same position!\n", getprog());
+	fatal("%s.loadbody: two bodies have identical position (%a,%a,%a)\n",
+	      getprog(), Pos(p)[0], Pos(p)[1], Pos(p)[2]);
       c = makecell();				// allocate cell for both
       for (k = 0; k < NDIM; k++)		// and initialize midpoint
 	Pos(c)[k] = Pos(q)[k] +	(Pos(p)[k]<Pos(q)[k] ? - qsize : qsize) / 4;
@@ -192,6 +193,7 @@ local void hackcofm(cellptr p, real psize, int lev)
   tdepth = MAX(tdepth, lev);			// remember maximum level
   cellhist[lev]++;				// count cells by level
   Mass(p) = 0.0;				// init cell's total mass
+  Ndesc(p) = 0;					// zero descendents count
   CLRV(cmpos);					// and center of mass pos
   for (i = 0; i < NSUB; i++)			// loop over the subnodes
     if ((q = Subp(p)[i]) != NULL) {		// skipping empty ones
@@ -200,6 +202,7 @@ local void hackcofm(cellptr p, real psize, int lev)
 	hackcofm((cellptr) q, phalf, lev+1);	// then do the same for it
       Update(p) |= Update(q);			// propagate update request
       Mass(p) += Mass(q);			// accumulate total mass
+      Ndesc(p) += (Type(q) == CELL ? Ndesc(q) : 1);
       ADDMULVS(cmpos, Pos(q), Mass(q));		// and center of mass posn
     }
   if (Mass(p) > 0.0) {				// usually, cell has mass
@@ -300,7 +303,7 @@ local void hackquad(cellptr p)
     SUBV(dr, Pos(q), Pos(p));			// find displacement vect.
     OUTVP(Qtmp, dr, dr);			// form outer prod. of dr
     MULMS(Qtmp, Qtmp, Mass(q));			// scale by mass of subnode
-#if !defined(SOFTCORR)
+#if defined(NOSOFTCORR)
     TRACEM(trQ, Qtmp);				// form trace (= dot prod.)
     SETMI(trQM);				// init unit matrix
     MULMS(trQM, trQM, trQ/3.0);			// and scale by trace

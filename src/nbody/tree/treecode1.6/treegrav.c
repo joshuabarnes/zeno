@@ -80,13 +80,13 @@ local void walktree(nodeptr *aptr, nodeptr *nptr, cellptr cptr, cellptr bptr,
 	  if (Mass(*ap) > 0.0) {		// and contribute to field?
 	    Mass(cptr) = Mass(*ap);		// copy to interaction list
 	    SETV(Pos(cptr), Pos(*ap));
-#if defined(SOFTCORR)
-	    TRACEM(Trace(cptr), Quad(*ap));	// save trace in copy
-	    SETMI(trQM);
-	    MULMS(trQM, trQM, Trace(cptr)/3);
-	    SUBM(Quad(cptr), Quad(*ap), trQM);	// store traceless moment
+#if defined(NOSOFTCORR)
+	    SETM(Quad(cptr), Quad(*ap));	// store traceless moment
 #else
-	    SETM(Quad(cptr), Quad(*ap));	// copy traceless moment
+	    TRACEM(Trace(cptr), Quad(*ap));	// save value of trace
+	    SETMI(trQM);
+	    MULMS(trQM, trQM, Trace(cptr)/3.0);	// scale unit matrix by trace
+	    SUBM(Quad(cptr), Quad(*ap), trQM);	// compute traceless moment
 #endif
 	    cptr++;				// and bump cell array ptr
 	  }
@@ -216,6 +216,9 @@ local void gravsum(bodyptr p0, cellptr cptr, cellptr bptr)
                                                 // sum forces from bodies
   Phi(p0) = phi0;                               // store total potential
   SETV(Acc(p0), acc0);                          // and total acceleration
+#ifdef TESTBED
+  Key(p0) = nfcalc;
+#endif
   nfcalc++;                                     // update counters
   nbbcalc += interact + actmax - bptr;
   nbccalc += cptr - interact;
@@ -261,7 +264,7 @@ local void sumcell(cellptr start, cellptr finish, vector pos0,
     mdr1i = Mass(p) * dr1i;			// form mono potential
     mdr3i = mdr1i * dr2i;			// get scale factor for dr
     DOTPMULMV(qdr2, qdr, Quad(p), dr);		// do quad part of force
-#if defined(SOFTCORR)
+#if !defined(NOSOFTCORR)
     qdr2 -= eps2thrd * Trace(p);		// apply Keigo's correction
 #endif
     dr5i = ((real) 3.0) * dr2i * dr2i * dr1i;	// factor 3 saves a multiply

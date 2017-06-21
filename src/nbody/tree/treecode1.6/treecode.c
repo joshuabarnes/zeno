@@ -1,6 +1,6 @@
 /*
  * treecode.c: hierarchical N-body simulation code.
- * Copyright (c) 2015 by Joshua E. Barnes, Kyoto, Japan.
+ * Copyright (c) 2017 by Joshua E. Barnes, Honolulu, Hawaii.
  */
 
 #define global				// don't default global to extern
@@ -17,10 +17,10 @@ string defv[] = {
 				";Hierarchical N-body code (+ ext grav)",
 #else
 				";Hierarchical N-body code"
-#  if defined(SOFTCORR)
-                                " (soft corr)",
-#  else
+#  if defined(NOSOFTCORR)
                                 " (no soft corr)",
+#  else
+                                " (soft corr)",
 #  endif
 #endif
     "in=",			";Input file with initial conditions",
@@ -56,7 +56,7 @@ string defv[] = {
 #if defined(EXTGRAV)
     "gravgsp=",			";Input GSP for external gravity field",
 #endif
-    "VERSION=1.6",		";Joshua Barnes  7 May 2015",
+    "VERSION=1.6",		";Joshua Barnes  3 May 2017",
     NULL,
 };
 
@@ -110,6 +110,10 @@ local void startrun(void)
   define_body_offset(MassTag, BodyOffset(Mass));
   define_body_offset(PhiTag,  BodyOffset(Phi));
   define_body_offset(AccTag,  BodyOffset(Acc));
+#ifdef TESTBED
+  define_body_offset(KeyTag,  BodyOffset(Key));
+  define_body_offset(AuxTag,  BodyOffset(Aux));
+#endif
   infile = getparam("in");			// set I/O file names
   outfile = getparam("out");
   savefile = getparam("save");
