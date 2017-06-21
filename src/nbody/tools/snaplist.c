@@ -59,7 +59,7 @@ int main(int argc, string argv[])
   rfmt = getparam("rfmt");
   print_header(datafields, getparam("hfmt"), getparam("keyhead"),
 	       burststring(getparam("auxhead"), ", "));
-  while (get_snap_t(istr, &btab, &nbody, &tnow, intags, FALSE, times)) {
+  while (get_snap(istr, &btab, &nbody, &tnow, intags, FALSE, times)) {
     if (! set_subset(intags, bodyfields))
       error("%s: one or more required fields not found\n", getargv0());
     print_data(btab, nbody, tnow, datafields, ifmt, rfmt);

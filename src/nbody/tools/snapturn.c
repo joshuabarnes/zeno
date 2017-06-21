@@ -42,7 +42,7 @@ int main(int argc, string argv[])
 	produce = burststring(getparam("produce"), ", ");
 	layout_body(produce, Precision, NDIM);
     }
-    if (! get_snap_t(istr, &btab1, &nbody, &tnow, iotags, expand, time))
+    if (! get_snap(istr, &btab1, &nbody, &tnow, iotags, expand, time))
         error("%s: no data in input file\n", getargv0());
     strclose(istr);
     ostr = stropen(getparam("out"), "w");

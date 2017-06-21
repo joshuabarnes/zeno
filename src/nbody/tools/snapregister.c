@@ -38,7 +38,7 @@ int main(int argc, string argv[])
   initparam(argv, defv);
   istr = stropen(getparam("in"), "r");
   get_history(istr);
-  while (get_snap(istr, &btab, &nbody, &tnow, iotags, TRUE)) {
+  while (get_snap(istr, &btab, &nbody, &tnow, iotags, TRUE, NULL)) {
     if (ostr == NULL && ! set_member(iotags, TypeTag))
       error("%s: %s input data missing\n", getargv0(), TypeTag);
     if (! set_member(iotags, PosTag))

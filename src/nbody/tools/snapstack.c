@@ -42,11 +42,11 @@ int main(int argc, string argv[])
     produce = NULL;
   istr = stropen(getparam("in1"), "r");
   get_history(istr);
-  if (! get_snap(istr, &btab1, &nbody1, &tsnap, itags1, produce == NULL))
+  if (! get_snap(istr, &btab1, &nbody1, &tsnap, itags1, produce==NULL, NULL))
     error("%s: no data in 1st input file\n");
   istr = stropen(getparam("in2"), "r");
   get_history(istr);
-  if (! get_snap(istr, &btab2, &nbody2, &tsnap, itags2, FALSE))
+  if (! get_snap(istr, &btab2, &nbody2, &tsnap, itags2, FALSE, NULL))
     error("%s: no data in 2nd input file\n");
   otags = set_inter(itags1, itags2);
   if (produce != NULL)

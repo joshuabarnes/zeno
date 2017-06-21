@@ -37,7 +37,7 @@ int main(int argc, string argv[])
 	layout_body(produce, Precision, NDIM);
     }
     atags[ntag = 0] = NULL;
-    while (get_snap_t(istr, &btab, &nbody, &tsnap, itags, expand, times)) {
+    while (get_snap(istr, &btab, &nbody, &tsnap, itags, expand, times)) {
 	for (i = 0; itags[i] != NULL; i++)
 	    if (! set_member(atags, itags[i])) {
 		atags[ntag++] = itags[i];

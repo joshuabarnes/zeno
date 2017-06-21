@@ -40,7 +40,7 @@ int main(int argc, string argv[])
     put_history(ostr);
     eps2 = rsqr(getdparam("eps"));
     nforce = -1;				/* use nforce as flag...    */
-    while (get_snap(istr, &btab, &nbody, &tnow, intags, FALSE)) {
+    while (get_snap(istr, &btab, &nbody, &tnow, intags, FALSE, NULL)) {
         if (nforce == -1 && ! set_member(intags, MassTag))
 	    error("%s: Mass data missing from 1st snapshot\n", getargv0());
 	if (! set_member(intags, PosTag))

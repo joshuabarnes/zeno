@@ -56,7 +56,7 @@ int main(int argc, string argv[])
   put_history(ostr);
   new_field(&ValueField, RealType, "Value");
   new_field(&ValueField + 1, NULL, NULL);
-  while (get_snap(xstr, &btab, &nbody, &tnow, itags, TRUE)) {
+  while (get_snap(xstr, &btab, &nbody, &tnow, itags, TRUE, NULL)) {
     qsort(btab, nbody, SizeofBody, cmpvalue);
     del_tag(otags, itags, "Value");
     put_snap(ostr, &btab, &nbody, &tnow, otags);

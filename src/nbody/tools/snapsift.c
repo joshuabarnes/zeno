@@ -58,7 +58,7 @@ int main(int argc, string argv[])
   put_history(ostr);
   new_field(&SieveField, BoolType, "Sieve");
   new_field(&SieveField + 1, NULL, NULL);
-  while (get_snap(xstr, &btab, &nbody, &tnow, itags, TRUE)) {
+  while (get_snap(xstr, &btab, &nbody, &tnow, itags, TRUE, NULL)) {
     snapsift(btab, &nout, btab, nbody);	// can sift in place b/c map process
 					// writes ALL fields of each snapshot
     del_tag(otags, itags, "Sieve");

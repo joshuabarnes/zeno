@@ -61,7 +61,7 @@ int main(int argc, string argv[])
   coords = getparam("coords");
   new_field(&WeightField, RealType, "Weight");
   new_field(&WeightField + 1, NULL, NULL);
-  while (get_snap(xstr, &btab, &nbody, &tnow, itags, TRUE)) {
+  while (get_snap(xstr, &btab, &nbody, &tnow, itags, TRUE, NULL)) {
     if (scanopt(coords, PosTag) && set_member(itags, PosTag)) {
       snapcmpos(cmpos, btab, nbody, WeightField.offset);
       for (bp = btab; bp < NthBody(btab, nbody); bp = NextBody(bp)) {

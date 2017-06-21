@@ -37,8 +37,8 @@ typedef struct {
 } snapshot;
 
 #define get_snapshot_timed(str, snap, tags, exp, times)			\
-  get_snap_t(str, &(snap).bodies, &(snap).nbody, &(snap).time,		\
-             tags, exp, times)
+  get_snap(str, &(snap).bodies, &(snap).nbody, &(snap).time,		\
+           tags, exp, times)
 
 #define put_snapshot(str, snap, tags)					\
   put_snap(str, &(snap).bodies, &(snap).nbody, &snap.time, tags)

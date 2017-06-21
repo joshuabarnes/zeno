@@ -58,7 +58,7 @@ int main(int argc, string argv[])
   new_field(&GroupField, IntType, "Group");
   new_field(&GroupField + 1, NULL, NULL);
   layout_body(btags, Precision, NDIM);
-  while (get_snap(xstr, &bodytab, &nbody, &tbody, itags, FALSE)) {
+  while (get_snap(xstr, &bodytab, &nbody, &tbody, itags, FALSE, NULL)) {
     snaptrak();
     put_snap(ostr, &traktab, &ntrak, &tbody, otags);
     if (ntrak != nold)

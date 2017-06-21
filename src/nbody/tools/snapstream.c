@@ -34,7 +34,7 @@ int main(int argc, string argv[])
   layout_body(bodytags, Precision, NDIM);
   istr = stropen(getparam("in"), "r");
   get_history(istr);
-  if (! get_snap(istr, &btab, &nbody, &tnow, iotags, FALSE))
+  if (! get_snap(istr, &btab, &nbody, &tnow, iotags, FALSE, NULL))
     error("%s: no data in input file\n", getargv0());
   ostr = stropen(getparam("out"), "w");
   put_history(ostr);

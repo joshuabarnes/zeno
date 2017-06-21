@@ -61,7 +61,7 @@ int main(int argc, string argv[])
   put_history(ostr);
   new_field(&WeightField, RealType, "Weight");
   new_field(&WeightField + 1, NULL, NULL);
-  while (get_snap(xstr, &btab, &nbody, &tnow, itags, TRUE)) {
+  while (get_snap(xstr, &btab, &nbody, &tnow, itags, TRUE, NULL)) {
     snaprect(btab, nbody);
     del_tag(otags, itags, "Weight");
     put_snap(ostr, &btab, &nbody, &tnow, otags);

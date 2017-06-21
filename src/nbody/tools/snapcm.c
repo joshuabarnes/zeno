@@ -31,7 +31,7 @@ int main(int argc, string argv[])
     istr = stropen(getparam("in"), "r");
     get_history(istr);
     layout_body(bodytags, Precision, NDIM);
-    while (get_snap(istr, &btab, &nbody, &tnow, intags, FALSE)) {
+    while (get_snap(istr, &btab, &nbody, &tnow, intags, FALSE, NULL)) {
 	if (set_member(intags, MassTag)) {
 	    mtot = 0.0;
 	    for (bp = btab; bp < NthBody(btab, nbody); bp = NextBody(bp))

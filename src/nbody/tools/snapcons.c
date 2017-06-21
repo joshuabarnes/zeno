@@ -29,7 +29,7 @@ typedef struct _snapshot {
 } snapshot;
 
 #define get_snapshot(str, snap, tags, ext)				\
-  get_snap(str, &(snap).bodies, &(snap).nbody, &(snap).time, tags, ext)
+  get_snap(str, &(snap).bodies, &(snap).nbody, &(snap).time, tags, ext, NULL)
 
 int main(int argc, string argv[])
 {

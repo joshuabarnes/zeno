@@ -79,14 +79,14 @@ int main(int argc, string argv[])
   layout_body(bodytags, Precision, NDIM);	// layout necessary fields
   istr = stropen(getparam("in"), "r");
   get_history(istr);
-  if (! get_snap(istr, &btab, &nbody, &tnow, bdtags, TRUE))
+  if (! get_snap(istr, &btab, &nbody, &tnow, bdtags, TRUE, NULL))
     error("%s: can't read input snapshot\n", getprog());
   if (! (set_member(bdtags, PosTag) && set_member(bdtags, VelTag)))
     error("%s: required data missing from input snapshot\n", getprog());
 #if defined(NBDGRAV)
   gstr = stropen(getparam("grav"), "r");
   get_history(gstr);
-  if (! get_snap(gstr, &gtab, &ngrav, &tgrav, grtags, FALSE))
+  if (! get_snap(gstr, &gtab, &ngrav, &tgrav, grtags, FALSE, NULL))
     error("%s: can't read gravity snapshot\n", getprog());
   if (! (set_member(grtags, MassTag) && set_member(grtags, PosTag)))
     error("%s: required data missing from gravity snapshot\n", getprog());
@@ -133,7 +133,7 @@ int main(int argc, string argv[])
     tnow = tnow + dtime;			// step time to new value
 #if defined(NBDGRAV)
     if (! getbparam("frozen"))
-      if (! get_snap(gstr, &gtab, &ngrav, &tgrav, grtags, TRUE))
+      if (! get_snap(gstr, &gtab, &ngrav, &tgrav, grtags, TRUE, NULL))
 	error("%s: can't read gravity snapshot\n", getprog());
     sumforces(btab, nbody, gtab, ngrav, eps2);	// get new accelerations
 #elif defined(GSPGRAV)

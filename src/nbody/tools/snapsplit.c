@@ -34,7 +34,7 @@ int main(int argc, string argv[])
   }
   istr = stropen(getparam("in"), "r");
   get_history(istr);
-  if (! get_snap(istr, &btab, &ninp, &tsnap, iotags, expand))
+  if (! get_snap(istr, &btab, &ninp, &tsnap, iotags, expand, NULL))
     error("%s: snapshot input failed\n", getargv0());
   if (! (expand || set_equal(iotags, produce)))
     eprintf("[%s: outputting only %d fields]\n",
