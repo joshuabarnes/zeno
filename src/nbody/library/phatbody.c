@@ -18,12 +18,17 @@
 #define RealArr  "RA"			// placeholder for RealArray
 #define IntArr   "IA"			// placeholder for IntArray
 
+//  PhatBodyTag: used to name Body phatstruct.
+//  __________________________________________
+
+#define PhatBodyTag  "PhatBody"
+
 //  phatbody: Defines the components and offsets of a body structure.
 //  Most applications use only a subset, while some extend the list.
 //  _________________________________________________________________
 
 ps_field phatbody[MaxBodyFields] = {
-  { NULL,      BodyTag,     0,          0 },	// = phatbody[ 0]
+  { NULL,      PhatBodyTag, 0,          0 },	// = phatbody[ 0]
   { VectToke,  PosTag,      BadOffset,  0 },	// = phatbody[ 1]
   { VectToke,  VelTag,      BadOffset,  0 },	// = phatbody[ 2]
   { RealToke,  MassTag,     BadOffset,  0 },	// = phatbody[ 3]
@@ -57,7 +62,7 @@ local string *clean_tags(string *tags);
 local bool array_tag(string tag);
 local string array_type(string type, int len);
 
-//  NOTE: these routines are called at the start of a process, to
+//  NOTE: these routines are called, at the start of a process, to
 //  initialize the layout of body structures.  They are written for
 //  clarity rather than speed, and don't reclaim allocated storage.
 //  _______________________________________________________________
@@ -89,7 +94,7 @@ void define_body(int length, string prec, int ndim)
   prec0 = prec;					// save for later reference
   ndim0 = ndim;
   fix_types(NULL, prec, ndim);			// set non-array type codes
-  define_struct(phatbody, BodyTag, length);	// init. structure length
+  define_struct(phatbody, PhatBodyTag, length);	// init. structure length
 }
 
 //  define_body_offset: fixed-offset interface sets field offset.
@@ -97,11 +102,12 @@ void define_body(int length, string prec, int ndim)
 
 void define_body_offset(string tag, int offset)
 {
+  string tags[2] = { tag, NULL };
+
   if (getenv("ZENO_PHSTR_DEBUG") != NULL)
     eprintf("[%s.define_body_offset: tag = %s  offset = %d]\n",
 	    getprog(), tag, offset);
   if (array_tag(tag)) {				// defining array field?
-    string tags[2] = { tag, NULL };
     if (prec0 == NULL || ndim0 == 0)
       error("%s.define_body_offset: prec or ndim not known\n", getprog());
     fix_types(tags, prec0, ndim0);		// set length of array field
