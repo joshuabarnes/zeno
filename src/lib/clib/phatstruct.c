@@ -8,58 +8,51 @@
 #include "phatstruct.h"
 #include <string.h>
 
-//  layout_struct: compute offsets and length of structure.  The order
-//  of the actual fields is determined by the names argument.  Padding
-//  is computed assuming (1) any type of object can have offset 0, and
-//  (2) identical objects can be stored contiguously without padding.
-//  __________________________________________________________________
+local ps_field *find_field(ps_field *pstab, string name, string caller);
+local int pad_struct(ps_field *pstab, int len);
 
-// Lines with TEST commants are prototyping construction of type string
-// for structure as realized in memory.
+//  layout_struct: compute offsets and length of structure.  The order
+//  of the active fields is determined by the names argument.  Padding
+//  is computed assuming (1) any object can have offset 0, and
+//  (2) identical objects can be stored contiguously without padding.
+//  Lines with TEST comments prototype construction of structure type.
+//  __________________________________________________________________
 
 void layout_struct(ps_field *pstab, string *names)
 {
   bool debug = (getenv("ZENO_PHSTR_DEBUG") != NULL);
-  int pad = 0, len;
+  int len, pad = 0;
   ps_field *psp;
 
-  pstab->type = (string) allocate(512);		// TEST: alloc lots of space
-  while (*names != NULL) {			// loop over field names
-    for (psp = pstab + 1; psp->name != NULL; psp++)
-      if (streq(psp->name, *names))		// find name in struct tab
-	break;
-    if (psp->name == NULL)			// must already be known
-      error("%s.layout_struct: field %s not found\n", getprog(), *names);
-    if (psp->offset == BadOffset) {		// if not already defined
+  if (pstab->type == NULL)			// TEST: first call on struct?
+    pstab->type = (string) allocate(512);	// TEST: alloc lots of space
+  for (string *np = names; *np != NULL; np++) {	// loop over field names
+    psp = find_field(pstab, *np, "layout_struct");
+    if (psp->offset == BadOffset) {		// if field not yet defined
+      if (type_base(psp->type) == NULL)
+	error("%s.layout_struct: base type undefined; field %s, type %s\n",
+	      getprog(), psp->name, psp->type);
       len = type_length(type_base(psp->type));	// get length of base type
-      while (pstab->length % len != 0) {	// align on proper boundary
-	pstab->length++;
-	pad++;
-	strcat(pstab->type, "b");		// TEST: store padding byte
-      }
-      psp->offset = pstab->length;		// assign offset and length
-      psp->length = type_length(psp->type);
-      pstab->length += psp->length;		// increment struct length
+      pad += pad_struct(pstab, len);		// align on field boundary
+      psp->offset = pstab->length;		// offset makes field active
+      psp->length = type_length(psp->type);	// store total field length
+      pstab->length += psp->length;		// keep track of struct length
+      strcat(pstab->type, psp->type);		// TEST: append field type
       if (debug)
-	eprintf("[%s.layout_struct: name = %s  offset = %d  length = %d]\n",
-		getprog(), *names, psp->offset, psp->length);
-      strcat(pstab->type, psp->type);	// TEST: append field type
+	eprintf("[%s.layout_struct: field %s:  offset = %d  length = %d"
+		"  type = %s]\n", getprog(), *np, psp->offset, psp->length,
+		psp->type);
     }
-    names++;
   }
-  len = sizeof(int);				// take int as minimum
-  for (psp = pstab + 1; psp->name != NULL; psp++)
-    if (psp->offset != BadOffset)
-      len = MAX(len, type_length(type_base(psp->type)));
-  while (pstab->length % len != 0) {		// align complete structure
-    pstab->length++;
-    pad++;
-    strcat(pstab->type, "b");			// TEST: store padding byte
-  }
+  len = sizeof(int);				// align structs to ints
+  for (psp = pstab+1; psp->name != NULL; psp++)	// loop over active fields
+    len = MAX(len, psp->offset != BadOffset ?	// find max component length
+	      type_length(type_base(psp->type)) : 0);
+  pad += pad_struct(pstab, len);		// align on struct boundary
   if (debug)
-    eprintf("[%s.layout_struct: struct %s: size = %d   pad = %d  type = %s]\n",
-	    getprog(), pstab->name, pstab->length, pad, pstab->type);
-						// TEST: print combined type
+    eprintf("[%s.layout_struct: struct %s: size = %d  type = %s  pad = %d"
+	    "  maxlen = %d]\n", getprog(), pstab->name, pstab->length,
+	    pstab->type, pad, len);		// TEST: print combined type
 }
 
 //  new_field: define a new field of given type and name.
@@ -70,7 +63,8 @@ void new_field(ps_field *psp, string type, string name)
   bool debug = (getenv("ZENO_PHSTR_DEBUG") != NULL);
 
   if (debug)
-    eprintf("[%s.new_field: type = %s  name = %s]\n", getprog(), type, name);
+    eprintf("[%s.new_field: type = %s  name = %s]\n", getprog(),
+	    type != NULL ? type : "NULL", name != NULL ? name : "NULL");
   psp->name = name;				// name is given by caller
   psp->type = type;				// type is given by caller
   psp->offset = BadOffset;			// offset is yet unknown
@@ -107,11 +101,7 @@ void define_offset(ps_field *pstab, string name, int offset)
   if (debug)
     eprintf("[%s.define_offset: name = %s  offset = %d\n",
 	    getprog(), name, offset);
-  for (psp = pstab + 1; psp->name != NULL; psp++)
-    if (streq(psp->name, name))			// find name in struct tab
-      break;
-  if (psp->name == NULL)			// must be already known
-    error("%s.define_field: field %s not found\n", getprog(), name);
+  psp = find_field(pstab, name, "define_field");
   if (psp->offset != BadOffset)			// but not already defined
     error("%s.define_field: can't redefine field %s\n", getprog(), name);
   psp->offset = offset;				// store supplied offset
@@ -119,6 +109,36 @@ void define_offset(ps_field *pstab, string name, int offset)
   if (debug)
     eprintf(" type = %s  length = %d]\n", psp->type, psp->length);
 }    
+
+//  find_field: scan structure table to find named field.
+//  _____________________________________________________
+
+local ps_field *find_field(ps_field *pstab, string name, string caller)
+{
+  ps_field *psp;
+
+  for (psp = pstab + 1; psp->name != NULL; psp++)
+    if (streq(psp->name, name))			// find name in struct tab
+      break;
+  if (psp->name == NULL)			// must be already known
+    error("%s.%s: field %s not found\n", getprog(), caller, name);
+  return (psp);
+}
+
+//  pad_struct: round up struct length to align on object of length len.
+//  ____________________________________________________________________
+
+local int pad_struct(ps_field *pstab, int len)
+{
+  int pad = 0;
+
+  while (pstab->length % len != 0) {		// until structure is aligned
+    pstab->length++;				// increase structure length
+    strcat(pstab->type, "b");			// TEST: store padding byte
+    pad++;					// and count padding
+  }
+  return (pad);
+}
 
 #ifdef TESTBED
 
@@ -153,13 +173,11 @@ ps_field pstab[] = {
 
 int main(int argc, string argv[])
 {
-  string *fields;
   void *xp;
   stream outstr;
 
   initparam(argv, defv);
-  fields = burststring(getparam("fields"), ",");
-  layout_struct(pstab, fields);
+  layout_struct(pstab, burststring(getparam("fields"), ","));
   xp = allocate(pstab[0].length);
   if (pstab[1].offset != BadOffset) Foo(xp) = 'a';
   if (pstab[2].offset != BadOffset) Bar(xp) = 123;
