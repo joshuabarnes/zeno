@@ -61,7 +61,7 @@ int main(int argc, string argv[])
   new_field(&ValueField + 1, NULL, NULL);
   layout_body(btags, Precision, NDIM);
   nsnap = 0;
-  while (get_snap(xstr, &btab, &nbody, &tnow, itags, TRUE)) {
+  while (get_snap(xstr, &btab, &nbody, &tnow, itags, TRUE, NULL)) {
     if (otags == NULL)
       otags = set_diff(set_union(itags, set_cons(AuxTag, NULL)), names);
     if (sum == NULL)

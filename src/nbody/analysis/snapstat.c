@@ -78,7 +78,7 @@ int main(int argc, string argv[])
 	    stdout : stropen(getparam("output"), "w"));
   strstr = (streq(getparam("stream"), "") ?
 	    NULL : stropen(getparam("stream"), "w"));
-  while (get_snap(xstr, &btab, &nbody, &tnow, itags, strstr != NULL)) {
+  while (get_snap(xstr, &btab, &nbody, &tnow, itags, strstr != NULL, NULL)) {
     snapstat(outstr, btab, nbody, tnow, getparam("options"), formats);
     if (strstr != NULL) {
       otags = set_diff(itags, names);

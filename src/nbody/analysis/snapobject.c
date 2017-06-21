@@ -44,7 +44,7 @@ int main(int argc, string argv[])
     layout_body(bodytags, Precision, NDIM);
     istr = stropen(getparam("in"), "r");
     get_history(istr);
-    if (! get_snap(istr, &btab, &nbody, &tnow, itags, TRUE))
+    if (! get_snap(istr, &btab, &nbody, &tnow, itags, TRUE, NULL))
 	error("%s: snapshot input failed\n", getargv0());
     if (! set_member(itags, PosTag))
 	error("%s: %s data missing\n", getargv0(), PosTag);

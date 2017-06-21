@@ -37,7 +37,7 @@ int main(int argc, string argv[])
   layout_body(bodytags, Precision, NDIM);
   printf("#%11s %3s %11s %11s %11s\n",
 	 "time", "n", "r_rms", "c/a", "b/a");
-  while (get_snap(istr, &btab, &nbody, &tnow, intags, FALSE)) {
+  while (get_snap(istr, &btab, &nbody, &tnow, intags, FALSE, NULL)) {
     if (! set_member(intags, PosTag))
       error("%s: %s data missing\n", getargv0(), PosTag);
     if (nbody % getiparam("nbin") != 0)

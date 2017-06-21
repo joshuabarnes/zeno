@@ -74,12 +74,12 @@ int main(int argc, string argv[])
   setrange(range, getparam("range"));
   if (exprs[1] == NULL) {
     ibins = (int *) allocate((nbins + 2) * sizeof(int));
-    while (get_snap(xstr, &btab, &nbody, &tnow, itags, FALSE))
+    while (get_snap(xstr, &btab, &nbody, &tnow, itags, FALSE, NULL))
       loadihist(ibins, nbins, range, btab, nbody);
     listihist(ibins, nbins, range, getbparam("plotstyle"));
   } else {
     rbins = (real *) allocate((nbins + 2) * sizeof(real));
-    while (get_snap(xstr, &btab, &nbody, &tnow, itags, FALSE))
+    while (get_snap(xstr, &btab, &nbody, &tnow, itags, FALSE, NULL))
       loadrhist(rbins, nbins, range, btab, nbody);
     listrhist(rbins, nbins, range, getbparam("plotstyle"));
   }

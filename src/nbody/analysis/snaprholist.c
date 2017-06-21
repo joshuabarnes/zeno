@@ -50,7 +50,7 @@ int main(int argc, string argv[])
   prof2 = (real *) allocate((2 + nprof) * sizeof(real));
   setrange(rrange, getparam("rrange"));
   nsamp = 0;
-  while (get_snap(xstr, &btab, &nbody, &tnow, itags, FALSE)) {
+  while (get_snap(xstr, &btab, &nbody, &tnow, itags, FALSE, NULL)) {
     setprofile(prof1, prof2, nprof, rrange, btab, nbody);
     nsamp++;
   }
