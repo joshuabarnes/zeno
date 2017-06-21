@@ -1,5 +1,5 @@
-# ~/lib/clib/Makefile: build and test Zeno C library package.
-# Copyright (c) 2012  Joshua E. Barnes  Honolulu, Hawai'i.
+##  ~/lib/clib/Makefile: build and test Zeno C library package.
+##  Copyright (c) 2017  Joshua E. Barnes  Honolulu, Hawai'i.
 
 OBJFILES = allocate.o bessel.o burststring.o cputime.o datatypes.o\
 	   error.o extstring.o filestruct.o getparam.o history.o\
@@ -14,6 +14,11 @@ TESTCODE = bessel_test burststring_test datatypes_test\
 	   random_test scanopt_test setrange_test spline_test_d\
 	   spline_test_f spline_test_m stropen_test strset_test\
 	   vectmath_test_d vectmath_test_f vectmath_test_m within_test
+
+##  Optimization for CPU-intensive packages: -O2 keeps code size down.
+##  __________________________________________________________________
+
+OPT = -O2
 
 # Assemble object library.
 
@@ -47,7 +52,7 @@ extstring.o: extstring.c stdinc.h
 	$(ZCC) $(ZCCFLAGS) -c extstring.c
 
 filestruct.o: filestruct.c filestruct.h stdinc.h
-	$(ZCC) $(ZCCFLAGS) -c filestruct.c
+	$(ZCC) $(ZCCFLAGS) $(OPT) -c filestruct.c
 
 getparam.o: getparam.c getparam.h stdinc.h
 	$(ZCC) $(ZCCFLAGS) -c getparam.c
@@ -86,13 +91,13 @@ setrange_m.o: setrange.c stdinc.h
 	$(ZCC) $(ZCCFLAGS) -c setrange.c -DMIXEDPREC  -o setrange_m.o
 
 spline_d.o: spline.c stdinc.h
-	$(ZCC) $(ZCCFLAGS) -c spline.c -DDOUBLEPREC -o spline_d.o
+	$(ZCC) $(ZCCFLAGS) $(OPT) -c spline.c -DDOUBLEPREC -o spline_d.o
 
 spline_f.o: spline.c stdinc.h
-	$(ZCC) $(ZCCFLAGS) -c spline.c -DSINGLEPREC -o spline_f.o
+	$(ZCC) $(ZCCFLAGS) $(OPT) -c spline.c -DSINGLEPREC -o spline_f.o
 
 spline_m.o: spline.c stdinc.h
-	$(ZCC) $(ZCCFLAGS) -c spline.c -DMIXEDPREC  -o spline_m.o
+	$(ZCC) $(ZCCFLAGS) $(OPT) -c spline.c -DMIXEDPREC  -o spline_m.o
 
 stropen.o: stropen.c stdinc.h
 	$(ZCC) $(ZCCFLAGS) -c stropen.c
@@ -101,13 +106,13 @@ strset.o: strset.c strset.h stdinc.h
 	$(ZCC) $(ZCCFLAGS) -c strset.c
 
 vectmath_d.o: vectmath.h vectdefs.h vectmath.c stdinc.h
-	$(ZCC) $(ZCCFLAGS) -c vectmath.c -DDOUBLEPREC -o vectmath_d.o
+	$(ZCC) $(ZCCFLAGS) $(OPT) -c vectmath.c -DDOUBLEPREC -o vectmath_d.o
 
 vectmath_f.o: vectmath.h vectdefs.h vectmath.c stdinc.h
-	$(ZCC) $(ZCCFLAGS) -c vectmath.c -DSINGLEPREC -o vectmath_f.o
+	$(ZCC) $(ZCCFLAGS) $(OPT) -c vectmath.c -DSINGLEPREC -o vectmath_f.o
 
 vectmath_m.o: vectmath.h vectdefs.h vectmath.c stdinc.h
-	$(ZCC) $(ZCCFLAGS) -c vectmath.c -DMIXEDPREC  -o vectmath_m.o
+	$(ZCC) $(ZCCFLAGS) $(OPT) -c vectmath.c -DMIXEDPREC  -o vectmath_m.o
 
 within.o: within.c stdinc.h
 	$(ZCC) $(ZCCFLAGS) -c within.c
