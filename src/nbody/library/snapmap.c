@@ -1,5 +1,5 @@
 /*
- * snapmap.c: program to implement arbitrary body transformation.
+ * snapmap.c: program to implement snapshot transformation.
  */
 
 #include "stdinc.h"
@@ -17,7 +17,7 @@ string defv[] = {
   "passall=false",		";If true, output all data",
   "seed=",			";Seed for random number generator",
   "HISTORY=",			";History from client program",
-  "VERSION=1.3",		";Josh Barnes  8 Sep 2014",
+  "VERSION=1.4",		";Josh Barnes  12 June 2017",
   NULL,
 };
 
@@ -39,7 +39,7 @@ int main(int argc, string argv[])
 {
   stream istr, ostr;
   string *require, *produce, iotags[MaxBodyFields];
-  bool firstsnap = TRUE;
+  bool firstsnap = TRUE, passall, bodyarr;
   bodyptr btab = NULL;
   int nbody;
   real tnow, tnew;
@@ -51,26 +51,28 @@ int main(int argc, string argv[])
   put_history(ostr);
   require = burststring(getparam("require"), ", ");
   produce = burststring(getparam("produce"), ", ");
+  passall = getbparam("passall");
+  bodyarr = (strcasestr(getparam("passall"), ",bodyarr") != NULL);
   extendbody();					// add client's extensions
   definebody(require, produce);			// set up all body fields
   if (! strnull(getparam("seed")))
     init_random(getiparam("seed"));
-  while (get_snap_t(istr, &btab, &nbody, &tnow, iotags,
-		    firstsnap && getbparam("passall"), getparam("times"))) {
+  while (get_snap(istr, &btab, &nbody, &tnow, iotags,
+		  firstsnap && passall, getparam("times"))) {
     if (firstsnap)
       checktags(iotags, require);		// check for required data
     snapmap(btab, nbody, tnow);			// map particle array
     tnew = computetime(tnow, nbody);		// and snapshot time value
-    if (getbparam("passall")) {
+    if (passall) {
       jointags(iotags, produce);		// form union w/ input set
-      put_snap(ostr, &btab, &nbody, &tnew, iotags);
+      put_snap(ostr, &btab, &nbody, &tnew, bodyarr ? NULL : iotags);
     } else
-      put_snap(ostr, &btab, &nbody, &tnew, produce);
+      put_snap(ostr, &btab, &nbody, &tnew, bodyarr ? NULL : produce);
     fflush(ostr);
     firstsnap = FALSE;
     get_history(istr);				// gobble any history items
   }
-  return (0);
+  return 0;
 }	
 
 //  definebody: construct list of body fields and layout body structure.
