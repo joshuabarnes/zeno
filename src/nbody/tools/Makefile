@@ -1,105 +1,141 @@
-# ~/nbody/tools/Makefile: mantain general N-body utilities.
+##  ~/nbody/tools/Makefile: mantain general N-body utilities.
+##  Copyright (c) 2017, Joshua E. Barnes, Honolulu, Hawaii.
+##  _________________________________________________________
 
-BINFILES = makesnap$P snapascii$P snapaux$P snapcenter$P snapcm$P \
-	   snapcollect$P snapcons$P snapforce$P snapkey$P snaplist$P \
-	   snaprect$P snapregister$P snaprotate$P snapset$P snapsift$P \
-	   snapsort$P snapsplit$P snapstack$P snapstream$P snaptipsy$P \
-	   snaptrak$P snapturn$P testcode$P testcode_gsp$P testcode_hqm$P
+BINFILES = snapascii$X snapaux$X snapcenter$X snapcm$X snapcollect$X \
+	   snapcons$X snapfile$X snapforce$X snapkey$X snaplist$X \
+	   snapmake$X snaprect$X snapregister$X snaprotate$X snapset$X \
+	   snapsift$X snapsort$X snapsplit$X snapstack$X snapstream$X \
+	   snaptipsy$X snaptrak$X snapturn$X \
+	   testcode$X testcode_gsp$X testcode_hqm$X
+
+##  Compilation options are selected by changing OPTIONS (and X):
+##	make binfiles OPTIONS="-DDOUBLEPREC" X=_dp
+##  compiles BINFILES in double precision, with "_dp" suffixes.
+##  _____________________________________________________________
+
+OPTIONS =
+OPT = -O3
 
 binfiles:
 	$(MAKE) $(BINFILES)
 
 # Targets used to build Zeno utilities.
 
-makesnap$P: makesnap.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o makesnap$P makesnap.c \
-	      -lNBody -lClib -lgsl -lgslcblas -lm
+snapascii$X: snapascii.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapascii$X \
+	       snapascii.c -lClib
 
-snapascii$P: snapascii.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapascii$P snapascii.c -lClib
+snapaux$X: snapaux.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapaux$X \
+	       snapaux.c -lNBody -lClib
 
-snapaux$P: snapaux.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapaux$P snapaux.c -lNBody -lClib
+snapcenter$X: snapcenter.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapcenter$X \
+	       snapcenter.c -lNBody -lClib
 
-snapcenter$P: snapcenter.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapcenter$P snapcenter.c -lNBody -lClib
+snapcm$X: snapcm.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapcm$X \
+	       snapcm.c -lNBody -lClib
 
-snapcm$P: snapcm.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapcm$P snapcm.c -lNBody -lClib
+snapcollect$X: snapcollect.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapcollect$X \
+	       snapcollect.c -lNBody -lClib
 
-snapcollect$P: snapcollect.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapcollect$P snapcollect.c -lNBody -lClib
+snapcons$X: snapcons.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapcons$X \
+	       snapcons.c -lNBody -lClib
 
-snapcons$P: snapcons.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapcons$P snapcons.c -lNBody -lClib
+snapfile$X: snapfile.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapfile$X \
+	       snapfile.c -lNBody -lClib
 
-snapforce$P: snapforce.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapforce$P snapforce.c -lNBody -lClib -lm
+snapforce$X: snapforce.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) $(OPT) -o snapforce$X \
+	       snapforce.c -lNBody -lClib -lm
 
-snapkey$P: snapkey.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapkey$P snapkey.c -lNBody -lClib
+snapkey$X: snapkey.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapkey$X \
+	       snapkey.c -lNBody -lClib
 
-snaplist$P: snaplist.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snaplist$P snaplist.c -lNBody -lClib
+snaplist$X: snaplist.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snaplist$X \
+	       snaplist.c -lNBody -lClib
 
-snaprect$P: snaprect.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snaprect$P snaprect.c \
-	      -lNBody -lClib -lgsl -lgslcblas -lm
+snapmake$X: snapmake.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapmake$X \
+	       snapmake.c -lNBody -lClib -lgsl -lgslcblas -lm
 
-snapregister$P: snapregister.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapregister$P snapregister.c \
-	      -lNBody -lClib -lm
+snaprect$X: snaprect.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snaprect$X \
+	       snaprect.c -lNBody -lClib -lgsl -lgslcblas -lm
 
-snaprotate$P: snaprotate.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snaprotate$P snaprotate.c \
-	      -lNBody -lClib -lm
+snapregister$X: snapregister.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapregister$X \
+	       snapregister.c -lNBody -lClib -lm
 
-snapset$P: snapset.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapset$P snapset.c -lNBody -lClib
+snaprotate$X: snaprotate.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snaprotate$X \
+	       snaprotate.c -lNBody -lClib -lm
 
-snapsift$P: snapsift.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapsift$P snapsift.c -lNBody -lClib
+snapset$X: snapset.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapset$X \
+	       snapset.c -lNBody -lClib
 
-snapsort$P: snapsort.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapsort$P snapsort.c -lNBody -lClib
+snapsift$X: snapsift.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapsift$X \
+	       snapsift.c -lNBody -lClib
 
-snapsplit$P: snapsplit.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapsplit$P snapsplit.c -lNBody -lClib
+snapsort$X: snapsort.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapsort$X \
+	       snapsort.c -lNBody -lClib
 
-snapstack$P: snapstack.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapstack$P snapstack.c -lNBody -lClib
+snapsplit$X: snapsplit.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapsplit$X \
+	       snapsplit.c -lNBody -lClib
 
-snapstream$P: snapstream.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapstream$P snapstream.c -lNBody -lClib
+snapstack$X: snapstack.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapstack$X \
+	       snapstack.c -lNBody -lClib
 
-snaptipsy$P: snapascii.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snaptipsy$P -DTIPSY snapascii.c -lClib
+snapstream$X: snapstream.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapstream$X \
+	       snapstream.c -lNBody -lClib
 
-snaptrak$P: snaptrak.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snaptrak$P snaptrak.c -lNBody -lClib -lm
+snaptipsy$X: snapascii.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -DTIPSY -o snaptipsy$X \
+	       snapascii.c -lClib
 
-snapturn$P: snapturn.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o snapturn$P snapturn.c -lNBody -lClib -lm
+snaptrak$X: snaptrak.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snaptrak$X \
+	       snaptrak.c -lNBody -lClib -lm
 
-testcode$P: testcode.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -o testcode$P testcode.c -lNBody -lClib -lm
+snapturn$X: snapturn.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapturn$X \
+	       snapturn.c -lNBody -lClib -lm
 
-testcode_gsp$P: testcode.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -DGSPGRAV -o testcode_gsp$P testcode.c -lNBody -lGSP -lClib -lm
+testcode$X: testcode.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) $(OPT) \
+	       -o testcode$X testcode.c -lNBody -lClib -lm
 
-testcode_hqm$P: testcode.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -DHQMGRAV -o testcode_hqm$P testcode.c -lNBody -lClib -lgsl -lgslcblas -lm
+testcode_gsp$X: testcode.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) $(OPT) -DGSPGRAV \
+	       -o testcode_gsp$X testcode.c -lNBody -lGSP -lClib -lm
+
+testcode_hqm$X: testcode.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) $(OPT) -DHQMGRAV \
+	       -o testcode_hqm$X testcode.c -lNBody -lClib -lgsl -lgslcblas -lm
 
 # Generate listing of source code.
 
-zeno_tools.ps: makesnap.c snapascii.c snapaux.c snapcenter.c snapcm.c \
-	       snapcollect.c snapcons.c snapforce.c snapkey.c snaplist.c \
-	       snaprect.c snapregister.c snaprotate.c snapset.c snapsift.c \
-	       snapsort.c snapsplit.c snapstack.c snapstream.c snaptrak.c \
-	       snapturn.c testcode.c
-	enscript -M Letterdj -o zeno_tools.ps \
-	       makesnap.c snapascii.c snapaux.c snapcenter.c snapcm.c \
-	       snapcollect.c snapcons.c snapforce.c snapkey.c snaplist.c \
-	       snaprect.c snapregister.c snaprotate.c snapset.c snapsift.c \
-	       snapsort.c snapsplit.c snapstack.c snapstream.c snaptrak.c \
-	       snapturn.c testcode.c
+zeno_tools.ps: snapascii.c snapaux.c snapcenter.c snapcm.c snapcollect.c \
+	       snapcons.c snapfile.c snapforce.c snapkey.c snaplist.c \
+	       snapmake.c snaprect.c snapregister.c snaprotate.c snapset.c \
+	       snapsift.c snapsort.c snapsplit.c snapstack.c snapstream.c \
+	       snaptrak.c snapturn.c testcode.c
+	enscript -r2 -M Letterdj -o zeno_tools.ps \
+	       snapascii.c snapaux.c snapcenter.c snapcm.c snapcollect.c \
+	       snapcons.c snapfile.c snapforce.c snapkey.c snaplist.c \
+	       snapmake.c snaprect.c snapregister.c snaprotate.c snapset.c \
+	       snapsift.c snapsort.c snapsplit.c snapstack.c snapstream.c \
+	       snaptrak.c snapturn.c testcode.c
