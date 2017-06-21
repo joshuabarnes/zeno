@@ -35,17 +35,14 @@ void define_body_offset(string, int);
 #  if defined(SINGLEPREC) || defined(MIXEDPREC)
 #    define put_snap    f3put_snap
 #    define get_snap    f3get_snap
-#    define get_snap_t  f3get_snap_t
 #  else
 #    define put_snap    d3put_snap
 #    define get_snap    d3get_snap
-#    define get_snap_t  d3get_snap_t
 #  endif
 #endif
 
 void put_snap(stream, bodyptr *, int *, real *, string *);
-bool get_snap(stream, bodyptr *, int *, real *, string *, bool);
-bool get_snap_t(stream, bodyptr *, int *, real *, string *, bool, string);
+bool get_snap(stream, bodyptr *, int *, real *, string *, bool, string);
 
 //  phatbody: array of phat structure fields for body structures.
 //  _____________________________________________________________
