@@ -81,10 +81,10 @@ string type_base(string type)
 {
   char *tp;
 
-  for (tp = type; *tp != (char) NULL; tp++)
-    if (*tp != type[0])
-      error("%s.base_type: type %s inhomogenious\n", getprog(), type);
-  return (tp - 1);
+  for (tp = type; *tp != (char) NULL; tp++)	// scan over compound type
+    if (*tp != type[0])				// if type is inhomogeneous
+      return (NULL);				// base type is undefined
+  return (tp - 1);				// ret. pointer to last char
 }
 
 //  find_type: return typeinfo for given type.  Note: for compound
