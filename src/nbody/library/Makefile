@@ -75,7 +75,7 @@ fixbody_test: fixbody_test.c fixbody.h phatbody.o
 zeno_library.ps: bodytags.h phatbody.h phatbody.c fixbody.h fixbody_test.c \
 	         bodyio.c buildmap.h buildmap.c snapmap.c \
 	         snapcenter.h snapcenter.c snapkinem.h snapkinem.c
-	enscript -M Letterdj -o zeno_library.ps \
+	enscript -M Letterdj -r2 -o zeno_library.ps \
 		 bodytags.h phatbody.h phatbody.c fixbody.h fixbody_test.c \
 	         bodyio.c buildmap.h buildmap.c snapmap.c \
 	         snapcenter.h snapcenter.c snapkinem.h snapkinem.c
