@@ -177,8 +177,8 @@ bool getdata(void)
     bodyptr bp;
 
     get_history(instr);
-    if (! get_snap_t(instr, &btab, &nbody, &tnow, intags, FALSE,
-		     getparam("times")))
+    if (! get_snap(instr, &btab, &nbody, &tnow, intags, FALSE,
+		   getparam("times")))
 	return (FALSE);
     if (firstcall && ! set_member(intags, bodytags[0]))
         error("%s: required %s data missing\n", getargv0(), bodytags[0]);

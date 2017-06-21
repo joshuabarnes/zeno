@@ -172,7 +172,7 @@ bool get_xyzk(stream istr, string times)
     string intags[MaxBodyFields];
 
     get_history(istr);
-    if (! get_snap_t(istr, &btab, &nbody, &tbody, intags, FALSE, times))
+    if (! get_snap(istr, &btab, &nbody, &tbody, intags, FALSE, times))
 	return (FALSE);
     if (firstcall && ! set_member(intags, KeyTag))
 	error("%s: %s data missing\n", getargv0(), KeyTag);

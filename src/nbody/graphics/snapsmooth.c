@@ -148,7 +148,7 @@ bool get_bodies(stream instr, string times, bool rhovalue)
   int i;
 
   get_history(instr);
-  if (! get_snap_t(instr, &btab, &nbody, &tsnap, intags, FALSE, times))
+  if (! get_snap(instr, &btab, &nbody, &tsnap, intags, FALSE, times))
     return (FALSE);
   if (firstcall) {				// check reqd. data fields
     for (i = 0; bodytags[i] != NULL; i++) {
