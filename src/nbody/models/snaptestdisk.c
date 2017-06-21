@@ -56,17 +56,17 @@ int main(int argc, string argv[])
 
 void readsphr(string name)
 {
-    stream instr;
-    real tsnap;
-    string infields[MaxBodyFields];
-
-    instr = stropen(name, "r");
-    get_history(instr);
-    if (! get_snap(instr, &spheroid, &nspheroid, &tsnap, infields, FALSE))
-        error("readsphr in %s: no data in input file\n", getargv0());
-    strclose(instr);
-    if (! (set_member(infields, MassTag) && set_member(infields, PosTag)))
-        error("readsphr in %s: required data missing\n", getargv0());
+  stream instr;
+  real tsnap;
+  string infields[MaxBodyFields];
+  
+  instr = stropen(name, "r");
+  get_history(instr);
+  if (! get_snap(instr, &spheroid, &nspheroid, &tsnap, infields, FALSE, NULL))
+    error("readsphr in %s: no data in input file\n", getargv0());
+  strclose(instr);
+  if (! (set_member(infields, MassTag) && set_member(infields, PosTag)))
+    error("readsphr in %s: required data missing\n", getargv0());
 }
 
 /*
