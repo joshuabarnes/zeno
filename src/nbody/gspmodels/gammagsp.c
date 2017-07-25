@@ -1,60 +1,120 @@
 /*
- * GAMMAGSP.C: generate profile tables for Dehnen models.
+ * gammagsp.c: generate profile tables for gamma models.
  * See Dehnen, W. 1993, MNRAS, 265, 250.
  */
 
 #include "stdinc.h"
 #include "mathfns.h"
+#include "getparam.h"
 #include "gsp.h"
 
-/*
- * GAMMAGSP: initialize tables for Gamma model.
- */
+//  Functions defining gamma models.  First argument holds parameters.
 
-gsprof *gammagsp(real gam, real mtot, real a, int np, real rmin, real rmax)
+local double density(void *p, double r);
+local double mass(void *p, double r);
+local double potential(void *p, double r);
+local double radius(void *p, double m);
+
+//  pars: structure used to pass parameters to model functions.
+//  ___________________________________________________________
+
+typedef struct {
+  double gam;
+  double mtot;
+  double ascl;
+} pars;
+
+//  gsp_gamma: initialize tables for gamma model.
+//  _____________________________________________
+
+gsprof *gsp_gamma(double gam, double mtot, double ascl,
+		  int np, double rmin, double rmax)
 {
-  gsprof *gsp;
-  real *rtab, *dtab, *mtab, lgrs;
-  int i;
+  gsprof *gsp = (gsprof *) allocate(sizeof(gsprof));
+  double lgrs;
+  pars p = { gam, mtot, ascl };
 
-  gsp = (gsprof *) allocate(sizeof(gsprof));
-  rtab = (real *) allocate(np * sizeof(real));
-  dtab = (real *) allocate(np * sizeof(real));
-  mtab = (real *) allocate(np * sizeof(real));
-  lgrs = rlog2(rmax / rmin) / (np - 1);
-  for (i = 0; i < np; i++) {
-    rtab[i] = rmin * rexp2(lgrs * i);
-    dtab[i] = ((3 - gam) / FOUR_PI) * mtot * a /
-                (rpow(rtab[i], gam) * rpow(rtab[i] + a, 4 - gam));
-    mtab[i] = mtot * rpow(rtab[i] / (rtab[i] + a), 3 - gam);
-  }
   gsp->npoint = np;
-  gsp->radius = rtab;
-  gsp->density = dtab;
-  gsp->mass = mtab;
-  /*
-  gsp->alpha = - (gam + (4 - gam) * rmin / (rmin + a));
-  gsp->beta = - (gam + (4 - gam) * rmax / (rmax + a));
-  */
-  gsp->alpha = - gam;
-  gsp->beta = -4.0;
+  gsp->radius  = (double *) allocate(np * sizeof(double));
+  gsp->density = (double *) allocate(np * sizeof(double));
+  gsp->mass    = (double *) allocate(np * sizeof(double));
+  // gsp->phi     = (double *) allocate(np * sizeof(double));
+  lgrs = log2(rmax / rmin) / (np - 1);
+  eprintf("[%s.gsp_gamma: lgrs = %f (%a)]\n", getprog(), lgrs, lgrs);
+  for (int i = 0; i < np; i++) {
+    gsp->radius[i]  = rmin * exp2(lgrs * i);
+    gsp->density[i] = density(&p, gsp->radius[i]);
+    gsp->mass[i]    = mass(&p, gsp->radius[i]);
+    if (i > 0 && gsp->mass[i] == gsp->mass[i-1])
+      error("%s.gsp_gamma: mass degenerate (i = %d)\n", getprog(), i);
+    // gsp->phi[i]     = potential(&p, gsp->radius[i]);
+  }
+  // gsp->alpha = - (gam + (4 - gam) * rmin / (rmin + ascl));
+  // gsp->beta = - (gam + (4 - gam) * rmax / (rmax + ascl));
+  gsp->alpha = - gam;				// true asymptotic slopes
+  gsp->beta = -4.0;				// yield higher accuracy
   gsp->mtot = mtot;
-  return (gsp);
+  gsp_test_rad(gsp, gsp_rho, density, &p, "density");
+  gsp_test_rad(gsp, gsp_mass, mass, &p, "mass");
+  gsp_test_mass(gsp, gsp_mass_rad, radius, &p, "radius");
+  gsp_test_rad(gsp, gsp_phi, potential, &p, "potential");
+  return gsp;
+}
+
+//  Access macros for parameters.
+
+#define _gam   (((pars *) p)->gam)
+#define _mtot  (((pars *) p)->mtot)
+#define _ascl  (((pars *) p)->ascl)
+
+//  density: compute space density as function of radius.
+//  _____________________________________________________
+
+local double density(void *p, double r)
+{
+  return (((3 - _gam) / (4 * M_PI)) * _mtot * _ascl /
+	  (rpow(r, _gam) * pow(r + _ascl, 4 - _gam)));
+}
+
+//  mass: compute enclosed mass as function of radius.
+//  __________________________________________________
+
+local double mass(void *p, double r)
+{
+  return (_mtot * pow(r / (r + _ascl), 3 - _gam));
+}
+
+//  potential: compute potential as function of radius.
+//  ___________________________________________________
+
+local double potential(void *p, double r)
+{
+  if (_gam != 2.0)
+    return ((_mtot/_ascl) * (1 - pow(r / (r + _ascl), 2-_gam)) / (_gam-2));
+  else
+    return ((_mtot/_ascl) * log(r / (r + _ascl)));
+}
+
+//  radius: compute radius as function of enclosed mass.
+//  ____________________________________________________
+
+local double radius(void *p, double m)
+{
+  double xi = pow(m / _mtot, 1.0 / (3 - _gam));
+  return (_ascl * xi / (1 - xi));
 }
 
 #ifdef UTILITY
 
-#include "getparam.h"
-
 string defv[] = {		";Generate profile for gamma model",
-    "out=???",			";Output file for profile tables",
-    "gamma=1.0",		";Structure parameter: 0 < gamma < 3",
-    "mtot=1.0",			";Total mass of model",
-    "a=1.0",			";Length scale of model",
-    "npoint=257",		";Number of points in tables",
-    "rrange=1/4096:16",		";Range of radii tabulated",
-    "VERSION=1.2",		";Josh Barnes  4 February 1995",
-    NULL,
+  "out=",			";Output file for profile tables",
+  "gamma=1.0",			";Structure parameter: 0 < gamma < 3",
+  "mtot=1.0",			";Total mass of model",
+  "a=1.0",			";Length scale of model",
+  "npoint=1281",		";Number of points in tables",
+  "rrange=1/1024:1024",		";Range of radii tabulated",
+  "VERSION=2.0",		";Josh Barnes  28 May 2017",
+  NULL,
 };
 
 int main(int argc, string argv[])
@@ -65,53 +125,15 @@ int main(int argc, string argv[])
 
   initparam(argv, defv);
   setrange(rrange, getparam("rrange"));
-  gsp = gammagsp(getdparam("gamma"), getdparam("mtot"), getdparam("a"),
-		 getiparam("npoint"), rrange[0], rrange[1]);
-  ostr = stropen(getparam("out"), "w");
-  put_history(ostr);
-  put_gsprof(ostr, gsp);
-  strclose(ostr);
-  return (0);
-}
-
-#endif
-
-#ifdef TESTBED
-
-#include "getparam.h"
-
-string defv[] = {		";Test representation of gamma model",
-    "gamma=1.0",		";Structure parameter: 0 < gamma < 3",
-    "mtot=1.0",			";Total mass of model",
-    "a=1.0",			";Length scale of model",
-    "npoint=257",		";Number of points in tables",
-    "rrange=1/256:256",		";Range of radii tabulated",
-    "VERSION=1.0",		";Josh Barnes  15 July 2011",
-    NULL,
-};
-
-int main(int argc, string argv[])
-{
-  real gam, mtot, a, rrange[2], lgrs, r, d, m;
-  gsprof *gsp;
-  int i;
-
-  initparam(argv, defv);
-  gam = getdparam("gamma");
-  mtot = getdparam("mtot");
-  a = getdparam("a");
-  setrange(rrange, getparam("rrange"));
-  gsp = gammagsp(gam, mtot, a, getiparam("npoint"), rrange[0], rrange[1]);
-  lgrs = rlog2(1000.0 / 0.001) / (6144 - 1);
-  for (i = 0; i < 6144; i++) {
-    r = 0.001 * rexp2(lgrs * i);
-    d = ((3-gam) / FOUR_PI) * mtot * a / (rpow(r, gam) * rpow(r + a, 4-gam));
-    m = mtot * rpow(r / (r + a), 3 - gam);
-    printf("%12.6f  %12.5e  %12.5e  %12.5e  %12.5e\n", r, d, m,
-	   (rho_gsp(gsp, r) - d) / d, (mass_gsp(gsp, r) - m) / m);
-
+  gsp = gsp_gamma(getdparam("gamma"), getdparam("mtot"), getdparam("a"),
+		  getiparam("npoint"), rrange[0], rrange[1]);
+  if (! strnull(getparam("out"))) {
+    ostr = stropen(getparam("out"), "w");
+    put_history(ostr);
+    gsp_write(ostr, gsp);
   }
-  return (0);
+  fflush(NULL);
+  return 0;
 }
 
 #endif
