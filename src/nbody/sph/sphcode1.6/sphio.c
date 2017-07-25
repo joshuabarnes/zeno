@@ -1,6 +1,6 @@
 /*
  * sphio.c: I/O routines for hierarchical SPH/N-body code.
- * Copyright (c) 2012 by Joshua E. Barnes, Honolulu, Hawai'i.
+ * Copyright (c) 2016 by Joshua E. Barnes, Honolulu, Hawai'i.
  */
 
 #include "stdinc.h"
@@ -16,12 +16,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-// Prototypes for local routines.
+//  Prototypes for local routines.
+//  ______________________________
 
 local void diagnostics(void);			// eval N-body diagnostics
-local void writetrace(void);			// dump body data to trace
+local void writestream(void);			// dump body data to stream
 
-// Output state variables.
+//  Diagnostic parameters.
+//  ______________________
 
 local real mtot;		                // total mass of system
 local double etot[4];				// system E, Ek, Ei, Ep
@@ -35,20 +37,19 @@ local vector amvec;				// angular momentum vector
 //  ___________________________________________________
 
 #define CHECKTAGS(tags, x) \
-  if (! set_member(tags, x)) error("%s: %s data missing\n", getargv0(), x)
+  if (! set_member(tags, x)) error("%s: %s data missing\n", getprog(), x)
 
 void inputdata(void)
 {
-  stream istr;
+  stream instr;
   string intags[MaxBodyFields];
-  bodyptr p;
 
-  istr = stropen(infile, "r");			// open input stream
-  get_history(istr);				// read file history data
+  instr = stropen(infile, "r");			// open input stream
+  get_history(instr);				// read file history data
   btab = NULL;					// be sure to alloc space
-  if (! get_snap(istr, &btab, &nbody, &tnow, intags, FALSE))
-    error("%s: no data in input file\n", getargv0());
-  strclose(istr);				// close input stream
+  if (! get_snap(instr, &btab, &nbody, &tnow, intags, FALSE, NULL))
+    error("%s.inputdata: no data in input file\n", getprog());
+  strclose(instr);				// close input stream
   CHECKTAGS(intags, TypeTag);
   CHECKTAGS(intags, MassTag);
   CHECKTAGS(intags, PosTag);
@@ -63,29 +64,29 @@ void inputdata(void)
   CHECKTAGS(intags, DeathTag);
 #endif
   ngas = 0;					// count gas bodies
-  for (p = btab; p < btab+nbody; p++) {		// check each body's type
+  for (bodyptr p = btab; p < btab+nbody; p++) {	// check each body's type
     if (Cell(p) || ! Body(p))
-      error("%s: input must contain bodies, not cells\n", getargv0());
+      error("%s.inputdata: only body types allowed in input\n", getprog());
     if (Gas(p) && Star(p))
-      error("%s: gas and star types mutually exclusive\n", getargv0());
+      error("%s.inpudata: gas & star types mutually exclusive\n", getprog());
     if (Gas(p)) {
       ngas++;
 #if defined(ENTROPY)
       if (EntFunc(p) <= 0)
-	error("%s: entropy function must be positive definite\n", getargv0());
+	error("%s.inputdata: entropy must be positive definite\n", getprog());
 #else
       if (Uintern(p) <= 0)
-	error("%s: internal energy must be positive definite\n", getargv0());
+	error("%s.inputdata: energy must be positive definite\n", getprog());
 #endif
     }
     if (Star(p)) {
 #if defined(MASSLOSS)
       if (Birth(p) > tnow)
-	error("%s: stars must be born before run starts\n", getargv0());
+	error("%s.inputdata: stars must already be born\n", getprog());
       if (Death(p) < tnow)
-	error("%s: stars must be alive when run starts\n", getargv0());
+	error("%s.inputdata: stars must still be alive\n", getprog());
       if (Birth(p) >= Death(p))
-	error("%s: stars must be born before they die\n", getargv0());
+	error("%s.inputdata: stars must be born before dying\n", getprog());
 #endif
     }
   }
@@ -96,111 +97,114 @@ void inputdata(void)
 
 void inputgrav(string gspfile)
 {
-  stream gstr;
+  stream gspstr;
 
 #if defined(EXTGRAV)
-  gstr = stropen(gspfile, "r");
-  get_history(gstr);
-  gravgsp = get_gsprof(gstr);			// read external field GSP
-  strclose(gstr);
+  gspstr = stropen(gspfile, "r");
+  get_history(gspstr);
+  gravgsp = get_gsprof(gspstr);			// read external field GSP
+  strclose(gspstr);
 #endif
 }
 
-//  startout: begin output to log file and trace file.
+//  startoutput: begin output to log file and stream file.
 //  __________________________________________________
 
-void startout(string defv[])
+void startoutput(string *opts)
 {
-  int i, ncol = 10;
+  int ncol = 10;
 
-  headline = defv[0] + 1;			// set ident. message
-  fprintf(logstr, "\n%s  [v%s]\n", headline, getversion());
-  for (i = 1; defv[i][0] == ';'; i++)
-    fprintf(logstr, "    %s\n", defv[i]+1);
-  fprintf(logstr, "\n %9s %9s %9s %9s %9s %9s %9s\n",
-	  "nbody", "ngas", "nsmooth", "courant", "dtime", "dtout", "tstop");
-  fprintf(logstr, " %9d %9d %9d %9.4f %9.6f %9.6f %9.4f\n\n",
-	  nbody, ngas, nsmooth, courant, dtime, dtout, tstop);
-  fprintf(logstr, " %9s", "gamma");
+  if (! strnull(logfile))			// explicit log file given?
+    logstream = (strne(logfile, "/dev/null") ? stropen(logfile, "w!") : NULL);
+  else						// use stdout unless busy
+    logstream = (strne(strmpatn, "-") ? stdout : NULL);
+  set_error_stream(logstream);			// set up error log
+
+  if (logstream != NULL) {
+    fprintf(logstream, "\n%s  [v%s]\n", headline, getversion());
+    for (int i = 0; opts[i][0] == ';'; i++)
+      fprintf(logstream, "    %s\n", opts[i]+1);
+    fprintf(logstream, "\n %9s %9s %9s %9s %9s %9s %9s\n",
+	    "nbody", "ngas", "nsmooth", "courant", "dtime", "dtout", "tstop");
+    fprintf(logstream, " %9d %9d %9d %9.4f %9.6f %9.6f %9.4f\n\n",
+	    nbody, ngas, nsmooth, courant, dtime, dtout, tstop);
+    fprintf(logstream, " %9s", "gamma");
 #if !defined(ENTROPY) && !defined(ISOTHERMAL)
-  fprintf(logstr, " %9s", "uintmax");
+    fprintf(logstream, " %9s", "uintmax");
 #endif
 #if defined(RADIATING)
-  fprintf(logstr, " %9s %9s", "uradpk", "lambpk");
+    fprintf(logstream, " %9s %9s", "uradpk", "lambpk");
 #endif
 #if defined(DIFFUSING)
-  fprintf(logstr, " %9s", "sigmastar");
+    fprintf(logstream, " %9s", "sigmastar");
 #endif
 #if defined(DIFFUSING) || defined(OPAQUE)
-  fprintf(logstr, " %9s", "opacity");
+    fprintf(logstream, " %9s", "opacity");
 #endif
 #if defined(CONDUCTING)
-  fprintf(logstr, " %9s", "conduct");
+    fprintf(logstream, " %9s", "conduct");
 #endif
 #if defined(STARFORM)
-  fprintf(logstr, " %9s %9s %9s", "csfr", "nsfr", "msfr");
+    fprintf(logstream, " %9s %9s %9s", "cstar", "nstar", "mstar");
 #if defined(MASSLOSS)
-  fprintf(logstr, " %9s %9s", "tau_ml", "beta_ml");
+    fprintf(logstream, " %9s %9s", "tau_ml", "beta_ml");
 #endif
 #endif
-  fprintf(logstr, "\n");
-  fprintf(logstr, " %9.4f", gamma0);
+    fprintf(logstream, "\n");
+    fprintf(logstream, " %9.4f", gamma0);
 #if !defined(ENTROPY) && !defined(ISOTHERMAL)
-  fprintf(logstr, " %9.4g", uintmax);
-  ncol += 10;
+    fprintf(logstream, " %9.4g", uintmax);
+    ncol += 10;
 #endif
+
 #if defined(RADIATING)
-  fprintf(logstr, " %9.4g %9.4g", uradpk, lambpk);
-  ncol += 20;
+    fprintf(logstream, " %9.4g %9.4g", uradpk, lambpk);
+    ncol += 20;
 #endif
 #if defined(DIFFUSING)
-  fprintf(logstr, " %9.4g", sigmastar);
-  ncol += 10;
+    fprintf(logstream, " %9.4g", sigmastar);
+    ncol += 10;
 #endif
 #if defined(DIFFUSING) || defined(OPAQUE)
-  fprintf(logstr, " %9.4g", opacity);
-  ncol += 10;
+    fprintf(logstream, " %9.4g", opacity);
+    ncol += 10;
 #endif
 #if defined(CONDUCTING)
-  fprintf(logstr, " %9.4g", conduct);
-  ncol += 10;
+    fprintf(logstream, " %9.4g", conduct);
+    ncol += 10;
 #endif
 #if defined(STARFORM)
-  fprintf(logstr, " %9.4g %9.2f %9.2f", csfr[0], nsfr[0], msfr[0]);
+    fprintf(logstream, " %9.4g %9.2f %9.2f", cstar[0], nstar[0], mstar[0]);
 #if defined(MASSLOSS)
-  fprintf(logstr, " %9.4g %9.2f", tau_ml, beta_ml);
+    fprintf(logstream, " %9.4g %9.2f", tau_ml, beta_ml);
 #endif
 #endif
-  fprintf(logstr, "\n");
-  if (csfr[1] > 0) {
-    for (i = 0; i < ncol; i++)
-      fputc(' ', logstr);
-    fprintf(logstr, " %9.4g %9.2f %9.2f\n", csfr[1], nsfr[1], msfr[1]);
-  }
-  if (csfr[2] > 0) {
-    for (i = 0; i < ncol; i++)
-      fputc(' ', logstr);
-    fprintf(logstr, " %9.4g %9.2f %9.2f\n", csfr[2], nsfr[2], msfr[2]);
-  }
-  fprintf(logstr, "\n");
+    fprintf(logstream, "\n");
+    for (int k = 1; k < 3; k++)
+      if (cstar[k] > 0) {
+	for (int i = 0; i < ncol; i++)
+	  fputc(' ', logstream);
+	fprintf(logstream, " %9.4g %9.2f %9.2f\n",
+		cstar[k], nstar[k], mstar[k]);
+      }
+    fprintf(logstream, "\n");
 #if defined(GRAVITY)
-  fprintf(logstr, " %9s %9s %9s", "eps", "usequad", "theta");
+    fprintf(logstream, " %9s %9s %9s", "eps", "usequad", "theta");
 #endif
-  fprintf(logstr, " %9s %9s %9s %9s\n", "alpha", "beta", "slope", "fdrag");
+    fprintf(logstream, " %9s %9s %9s %9s\n",
+	    "alpha", "beta", "slope", "fdrag");
 #if defined(GRAVITY)
-  fprintf(logstr, " %9.4f %9s %9.2f", eps, usequad ? "true" : "false", theta);
+    fprintf(logstream, " %9.4f %9s %9.2f",
+	    eps, usequad ? "true" : "false", theta);
 #endif
-  fprintf(logstr, " %9.2f %9.2f %9.4f %9.4f\n", alpha, beta, slope0, fdrag);
-  if (! strnull(options))			// print options, if any
-    fprintf(logstr, "\n\toptions: %s\n", options);
-  fflush(logstr);
-  if (! strnull(savefile))			// was state file given?
+    fprintf(logstream, " %9.2f %9.2f %9.4f %9.4f\n",
+	    alpha, beta, slope0, fdrag);
+    if (! strnull(options))			// print options, if any
+      fprintf(logstream, "\n\toptions: %s\n", options);
+    fflush(logstream);
+  }
+  if (! strnull(savepatn))			// was state file given?
     savestate();				// save initial data
-  if (! strnull(tracefile)) {
-    tracestr = stropen(tracefile, "a");
-    put_history(tracestr);
-  } else
-    tracestr = NULL;
 }
 
 //  outputhead: announce beginning of new time-step.
@@ -208,10 +212,13 @@ void startout(string defv[])
 
 void outputhead(void)
 {
-  fprintf(logstr, "\n____________________________________________________\n");
-  fprintf(logstr, "time: %.8f    nstep: %d    cputime: %.2f\n",
-	  tnow, nstep, cputime());
-  fflush(logstr);
+  if (logstream != NULL) {
+    fprintf(logstream,
+	    "\n____________________________________________________\n");
+    fprintf(logstream, "time: %.8f    nstep: %d    cputime: %.2f\n",
+	    tnow, nstep, cputime());
+    fflush(logstream);
+  }
 }
 
 //  outputdata: output diagnostics and binary data.
@@ -222,20 +229,22 @@ void outputdata(void)
   static string *outtags = NULL;
   int n;
   string reqtags[MaxBodyFields], *alltags;
-  char namebuf[256];
-  struct stat buf;
+  char outbuf[256];
+  struct stat outstat;
   stream outstr;
 
   diagnostics();				// compute all diagnostics
-  fprintf(logstr, "\n%9s %9s %9s %9s %9s %9s %9s %9s\n",
-	  "Time", "Etot", "Eint", "Ekin", "Epot", "Erad",
-	  "|Jtot|", "|Vcom|");
-  fprintf(logstr, "%9.4f %9.5f %9.5f %9.5f %9.5f %9.5f %9.6f %9.6f\n",
-	  tnow, etot[0], etot[1], etot[2], etot[3], eradiate,
-	  absv(amvec), absv(cmvel));
+  if (logstream != NULL) {
+    fprintf(logstream, "\n%9s %9s %9s %9s %9s %9s %9s %9s\n",
+	    "Time", "Etot", "Eint", "Ekin", "Epot", "Erad",
+	    "|Jtot|", "|Vcom|");
+    fprintf(logstream, "%9.4f %9.5f %9.5f %9.5f %9.5f %9.5f %9.6f %9.6f\n",
+	    tnow, etot[0], etot[1], etot[2], etot[3], eradiate,
+	    absv(amvec), absv(cmvel));
+  }
   if (outtags == NULL)				// list requested data
     outtags = burststring(outputs, ", \t\n");
-  if (! strnull(outfile) && tnow + (dtime > 0 ? dtime/8 : 0) >= tout) {
+  if (! strnull(outpatn) && tnow + (dtime > 0 ? dtime/8 : 0) >= tout) {
     n = 0;					// build output list
     if (nstep == 0) {				// first output of run?
       reqtags[n++] = TypeTag;			// output type codes first
@@ -250,24 +259,25 @@ void outputdata(void)
     }
     reqtags[n] = NULL;				// terminate required list
     alltags = set_union(reqtags, outtags);	// list all output data
-    sprintf(namebuf, outfile, nstep);		// make up output file name
-    if (stat(namebuf, &buf) != 0) {		// no output file exists?
-      outstr = stropen(namebuf, "w");		// create & open for output
+    sprintf(outbuf, outpatn, nstep);		// make up output file name
+    if (stat(outbuf, &outstat) != 0) {		// no output file exists?
+      outstr = stropen(outbuf, "w");		// create & open for output
       put_history(outstr);			// write out history data
     } else					// else file already exists
-      outstr = stropen(namebuf, "a");		// reopen and append output
+      outstr = stropen(outbuf, "a");		// reopen and append output
     put_snap(outstr, &btab, &nbody, &tnow, alltags);
     strclose(outstr);				// close up output file
     free(alltags);
-    fprintf(logstr, "\n\tdata output to file %s at time %f\n",
-	    namebuf, tnow);
+    if (logstream != NULL)
+      fprintf(logstream, "\n\tdata output to file %s at time %f\n",
+	      outbuf, tnow);
     tout += dtout;				// schedule next output
   }
-  fflush(logstr);
-  if (! strnull(savefile))			// was state file given?
+  if (logstream != NULL)
+    fflush(logstream);
+  if (! strnull(savepatn))			// was state file given?
     savestate();				// save data for restart
-  if (tracestr != NULL)
-    writetrace();
+  writestream();
 }
 
 //  diagnostics: compute dynamic and thermodynamic diagnostics.
@@ -324,12 +334,15 @@ local void diagnostics(void)
   DIVVS(cmvel, cmvel, mtot);
 }
 
-//  writetrace: output full particle data to trace stream.
+//  writestream: output full particle data to stream file.
 //  ______________________________________________________
 
-local void writetrace(void)
+local void writestream(void)
 {
-  static string tracetags[] = {
+  char strmbuf[256];
+  struct stat strmstat;
+  stream strmstr;
+  static string strmtags[] = {
     TypeTag, PosTag, VelTag, MassTag, SmoothTag, PhiTag, AccTag, RhoTag,
 #if defined(ENTROPY)
     EntFuncTag,
@@ -354,27 +367,39 @@ local void writetrace(void)
 #endif
     NULL,
   };
-
-  put_snap(tracestr, &btab, &nbody, &tnow, tracetags);
-  fflush(tracestr);    
+  if (! strnull(strmpatn)) {
+    if (strne(strmpatn, "-")) {
+      sprintf(strmbuf, strmpatn, nstep);
+      if (stat(strmbuf, &strmstat) != 0) {
+	strmstr = stropen(strmbuf, "w");
+	put_history(strmstr);
+      } else
+	strmstr = stropen(strmbuf, "a");
+    } else
+      strmstr = stdout;
+    put_snap(strmstr, &btab, &nbody, &tnow, strmtags);
+    fflush(strmstr);
+    if (strne(strmpatn, "-"))
+      strclose(strmstr);
+  }
 }
-
+
 //  savestate: write current state to disk file.
 //  ____________________________________________
 
 void savestate(void)
 {
-  char namebuf[256];
+  char savebuf[256];
   stream str;
   static int randsize;
   static void *randstate = NULL;
 
-  sprintf(namebuf, savefile, nstep & 1);	// generate state file name
-  str = stropen(namebuf, "w!");			// open state output file
-  put_string(str, "program", getargv0());
+  sprintf(savebuf, savepatn, nstep & 1);	// generate state file name
+  str = stropen(savebuf, "w!");			// open state output file
+  put_string(str, "program", getprog());
   put_string(str, "version", getversion());
   put_string(str, "headline", headline);
-  put_data(str, "gamma", RealType, &gamma0, 0);
+  put_data(str, "gamma", RealType, &gamma0, 0);	// save input parameters
 #if defined(RADIATING)
   put_data(str, "uradpk", RealType, &uradpk, 0);
   put_data(str, "lambpk", RealType, &lambpk, 0);
@@ -392,9 +417,9 @@ void savestate(void)
   put_data(str, "opacity", RealType, &opacity, 0);
 #endif
 #if defined(STARFORM)
-  put_data(str, "csfr", RealType, csfr, 3, 0);
-  put_data(str, "nsfr", RealType, nsfr, 3, 0);
-  put_data(str, "msfr", RealType, msfr, 3, 0);
+  put_data(str, "cstar", RealType, cstar, 3, 0);
+  put_data(str, "nstar", RealType, nstar, 3, 0);
+  put_data(str, "mstar", RealType, mstar, 3, 0);
 #if defined(MASSLOSS)
   put_data(str, "tau_ml", RealType, &tau_ml, 0);
   put_data(str, "beta_ml", RealType, &beta_ml, 0);
@@ -435,7 +460,7 @@ void savestate(void)
   put_data(str, "btab", AnyType, btab, nbody, sizeof(body), 0);
   strclose(str);
 }
-
+
 //  restorestate: restore state from disk file.
 //  ___________________________________________
 
@@ -449,10 +474,9 @@ void restorestate(void)
   str = stropen(restfile, "r");			// open state input file
   program = get_string(str, "program");
   version = get_string(str, "version");
-  if (! streq(program, getargv0()) ||		// check program, version
-      ! streq(version, getversion()))
-    eprintf("[%s: warning -- input state file may be outdated]\n",
-	    getargv0());
+  if (strne(program, getprog()) || strne(version, getversion()))
+    eprintf("[%s: warning: input state file may be outdated]\n",
+	    getprog());
   headline = get_string(str, "headline");
   get_data(str, "gamma", RealType, &gamma0, 0);	// read program parameters
 #if defined(RADIATING)
@@ -475,9 +499,9 @@ void restorestate(void)
   get_data(str, "opacity", RealType, &opacity, 0);
 #endif
 #if defined(STARFORM)
-  get_data(str, "csfr", RealType, csfr, 3, 0);
-  get_data(str, "nsfr", RealType, nsfr, 3, 0);
-  get_data(str, "msfr", RealType, msfr, 3, 0);
+  get_data(str, "cstar", RealType, cstar, 3, 0);
+  get_data(str, "nstar", RealType, nstar, 3, 0);
+  get_data(str, "mstar", RealType, mstar, 3, 0);
 #if defined(MASSLOSS)
   get_data(str, "tau_ml", RealType, &tau_ml, 0);
   get_data(str, "beta_ml", RealType, &beta_ml, 0);

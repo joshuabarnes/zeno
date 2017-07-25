@@ -39,8 +39,8 @@ local void sphdensity(bool, real, int, int);	// perform smoothing
 local void sph_numb_density(smxptr, int, int);	// compute number density
 local void sph_mass_density(smxptr, int, int);	// compute mass density
 
-//  _______________________
 //  main: toplevel routine.
+//  _______________________
 
 int main(int argc, string argv[])
 {
@@ -54,7 +54,7 @@ int main(int argc, string argv[])
   newtags = set_cons(SmoothTag, RhoTag, NULL);
   istr = stropen(getparam("in"), "r");
   get_history(istr);
-  while (get_snap(istr, &btab, &nbody, &tnow, intags, FALSE)) {
+  while (get_snap(istr, &btab, &nbody, &tnow, intags, FALSE, NULL)) {
     if (! set_member(intags, PosTag))
       error("%s: %s input data missing\n", getprog(), PosTag);
     massdata = massdata || set_member(intags, MassTag);
@@ -76,8 +76,8 @@ int main(int argc, string argv[])
   return (0);
 }
 
-//  ________________________________________________________________
 //  setupbody: inform dynamic body routines of relevant body fields.
+//  ________________________________________________________________
 
 local void setupbody(void)
 {
@@ -92,8 +92,8 @@ local void setupbody(void)
   define_body_offset(RhoTag, BodyOffset(Rho));
 }
 
-//  _________________________________________________
 //  sphdensity: compute smoothing length and density.
+//  _________________________________________________
 
 local void sphdensity(bool rhomass, real slope, int nsmooth, int nbucket)
 {
@@ -114,8 +114,8 @@ local void sphdensity(bool rhomass, real slope, int nsmooth, int nbucket)
   finish_kdtree(kd);				// deallocate kdtree data
 }
 
-//  ____________________________________________________________________
 //  sph_numb_density: compute number density for body and its neighbors.
+//  ____________________________________________________________________
 
 local void sph_numb_density(smxptr sm, int pi, int nball)
 {
@@ -134,8 +134,8 @@ local void sph_numb_density(smxptr sm, int pi, int nball)
   }
 }
 
-//  __________________________________________________________________
 //  sph_mass_density: compute mass density for body and its neighbors.
+//  __________________________________________________________________
 
 local void sph_mass_density(smxptr sm, int pi, int nball)
 {
