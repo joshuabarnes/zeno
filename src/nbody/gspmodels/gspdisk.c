@@ -1,5 +1,5 @@
 /*
- * GSPDISK.C: set up an exponential disk in a gsp model.
+ * gspdisk.c: set up an exponential disk in a gsp model.
  */
 
 #include "stdinc.h"
@@ -9,104 +9,134 @@
 #include "phatbody.h"
 #include "snapcenter.h"
 #include "gsp.h"
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_integration.h>
+#include <assert.h>
 
 string defv[] = {		";Make exponential disk in a gsp model",
-    "grav=",			";Input gsp file sets spheroid gravity.",
+  "grav=",			";Input gsp file sets spheroid gravity.",
 				";If blank, just use disk self-gravity.",
-    "out=",			";Output N-body file with disk model.",
-				";Contains " MassTag ", " PosTag ", "
-				  VelTag " data.",
-    "mdisk=0.1875",		";Exponential disk mass (or masses).",
-				";Can take two comma-separated values;",
-				";uses 1st for N-body model, adds 2nd to",
-				";grav. field.  If so, must also specify",
-				";two values for alpha and epsilon.",
-    "alpha=12.0",		";Inverse radial scale length(s)",
-    "epsilon=-1",		";Plummer smoothing parameter(s).",
+  "out=",			";Output N-body file with disk model.",
+				";Contains " MassTag ", " PosTag ", " VelTag
+#if defined(GAS)
+				",",
+				";" UinternTag ", " TypeTag ", " AuxTag
+#endif
+				" data.",
+  "mdisk=0.1875",		";Exponential disk mass (or masses).",
+				";Can take many comma-separated values;",
+				";uses first to generate model,",
+				";adds rest to compute rotation curve.",
+  "alpha=12.0",			";Inverse radial scale length(s).",
+				";Can take many comma-separated values.",
+  "epsilon=-1",			";Smoothing parameter for disk(s).",
+				";Can take many comma-separated values.",
 				";No smoothing is used if epsilon < 0.",
-    "zdisk=0.01",		";Vertical scale height; sets dispersions",
-    "mu=2.0",			";Ratio of radial to vertical dispersion.",
+#if !defined(GAS)
+  "zdisk=0.01",			";Vertical scale height; sets dispersions",
+  "mu=2.0",			";Ratio of radial to vertical dispersion.",
 				";Constant unless r_mu > 0.",
-    "r_mu=-1",			";Scale radius for mu(R) function.",
+  "r_mu=-1",			";Scale radius for mu(R) function.",
 				";If r_mu > 0 then mu -> 1 as R -> 0.",
-    "eta=-1",			";Velocity distribution parameter.",
+  "eta=-1",			";Velocity distribution parameter.",
 				";Use Gaussian distribution if eta < 0.",
-    "rcut=1.0",			";Outer disk cutoff radius",
-    "nlist=256",		";Number of radii in disk listing",
-    "ndisk=12288",		";Number of disk particles",
-    "seed=54321",		";Seed for random number generator",
-    "VERSION=1.4",		";Josh Barnes  12 May 2012",
-    NULL,
+  "rcut=1.0",			";Outer disk cutoff radius",
+  "nlist=256",			";Number of radii in disk listing",
+#else
+  "uint=0.014",                 ";Internal energy for SPH particles",
+  "gamma=5.0/3.0",              ";Ratio of specific heats",
+  "type=0x60",			";Body type for SPH calculation",
+  "rcut=1.0",			";Outer disk cutoff radius",
+#endif
+  "ndisk=12288",		";Number of disk particles",
+  "seed=54321",			";Seed for random number generator",
+  "VERSION=2.0",		";Josh Barnes & Kelly Blumenthal  24 July 2017",
+  NULL,
 };
 
-/* Global parameters. */
-
-real mdisk1, mdisk2;			/* total mass of expo. disk(s)      */
-real alpha1, alpha2;			/* inverse radial scale length(s)   */
-real epsilon1, epsilon2;		/* value for smoothing length(s)    */
-real zdisk;				/* vertical scale height            */
-real mu;				/* ratio of sig_r to sig_z          */
-real r_mu;				/* scale radius for mu(R) function  */
-real eta;				/* shape parameter for vel. dist.   */
-real rcut;				/* cut-off radius for disk model    */
-
-/* Global tables and data structures. */
-
-#define NTAB  (256 + 1)
-
-real mdtab[NTAB];			/* use disk mass as indp var        */
-real rdtab[4*NTAB];			/* radius as fcn of mass            */
-real vctab[4*NTAB];			/* circ. velocity as fcn of radius  */
-
-gsprof *sphr = NULL;			/* sphroid mass as fcn of radius    */
-
-string bodyfields[] = { PosTag, VelTag, MassTag, NULL };
-
-bodyptr disk = NULL;			/* array of disk particles          */
-int ndisk;				/* number of particles in the disk  */
-
-/* Function prototypes. */
+// Function prototypes.
 
 void readgsp(void);
 void writemodel(void);
 void setprof(void);
-real gdisk(real);
-real dgdisk(real, real, real, real);
-real simpson(real (*)(real, real, real, real),
-	     real, real, real, real, real, real);
+double gdisk(double);
+double dgdisk(double, void *);
 void listdisk(int);
 void makedisk(void);
-real ratanh(real);
-real pickdist(real, real);
+double pickdist(double, double);
+string *padlist(string *old, int len);
+
+// Global parameters.
+
+#define MAXMODEL  4
+double mdisk[MAXMODEL];			// total mass of expo. disk(s)
+double alpha[MAXMODEL];			// inverse radial scale length(s)
+double epsilon[MAXMODEL];		// value for smoothing length(s)
+int nmodel;				// number of disk models
+
+double zdisk;				// vertical scale height of 1st disk
+double mu;				// ratio of sig_r to sig_z
+double r_mu;				// scale radius for mu(R) function
+double eta;				// shape parameter for vel. dist.
+double rcut;				// cut-off radius for disk model
+double uinternal;                       // internal energy for SPH particles
+double gam;                             // Ratio of specific heats
+byte type;                              // body type for SPH particles
+
+// Global arrays and data structures.
+
+#define NTAB  (256 + 1)
+
+double mdtab[NTAB];			// use disk mass as indp var
+double rdtab[NTAB];			// radius as fcn of mass
+double vctab[NTAB];			// circ. velocity as fcn of radius
+gsl_interp *rm_spline;			// interpolator for r(m)
+gsl_interp *vr_spline;			// interpolator for v(r)
+
+gsprof *sphr = NULL;			// sphroid mass as fcn of radius
+
+string bodyfields[] = {
+#if !defined(GAS)
+  PosTag, VelTag, MassTag, NULL,
+#else
+  PosTag, VelTag, MassTag, UinternTag, TypeTag, AuxTag, NULL,
+#endif
+};
+
+bodyptr disk = NULL;			// array of disk particles
+int ndisk;				// number of particles in the disk
 
 int main(int argc, string argv[])
 {
-  float tmp1, tmp2;
+  string *mdisklist, *alphalist, *epsillist;
 
   initparam(argv, defv);
-  if (sscanf(getparam("mdisk"), "%f,%f", &tmp1, &tmp2) == 2) {
-    mdisk1 = tmp1;
-    mdisk2 = tmp2;
-    if (sscanf(getparam("alpha"), "%f,%f", &tmp1, &tmp2) != 2)
-      error("%s: must specify two alpha values\n", getargv0());
-    alpha1 = tmp1;
-    alpha2 = tmp2;
-    if (sscanf(getparam("epsilon"), "%f,%f", &tmp1, &tmp2) != 2)
-      error("%s: must specify two epsilon values\n", getargv0());
-    epsilon1 = tmp1;
-    epsilon2 = tmp2;
-  } else {
-    mdisk1 = getdparam("mdisk");
-    mdisk2 = 0.0;
-    alpha1 = getdparam("alpha");
-    alpha2 = 12.0;			 /* nonzero value stops div by zero */
-    epsilon1 = getdparam("epsilon");
-    epsilon2 = -1.0;
+  mdisklist = burststring(getparam("mdisk"), ",");
+  nmodel = xstrlen(mdisklist, sizeof(string)) - 1;
+  if (nmodel < 1)
+    error("%s: must specify at least one mdisk\n", getprog());
+  if (nmodel > MAXMODEL)
+    error("%s: can't have more than %d disks\n", getprog(), MAXMODEL);
+  alphalist = padlist(burststring(getparam("alpha"), ","), nmodel);
+  epsillist = padlist(burststring(getparam("epsilon"), ","), nmodel);
+  if (alphalist == NULL || epsillist == NULL)
+    error("%s: must specify value(s) for alpha, epsilon\n", getprog());
+  for (int i = 0; i < nmodel; i++) {
+    mdisk[i] = strtod(mdisklist[i], (char **) NULL);
+    alpha[i] = strtod(alphalist[i], (char **) NULL);
+    epsilon[i] = strtod(epsillist[i], (char **) NULL);
   }
+#if !defined(GAS)
   zdisk = getdparam("zdisk");
   mu = getdparam("mu");
   r_mu = getdparam("r_mu");
   eta = getdparam("eta");
+#else
+  uinternal = getdparam("uint");
+  gam = getdparam("gamma");
+  type = (0x7f & getiparam("type"));
+#endif
   rcut = getdparam("rcut");
   readgsp();
   setprof();
@@ -114,16 +144,18 @@ int main(int argc, string argv[])
   ndisk = getiparam("ndisk");
   disk = (bodyptr) allocate(ndisk * SizeofBody);
   init_random(getiparam("seed"));
+#if !defined(GAS)
   if (getiparam("nlist") > 0)
     listdisk(getiparam("nlist"));
+#endif
   makedisk();
   writemodel();
-  return (0);
+  fflush(NULL);
+  return 0;
 }
 
-/*
- * READGSP: read sphr GSP from input file.
- */
+//  readgsp: read sphr GSP from input.
+//  __________________________________
 
 void readgsp(void)
 {
@@ -132,14 +164,12 @@ void readgsp(void)
   if (! strnull(getparam("grav"))) {
     istr = stropen(getparam("grav"), "r");
     get_history(istr);
-    sphr = get_gsprof(istr);
-    strclose(istr);
+    sphr = gsp_read(istr);
   }
 }
 
-/*
- * WRITEMODEL: write N-body model to output file.
- */
+//  writemodel: write N-body model to output.
+//  _________________________________________
 
 void writemodel(void)
 {
@@ -150,227 +180,238 @@ void writemodel(void)
     ostr = stropen(getparam("out"), "w");
     put_history(ostr);
     put_snap(ostr, &disk, &ndisk, &tsnap, bodyfields);
-    strclose(ostr);
   }
 }
 
-/*
- * SETPROF: initialize disk tables for radius and circular velocity.
- */
+//  setprof: initialize disk tables for radius and circular velocity.
+//  _________________________________________________________________
 
 void setprof(void)
 {
-  int j;
-  real r, msphr;
+  double r, msphr;
 
   rdtab[0] = mdtab[0] = vctab[0] = 0.0;
-  for (j = 1; j < NTAB; j++) {
-    r = rcut * rpow(((real) j) / (NTAB - 1), 2.0);
-    rdtab[j] = r;
-    mdtab[j] = 1 - rexp(- alpha1 * r) - alpha1 * r * rexp(- alpha1 * r);
-    msphr = (sphr != NULL ? mass_gsp(sphr, r) : 0.0);
-    vctab[j] = rsqrt(msphr / r - gdisk(r) * r);
+  for (int j = 1; j < NTAB; j++) {
+    rdtab[j] = r = rcut * gsl_pow_2(((double) j) / (NTAB - 1));
+    mdtab[j] = 1 - exp(- alpha[0] * r) - alpha[0] * r * exp(- alpha[0] * r);
+    msphr = (sphr != NULL ? gsp_mass(sphr, r) : 0.0);
+    vctab[j] = sqrt(msphr / r - gdisk(r) * r);
   }
   eprintf("[%s: rcut = %8.4f/alpha  M(rcut) = %8.6f mdisk]\n",
-	  getargv0(), rdtab[NTAB-1] * alpha1, mdtab[NTAB-1]);
+	  getprog(), rdtab[NTAB-1] * alpha[0], mdtab[NTAB-1]);
   if ((mdtab[0] == mdtab[1]) || (mdtab[NTAB-2] == mdtab[NTAB-1]))
-      error("%s: disk mass table is degenerate\n", getargv0());
-  spline(&rdtab[NTAB], &mdtab[0], &rdtab[0], NTAB);	/* for r_d = r_d(m) */
-  spline(&vctab[NTAB], &rdtab[0], &vctab[0], NTAB);	/* for v_c = v_c(r) */
+      error("%s: disk mass table is degenerate\n", getprog());
+  rm_spline = gsl_interp_alloc(gsl_interp_akima, NTAB);
+  gsl_interp_init(rm_spline, mdtab, rdtab, NTAB);
+  vr_spline = gsl_interp_alloc(gsl_interp_akima, NTAB);
+  gsl_interp_init(vr_spline, rdtab, vctab, NTAB);
 }
 
-/*
- * GDISK: compute radial acceleration due to exponential disks.
- */
+//  gdisk: compute radial acceleration due to exponential disks.
+//  ____________________________________________________________
 
 #define KMAX 1000.0
-#define STEP 0.1
+#define NWKSP  1000
+#define ERRTOL 1.0e-7
 
-real gdisk(real r)
+double gdisk(double r)
 {
-  real x1 = 0.5 * alpha1 * r, x2 = 0.5 * alpha2 * r, a1, a2;;
+  static gsl_integration_workspace *wksp = NULL;
+  double params[3], res, abserr, a, x, atot = 0;
+  gsl_function dgdisk_func = { &dgdisk, params };
 
-  if (epsilon1 >= 0.0)				/* compute smoothed accel.  */
-    a1 = - mdisk1 * rqbe(alpha1) *
-      simpson(dgdisk, r, alpha1, epsilon1, 0, KMAX*alpha1, STEP*alpha1);
-  else						/* use exact expression     */
-    a1 = - mdisk1 * rqbe(alpha1) *
-      r * (bessel_I0(x1) * bessel_K0(x1) - bessel_I1(x1) * bessel_K1(x1)) / 2;
-  if (epsilon2 >= 0.0)
-    a2 = - mdisk2 * rqbe(alpha2) *
-      simpson(dgdisk, r, alpha2, epsilon2, 0, KMAX*alpha2, STEP*alpha2);
-  else
-    a2 = - mdisk2 * rqbe(alpha2) *
-      r * (bessel_I0(x2) * bessel_K0(x2) - bessel_I1(x2) * bessel_K1(x2)) / 2;
-  return (a1 + a2);	       
-}
-
-/*
- * DGDISK: integrand for radial acceleration with smoothing. Note: potential
- * at z = 0 with smoothing equals potential at z = epsilon without smoothing.
- */
-
-real dgdisk(real k, real r, real alpha, real eps)
-{
-  return (rexp(- k*eps) * j1(k*r) * k / rsqrt(rqbe(alpha*alpha + k*k)));
-}
-
-/*
- * SIMPSON: integrate given function using Simpson's rule.
- */
-
-real simpson(real (*integrand)(real, real, real, real),
-	     real param1, real param2, real param3,
-	     real xlow, real xhigh, real step0)
-{
-  int nstep, i;
-  real step1, x;
-  double v1, v2, v4;
-
-  nstep = 1 + 2 * (int) rceil(0.5 * (xhigh - xlow) / step0);
-  step1 = (xhigh - xlow) / (nstep - 1);
-  v1 = v2 = v4 = 0.0;
-  for (i = 1; i <= nstep; i++) {
-    x = xlow + (i - 1) * step1;
-    if (i == 1 || i == nstep)
-      v1 = v1 + (*integrand)(x, param1, param2, param3);
-    else if (i % 2 == 0)
-      v4 = v4 + (*integrand)(x, param1, param2, param3);
-    else
-      v2 = v2 + (*integrand)(x, param1, param2, param3);
+  for (int j = 0; j < nmodel; j++) {
+    if (epsilon[j] >= 0.0) {			// compute smoothed accel.
+      if (wksp == NULL)				// get workspace ready
+	wksp = gsl_integration_workspace_alloc(NWKSP);
+      params[0] = r;				// init params for dgdisk
+      params[1] = alpha[j];
+      params[2] = epsilon[j];
+      assert(gsl_integration_qag(&dgdisk_func, 0.0, KMAX * alpha[j],
+				 0.0, ERRTOL, NWKSP, GSL_INTEG_GAUSS61,
+				 wksp, &res, &abserr) == GSL_SUCCESS);
+    } else {					// use analytic expression
+      x = 0.5 * alpha[j] * r;
+      res = r * (bessel_I0(x)*bessel_K0(x) - bessel_I1(x)*bessel_K1(x)) / 2;
+    }
+    atot = atot - mdisk[j] * gsl_pow_3(alpha[j]) * res;
   }
-  return (step1 * (v1 + 4.0*v4 + 2.0*v2) / 3.0);
+  return atot;	       
+}
+
+//  dgdisk: integrand for radial acceleration with smoothing. Note: potential
+//  at z = 0 with smoothing equals potential at z = epsilon without smoothing.
+//  __________________________________________________________________________
+
+double dgdisk(double k, void *params)
+{
+  double r = ((double *) params)[0];
+  double alpha = ((double *) params)[1];
+  double eps = ((double *) params)[2];
+  
+  return (exp(- k*eps) * bessel_J1(k*r) * k / pow(alpha*alpha + k*k, 1.5));
 }
 
-/*
- * LISTDISK: print table listing disk parameters.
- */
+#if !defined(GAS)
+
+//  listdisk: print table listing disk parameters.
+//  ______________________________________________
 
 void listdisk(int nlist)
 {
-  int i;
-  real r, phi, vcir, omega, Adisk, kappa, sigma1, sigma2,
-       mu_eff, sig_r, sig_p, sig_z, vrad, vorb2, vorb;
+  double r, vcir, dvdr, Omega, Aoort, kappa, Sigma1, Sigma;
+  double mu_eff, sig_z, sig_r, sig_p, vorb2, vorb;
 
   printf("#%5s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s\n",
-	 "r", "vcir", "omega", "kappa", "sig_z", "sig_r", "sig_p", "vorb",
+	 "r", "vcir", "Omega", "kappa", "sig_z", "sig_r", "sig_p", "vorb",
 	 "Q", "rhomid", "fmax");
-  for (i = 1; i <= nlist; i++) {			/* loop over radii  */
-    r = (i * rcut) / ((real) nlist);
-    vcir = seval(r, &rdtab[0], &vctab[0], &vctab[NTAB], NTAB);
-    omega = vcir / r;
-    Adisk = (omega - spldif(r, &rdtab[0], &vctab[0], &vctab[NTAB], NTAB)) / 2;
-    if (omega - Adisk < 0.0)
-      error("%s: kappa undefined (omega - Adisk < 0)\n"
-	    "  r, omega, Adisk = %f %f %f\n", getargv0(), r, omega, Adisk);
-    kappa = 2 * rsqrt(rsqr(omega) - Adisk * omega);
-    sigma1 = rsqr(alpha1) * mdisk1 * rexp(- alpha1 * r) / TWO_PI;
-    sigma2 = rsqr(alpha2) * mdisk2 * rexp(- alpha2 * r) / TWO_PI;
+  for (int i = 1; i <= nlist; i++) {		// loop over table radii
+    r = (i * rcut) / ((double) nlist);
+    vcir = gsl_interp_eval(vr_spline, rdtab, vctab, r, NULL);
+    dvdr = gsl_interp_eval_deriv(vr_spline, rdtab, vctab, r, NULL);
+    Omega = vcir / r;
+    Aoort = (Omega - dvdr) / 2;
+    if (Omega - Aoort < 0.0)
+      error("%s.listdisk: kappa undefined (Omega - Aoort < 0)\n"
+	    "  r, Omega, Aoort = %f %f %f\n", getprog(), r, Omega, Aoort);
+    kappa = 2 * sqrt(Omega*Omega - Aoort * Omega);
+    Sigma1 = alpha[0]*alpha[0] * mdisk[0] * exp(- alpha[0] * r) / (2*M_PI);
+    Sigma = Sigma1;				// sum total surface density
+    for (int j = 1; j < nmodel; j++)
+      Sigma += alpha[j]*alpha[j] * mdisk[j] * exp(- alpha[j] * r) / (2*M_PI);
     mu_eff = (r_mu>0 ? 1 + (mu - 1) * (r / (r + r_mu)) : mu);
-    sig_z = rsqrt(PI * (sigma1 + sigma2) * zdisk);
-    sig_r = mu_eff * sig_z;
-    sig_p = (0.5 * kappa / omega) * sig_r;
-    vorb2 = rsqr(vcir) + rsqr(sig_r) * (1 - 2 * alpha1 * r) - rsqr(sig_p) +
-      (r_mu>0 ? rsqr(sig_z) * r * mu_eff*(2*mu-2)*r_mu/rsqr(r+r_mu) : 0);
-    vorb = rsqrt(MAX(vorb2, 0.0));
+    sig_z = sqrt(M_PI * Sigma * zdisk);		// model as isothermal sheet
+    sig_r = mu_eff * sig_z;			// apply ratio given by user
+    sig_p = (0.5 * kappa / Omega) * sig_r;	// use epicyclic relationship
+    vorb2 = vcir*vcir + sig_r*sig_r * (1 - 2 * alpha[0] * r) - sig_p*sig_p +
+      (r_mu>0 ? sig_z*sig_z * r * mu_eff*(2*mu-2)*r_mu/(r+r_mu)*(r+r_mu) : 0);
+    vorb = sqrt(MAX(vorb2, 0.0));
     printf("%6.4f %6.4f %6.2f %6.2f %6.4f %6.4f %6.4f %6.4f "
 	   "%6.3f %6.1f %6.1f\n",
-	   r, vcir, omega, kappa, sig_z, sig_r, sig_p, vorb,
-	   kappa * sig_r / (3.358*(sigma1+sigma2)), sigma1/(2*zdisk),
-	   sigma1 / (2*zdisk * rsqrt(rqbe(2*PI)) * sig_z*sig_r*sig_p));
+	   r, vcir, Omega, kappa, sig_z, sig_r, sig_p, vorb,
+	   kappa * sig_r / (3.358 * Sigma), Sigma1 / (2*zdisk),
+	   Sigma1 / (2*zdisk * pow(2*M_PI, 1.5) * sig_z*sig_r*sig_p));
   }
 }
+#endif
 
-/*
- * MAKEDISK: create realization of disk.
- */
+//  makedisk: create realization of disk.
+//  _____________________________________
 
 void makedisk(void)
 {
-  real m, r, phi, vcir, omega, Adisk, kappa, sigma1, sigma2,
-       mu_eff, sig_r, sig_p, sig_z, vrad, vorb2, vorb, vphi;
-  double Trr = 0.0, Tpp = 0.0, Tzz = 0.0;
-  int i;
   bodyptr dp;
+  double m, r, vcir, phi, Omega, dvdr, kappa, Sigma, K, zgas;
+  double mu_eff, sig_z, sig_r, sig_p, vorb2, vorb, vrad, vphi;
+  double Trr = 0.0, Tpp = 0.0, Tzz = 0.0;
 
-  for (i = 0; i < ndisk; i++) {			/* loop initializing bodies */
-    m = mdtab[NTAB-1] * ((real) i + 0.5) / ndisk;
-    r = seval(m, &mdtab[0], &rdtab[0], &rdtab[NTAB], NTAB);
-    vcir = seval(r, &rdtab[0], &vctab[0], &vctab[NTAB], NTAB);
-    omega = vcir / r;
-    Adisk = (omega - spldif(r, &rdtab[0], &vctab[0], &vctab[NTAB], NTAB)) / 2;
-    if (omega - Adisk < 0.0)
-      error("%s: kappa undefined (omega - Adisk < 0)\n"
-	    "  r, omega, Adisk = %f %f %f\n", getargv0(), r, omega, Adisk);
-    kappa = 2 * rsqrt(rsqr(omega) - Adisk * omega);
-    sigma1 = rsqr(alpha1) * mdisk1 * rexp(- alpha1 * r) / TWO_PI;
-    sigma2 = rsqr(alpha2) * mdisk2 * rexp(- alpha2 * r) / TWO_PI;
+  for (int i = 0; i < ndisk; i++) {		// loop initializing bodies
+    dp = NthBody(disk, i);
+    m = mdtab[NTAB-1] * ((double) i + 0.5) / ndisk;
+    r = gsl_interp_eval(rm_spline, mdtab, rdtab, m, NULL);
+    vcir = gsl_interp_eval(vr_spline, rdtab, vctab, r, NULL);
+    Mass(dp) = mdisk[0] / ndisk;
+    phi = xrandom(0.0, 2 * M_PI);
+#if !defined(GAS)
+    Omega = vcir / r;
+    dvdr = gsl_interp_eval_deriv(vr_spline, rdtab, vctab, r, NULL);
+    if (Omega + dvdr < 0.0)			// should NOT happen!
+      error("%s.makedisk: kappa undefined because Omega + dvdr < 0\n"
+	    "  r, Omega, dvdr = %f %f %f\n", getprog(), r, Omega, dvdr);
+    kappa = 2 * sqrt(Omega * (Omega + dvdr) / 2);
+    Sigma = 0.0;				// sum total surface density
+    for (int j = 0; j < nmodel; j++)
+      Sigma += alpha[j]*alpha[j] * mdisk[j] * exp(- alpha[j] * r) / (2*M_PI);
     mu_eff = (r_mu>0 ? 1 + (mu - 1) * (r / (r + r_mu)) : mu);
-    sig_z = rsqrt(PI * (sigma1 + sigma2) * zdisk);
-    sig_r = mu_eff * sig_z;
-    sig_p = (0.5 * kappa / omega) * sig_r;
-    vorb2 = rsqr(vcir) + rsqr(sig_r) * (1 - 2 * alpha1 * r) - rsqr(sig_p) +
-      (r_mu>0 ? rsqr(sig_z) * r * mu_eff*(2*mu-2)*r_mu/rsqr(r+r_mu) : 0);
-    vorb = rsqrt(MAX(vorb2, 0.0));
-    dp = NthBody(disk, i);			/* set up ptr to disk body  */
-    Mass(dp) = mdisk1 / ndisk;
-    phi = xrandom(0.0, TWO_PI);
-    Pos(dp)[0] = r * rsin(phi);
-    Pos(dp)[1] = r * rcos(phi);
-    Pos(dp)[2] = zdisk * ratanh(xrandom(-1.0, 1.0));
+    sig_z = sqrt(M_PI * Sigma * zdisk);		// model as isothermal sheet
+    sig_r = mu_eff * sig_z;			// apply ratio given by user
+    sig_p = (0.5 * kappa / Omega) * sig_r;	// use epicyclic relationship
+    vorb2 = vcir*vcir + sig_r*sig_r * (1 - 2 * alpha[0] * r) - sig_p*sig_p +
+      (r_mu>0 ? sig_z*sig_z * r * mu_eff*(2*mu-2)*r_mu/(r+r_mu)*(r+r_mu) : 0);
+    vorb = sqrt(MAX(vorb2, 0.0));
     vrad = (eta > 0 ? pickdist(eta, sig_r) : grandom(0.0, sig_r));
     vphi = (eta > 0 ? pickdist(eta, sig_p) : grandom(0.0, sig_p)) + vorb;
-    Vel(dp)[0] = vrad * rsin(phi) + vphi * rcos(phi);
-    Vel(dp)[1] = vrad * rcos(phi) - vphi * rsin(phi);
+    Pos(dp)[0] = r * sin(phi);
+    Pos(dp)[1] = r * cos(phi);
+    Pos(dp)[2] = zdisk * atanh(xrandom(-1.0, 1.0));
+    Vel(dp)[0] = vrad * sin(phi) + vphi * cos(phi);
+    Vel(dp)[1] = vrad * cos(phi) - vphi * sin(phi);
     Vel(dp)[2] = grandom(0.0, sig_z);
-    Trr += Mass(dp) * rsqr(sig_r) / 2;
-    Tpp += Mass(dp) * (rsqr(vorb) + rsqr(sig_p)) / 2;
-    Tzz += Mass(dp) * rsqr(sig_z) / 2;
+    Trr += Mass(dp) * sig_r*sig_r / 2;
+    Tpp += Mass(dp) * (vorb*vorb + sig_p*sig_p) / 2;
+    Tzz += Mass(dp) * sig_z*sig_z / 2;
+#else
+    K = (sphr != NULL ? gsp_mass(sphr, r) / (r*r*r) : 0.0);
+    if (nmodel > 1)				// stellar disk present?
+      K += (mdisk[1] * alpha[1]*alpha[1] / epsilon[1]) * exp(-alpha[1]*r);
+    zgas = (K > 0 ? sqrt(uinternal * (gam - 1) / K) : 0.0);
+    Pos(dp)[0] = r * sin(phi);
+    Pos(dp)[1] = r * cos(phi);
+    Pos(dp)[2] = grandom(0, zgas);
+    Vel(dp)[0] = vcir * cos(phi);
+    Vel(dp)[1] = - vcir * sin(phi);
+    Vel(dp)[2] = 0.0;
+    Uintern(dp) = uinternal;
+    Type(dp) = type;
+    Aux(dp) = K;				// save force constant
+    Tpp += Mass(dp) * vcir*vcir / 2;
+#endif    
   }
-  eprintf("[%s: Trr = %f  Tpp = %f  Tzz = %f]\n", getargv0(), Trr, Tpp, Tzz);
-}
 
-/*
- * RATANH: return hyperbolic arc tangent.
- */
-
-real ratanh(real x)
-{
-  return (0.5 * rlog((1.0 + x) / (1.0 - x)));
+  eprintf("[%s.makedisk: Trr = %f  Tpp = %f  Tzz = %f]\n",
+	  getprog(), Trr, Tpp, Tzz);
 }
 
-/*
- * PICKDIST: pick value from modified gaussian distribution.
- */
+//  pickdist: pick value from modified gaussian distribution.
+//  _________________________________________________________
 
 #define YMAX  2.5
 #define fmap(x)  ((x) / (1 - (x)*(x)))
 
-real pickdist(real eta, real sigma)
+double pickdist(double eta, double sigma)
 {
-  static real eta0 = -1.0, sigcorr;
+  static double eta0 = -1.0, sigcorr;
   int niter;
-  real x, y, q;
+  double x, y, q;
 
   if (eta != eta0) {
     sigcorr =
-      rsqrt(8 * eta /
+      sqrt(8 * eta /
 	      (bessel_K(0.75, 1/(32*eta)) / bessel_K(0.25, 1/(32*eta)) - 1));
-    eprintf("[%s: sigma correction factor = %f]\n", getargv0(), sigcorr);
+    eprintf("[%s.pickdist: sigma correction factor = %f]\n",
+	    getprog(), sigcorr);
     eta0 = eta;
   }
   niter = 0;
   do {
     x = xrandom(-1.0, 1.0);
     y = xrandom(0.0, YMAX);
-    q = rexp(- 0.5 * rsqr(fmap(x)) - eta * rsqr(rsqr(fmap(x)))) *
-      (1 + x*x) / rsqr(1 - x*x);
-    if (q > YMAX)				/* should not ever happen   */
-      error("%s: guess out of bounds\n  x = %f  q = %f > %f\n",
-	    getargv0(), x, q, YMAX);
+    q = exp(- 0.5 * gsl_pow_2(fmap(x)) - eta * gsl_pow_4(fmap(x))) *
+      (1 + x*x) / gsl_pow_2(1 - x*x);
+    if (q > YMAX)				// should not ever happen
+      error("%s.pickdist: guess out of bounds\n  x = %f  q = %f > %f\n",
+	    getprog(), x, q, YMAX);
     niter++;
-    if (niter > 1000)
-      error("%s: 1000 iterations without success\n", getargv0());
-  } while (y > q || x*x == 1);			/* 2nd test prevents infty  */
+    if (niter >= 1000)
+      error("%s.pickdist: 1000 iterations without success\n", getprog());
+  } while (y > q || x*x == 1);			// 2nd test prevents infty
   return (sigcorr * sigma * fmap(x));
+}
+
+//  padlist: pad string list to specified length.
+//  _____________________________________________
+
+string *padlist(string *old, int newlen)
+{
+  int oldlen = xstrlen(old, sizeof(string)) - 1;
+  string *new;
+  
+  if (oldlen == 0)
+    return (NULL);
+  if (oldlen >= newlen)
+    return (old);
+  new = (string *) allocate((newlen + 1) * sizeof(string));
+  for (int i = 0; i <= newlen; i++)
+    new[i] = (i < newlen ? old[MIN(i, oldlen - 1)] : NULL);
+  return new;
 }
