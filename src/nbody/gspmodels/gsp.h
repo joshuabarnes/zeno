@@ -1,69 +1,107 @@
 /*
- * GSP.H: structure for profile of general spherical model.
+ * gsp.h: definitions for general spherical profile model.
  */
 
-typedef struct {
-    int npoint;			/* number of points in radial arrays        */
-    real *radius;		/* radii defining model profile		    */
-    real *density;		/* density tabulated at each radius	    */
-    real *mass;			/* enclosed mass within each radius	    */
-    real *phi;			/* grav. potential at each radius           */
-    real alpha;			/* density power-law index for small r	    */
-    real beta;			/* density power-law index for large r	    */
-    real mtot;			/* total mass of model (within infinity)    */
-    real *dr_coef;		/* coefs for spline-fit to density(radius)  */
-    real *mr_coef;		/* coefs for spline-fit to mass(radius)	    */
-    real *rm_coef;		/* coefs for spline-fit to radius(mass)	    */
-    real *pr_coef;		/* coefs for spline-fit to phi(radius)      */
-    real *rp_coef;		/* coefs for spline-fit to radius(phii)      */
+#include <gsl/gsl_interp.h>
+
+//  gsprof: structure representing general spherical profile.
+//  _________________________________________________________
+
+typedef struct _gsprof {
+  int npoint;			// number of points in radial arrays
+  double *radius;		// radii used to define model profile
+  double *lg2rad;		// log2 of radii, for USELOG2R option
+  double *density;		// density tabulated at each radius
+  double *mass;			// enclosed mass within each radius
+  double *phi;			// grav. potential at each radius
+  double *sig2;			// square of radial velocity dispersion
+  double *dfint;		// integral of distribution function
+  double *energy;		// energy for distribution function
+  double alpha;			// density power-law index for small r
+  double beta;			// density power-law index for large r
+  double mtot;			// total mass of model (inside r=infinity)
+  double raniso;		// anisotropy radius for O.-M. models
+  struct _gsprof *ggsp;		// gravitational GSP for sig2(radius)
+  double beta_a;		// anisotropy parameter for sig2(radius)
+  gsl_interp *dr_spline;	// spline-fit for density(radius)
+  gsl_interp *mr_spline;	// spline-fit for mass(radius)
+  gsl_interp *rm_spline;	// spline-fit for radius(mass)
+  gsl_interp *pr_spline;	// spline-fit for phi(radius)
+  gsl_interp *rp_spline;	// spline-fit for radius(phi)
+  gsl_interp *sr_spline;	// spline-fit for sig2(radius)
+  gsl_interp *df_spline;	// spline-fit for distibution function
+  gsl_interp_accel *r_acc;	// interpolation accelerator for radius
 } gsprof;
 
-/* Low-level GSP functions; see gsp.c for code. */
+//  Basic GSP access macros and functions; see gsp.c for code.
+//  __________________________________________________________
 
-real rho_gsp(gsprof *, real);
+#define gsp_mtot(gsp)   ((gsp)->mtot)
+#define gsp_alpha(gsp)  ((gsp)->alpha)
+#define gsp_beta(gsp)   ((gsp)->beta)
 
-real drho_gsp(gsprof *, real);
+double gsp_rho(gsprof *gsp, double r);
+double gsp_grad(gsprof *gsp, double r);
+double gsp_mass(gsprof *gsp, double r);
+double gsp_mass_rad(gsprof *gsp, double m);
 
-real mass_gsp(gsprof *, real);
+gsprof *gsp_read(stream istr);
+void gsp_write(stream ostr, gsprof *);
 
-real r_mass_gsp(gsprof *, real);
+void gsp_free(gsprof *gsp);
+
+//  Test routines; see gsp.c for code.
+//  __________________________________
 
-gsprof *get_gsprof(stream);
+void gsp_test_rad(gsprof *gsp, double (*gsp_func)(gsprof *, double),
+		  double (*ref_func)(void *, double), void *pars, string);
+void gsp_test_mass(gsprof *gsp, double (*gsp_func)(gsprof *, double),
+		   double (*ref_func)(void *, double), void *pars, string);
 
-void put_gsprof(stream, gsprof *);
+//  High-level GSP functions.
+//  _________________________
 
-void free_gsprof(gsprof *gsp);
+double gsp_phi(gsprof *gsp, double r);
+double gsp_phi_rad(gsprof *gsp, double phi);
+void gsp_calc_phi(gsprof *gsp);
 
-/* High-level GSP functions. */
+double gsp_dist(gsprof *dgsp, double E);
+double gsp_dist_integ(gsprof *dgsp, double E);
+void gsp_calc_dist(gsprof *dgsp, gsprof *ggsp, double ra);
+void gsp_calc_dist_pars(double *eap, double *erp, bool *upp);
 
-void calc_phi_gsp(gsprof *, string);
+double gsp_sig2(gsprof *dgsp, double r);
+void gsp_calc_sig2(gsprof *dgsp, gsprof *ggsp, double beta_a);
 
-real phi_gsp(gsprof *, real);
+//  Constructor functions for GSP models.
+//  _____________________________________
 
-real r_phi_gsp(gsprof *, real);
+gsprof *gsp_expd(double mtot, double alpha, double zdisk,
+		 int np, double rmin, double rmax);
 
-real *calc_sig2_gsp(gsprof *, gsprof *, real);
+gsprof *gsp_gamma(double gam, double mtot, double ascale,
+		  int np, double rmin, double rmax);
 
-real sig2_gsp(gsprof *, gsprof *, real, real *, real);
+gsprof *gsp_halo_e(double, double, double, int, double, double);
 
-/* Constructor functions for GSP models. */
+gsprof *gsp_halo_g(double, double, double, int, double, double);
 
-gsprof *expdgsp(real, real, real, int, real, real);
+gsprof *gsp_halo_sw(double, double, double, int, double, double);
 
-gsprof *gammagsp(real, real, real, int, real, real);
+gsprof *gsp_isoth(double, double, double, int, double, double);
 
-gsprof *halogsp_e(real, real, real, int, real, real);
+gsprof *gsp_plum(double mtot, double ascale,
+		 int np, double rmin, double rmax);
 
-gsprof *halogsp_g(real, real, real, int, real, real);
+gsprof *gsp_poly(double, double, double, int);
 
-gsprof *halogsp_sw(real, real, real, int, real, real);
+//  Transformation functions for GSP models.
+//  ________________________________________
 
-gsprof *isothgsp(real, real, real, int, real, real);
+gsprof *gsp_smooth(gsprof *gsp, double eps, double kappa, string trace);
 
-gsprof *plumgsp(real, real, int, real, real);
+//  USELOG2R: if defined, interpolate using log2(radius) instead of radius.
+//  Appears to yield more accurate results, at cost of log2() evaluation.
+//  _______________________________________________________________________
 
-gsprof *polygsp(real, real, real, int);
-
-/* Transformation functions for GSP models. */
-
-gsprof *gspsmooth(gsprof *gsp, real eps, real kappa, string trace);
+#define USELOG2R
