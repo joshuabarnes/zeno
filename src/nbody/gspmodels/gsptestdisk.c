@@ -9,6 +9,7 @@
 #include "phatbody.h"
 #include "snapcenter.h"
 #include "gsp.h"
+#include <gsl/gsl_math.h>
 
 string defv[] = {		";Make test disk in a gsp spheroid",
   "gsp=???",			";Input gsp for mass profile",
@@ -24,7 +25,7 @@ string defv[] = {		";Make test disk in a gsp spheroid",
   "ndisk=12288",		";Number of disk particles",
   "randspin=false",		";If true, generate test-particle ball",
   "seed=54321",			";Seed for random number generator",
-  "VERSION=1.1",		";Josh Barnes  28 August 2014",
+  "VERSION=2.0",		";Josh Barnes  22 June 2017",
   NULL,
 };
 
@@ -32,24 +33,20 @@ string defv[] = {		";Make test disk in a gsp spheroid",
 
 void readgsp(void);
 void writemodel(void);
-void setprof(void);
+void setprof(int model, double alpha, double rcut);
 void makedisk(bool randspin);
-void xmatrix(matrix rmat, real theta);
-void zmatrix(matrix rmat, real theta);
+void xmatrix(matrix rmat, double theta);
+void zmatrix(matrix rmat, double theta);
 
-// Global parameters.
-
-real alpha;				// inverse exponential scale length
-real rcut;				// cut-off radius for disk model
-int model;				// selects model to generate
-
-// Global tables and data structures.
+// Global arrays and data structures.
 
 #define NTAB  (256 + 1)
 
-real mdtab[NTAB];			// use disk mass as indp var
-real rdtab[4*NTAB];			// radius as fcn of mass
-real vctab[4*NTAB];			// circ. velocity as fcn of radius
+double mdtab[NTAB];			// use disk mass as indp var
+double rdtab[NTAB];			// radius as fcn of mass
+double vctab[NTAB];			// circ. velocity as fcn of radius
+gsl_interp *rm_spline;			// interpolator for r(m)
+gsl_interp *vr_spline;			// interpolator for v(r)
 
 gsprof *spheroid;			// spheroid mass as fcn of radius
 
@@ -60,6 +57,9 @@ int ndisk;				// number of particles in the disk
 
 int main(int argc, string argv[])
 {
+  double alpha, rcut;
+  int model;
+
   initparam(argv, defv);
   alpha = getdparam("alpha");
   rcut = getdparam("rcut");
@@ -67,14 +67,15 @@ int main(int argc, string argv[])
   ndisk = getiparam("ndisk");
   init_random(getiparam("seed"));
   readgsp();
-  setprof();
+  setprof(model, alpha, rcut);
   layout_body(bodyfields, Precision, NDIM);
   disk = (bodyptr) allocate(ndisk * SizeofBody);
   makedisk(getbparam("randspin"));
   if (! getbparam("randspin"))			// if spins not random
     bodyfields[2] = NULL;			// don't write AuxVec field
   writemodel();
-  return (0);
+  fflush(NULL);
+  return 0;
 }
 
 //  readgsp: read spheroid gsp from input file.
@@ -86,8 +87,7 @@ void readgsp(void)
 
   istr = stropen(getparam("gsp"), "r");
   get_history(istr);
-  spheroid = get_gsprof(istr);
-  strclose(istr);
+  spheroid = gsp_read(istr);
 }
 
 //  writemodel: write N-body model to output file.
@@ -101,53 +101,54 @@ void writemodel(void)
   ostr = stropen(getparam("out"), "w");
   put_history(ostr);
   put_snap(ostr, &disk, &ndisk, &tsnap, bodyfields);
-  strclose(ostr);
 }
 
 //  setprof: initialize disk tables for radius and circular velocity.
 //  _________________________________________________________________
 
-void setprof(void)
+void setprof(int model, double alpha, double rcut)
 {
   int j;
-  real r, x;
+  double r, x;
 
   rdtab[0] = mdtab[0] = vctab[0] = 0.0;
   for (j = 1; j < NTAB; j++) {
-    r = rcut * rpow(((real) j) / (NTAB - 1), 2.0);
+    r = rcut * pow(((double) j) / (NTAB - 1), 2.0);
     rdtab[j] = r;
     x = alpha * r;
     switch (model) {
       case -3:
-        mdtab[j] = rsqr(rsqr(r)) / rsqr(rsqr(rcut));
+        mdtab[j] = gsl_pow_4(r / rcut);
 	break;
       case -2:
-        mdtab[j] = rqbe(r) / rqbe(rcut);
+        mdtab[j] = gsl_pow_3(r / rcut);
 	break;
       case -1:
-        mdtab[j] = rsqr(r) / rsqr(rcut);
+        mdtab[j] = gsl_pow_2(r / rcut);
 	break;
       case 0:
-	mdtab[j] = 1 - rexp(-x) - x * rexp(-x);
+	mdtab[j] = 1 - exp(-x) - x * exp(-x);
 	break;
       case 1:
-	mdtab[j] = (2 - 2 * rexp(-x) - (2*x + x*x) * rexp(-x)) / 2;
+	mdtab[j] = (2 - 2 * exp(-x) - (2*x + x*x) * exp(-x)) / 2;
 	break;
       case 2:
-	mdtab[j] = (6 - 6 * rexp(-x) - (6*x + 3*x*x + x*x*x) * rexp(-x)) / 6;
+	mdtab[j] = (6 - 6 * exp(-x) - (6*x + 3*x*x + x*x*x) * exp(-x)) / 6;
 	break;
       default:
-	error("%s: bad choice for model\n", getargv0());
+	error("%s: bad choice for model\n", getprog());
     }
-    vctab[j] = rsqrt(mass_gsp(spheroid, r) / r);
+    vctab[j] = sqrt(gsp_mass(spheroid, r) / r);
   }
-  if (model != -1)
-    eprintf("[%s: rcut = %8.4f/alpha  M(rcut) = %8.6f mdisk]\n",
-	    getargv0(), rdtab[NTAB-1] * alpha, mdtab[NTAB-1]);
+  if (model > -1)
+    eprintf("[%s: rcut = %8.4f/alpha  M(rcut) = %8.6f*mdisk]\n",
+	    getprog(), rdtab[NTAB-1] * alpha, mdtab[NTAB-1]);
   if ((mdtab[0] == mdtab[1]) || (mdtab[NTAB-2] == mdtab[NTAB-1]))
-    error("%s: disk mass table is degenerate\n", getargv0());
-  spline(&rdtab[NTAB], &mdtab[0], &rdtab[0], NTAB);	// for r_d = r_d(m)
-  spline(&vctab[NTAB], &rdtab[0], &vctab[0], NTAB);	// for v_c = v_c(r)
+    error("%s: disk mass table is degenerate\n", getprog());
+  rm_spline = gsl_interp_alloc(gsl_interp_akima, NTAB);
+  gsl_interp_init(rm_spline, mdtab, rdtab, NTAB);
+  vr_spline = gsl_interp_alloc(gsl_interp_akima, NTAB);
+  gsl_interp_init(vr_spline, rdtab, vctab, NTAB);
 }
 
 //  makedisk: create realization of disk.
@@ -157,26 +158,26 @@ void makedisk(bool randspin)
 {
   int i;
   bodyptr bp;
-  real m, r, v, phi;
+  double m, r, v, phi;
   matrix xmat, zmat;
   vector tmpv;
 
   for (i = 0; i < ndisk; i++) {			// loop initializing bodies
     bp = NthBody(disk, i);			// set ptr to body number i
-    m = mdtab[NTAB-1] * ((real) i + 0.5) / ndisk;
-    r = seval(m, &mdtab[0], &rdtab[0], &rdtab[NTAB], NTAB);
-    v = seval(r, &rdtab[0], &vctab[0], &vctab[NTAB], NTAB);
-    phi = xrandom(0.0, TWO_PI);
-    Pos(bp)[0] = r * rsin(phi);
-    Pos(bp)[1] = r * rcos(phi);
+    m = mdtab[NTAB-1] * ((double) i + 0.5) / ndisk;
+    r = gsl_interp_eval(rm_spline, mdtab, rdtab, m, NULL);
+    v = gsl_interp_eval(vr_spline, rdtab, vctab, r, NULL);
+    phi = xrandom(0.0, 2 * M_PI);
+    Pos(bp)[0] = r * sin(phi);
+    Pos(bp)[1] = r * cos(phi);
     Pos(bp)[2] = 0.0;
-    Vel(bp)[0] = v * rcos(phi);
-    Vel(bp)[1] = - v * rsin(phi);
+    Vel(bp)[0] = v * cos(phi);
+    Vel(bp)[1] = - v * sin(phi);
     Vel(bp)[2] = 0.0;
     pickshell(AuxVec(bp), NDIM, 1.0);
     if (randspin) {
-      xmatrix(xmat, racos(AuxVec(bp)[2]));
-      zmatrix(zmat, ratan2(AuxVec(bp)[0], AuxVec(bp)[1]));
+      xmatrix(xmat, acos(AuxVec(bp)[2]));
+      zmatrix(zmat, atan2(AuxVec(bp)[0], AuxVec(bp)[1]));
       MULMV(tmpv, xmat, Pos(bp));
       MULMV(Pos(bp), zmat, tmpv);
       MULMV(tmpv, xmat, Vel(bp));
@@ -185,18 +186,18 @@ void makedisk(bool randspin)
   }
 }
 
-void xmatrix(matrix rmat, real theta)
+void xmatrix(matrix rmat, double theta)
 {
-  real s = rsin(theta), c = rcos(theta);
+  real s = sin(theta), c = cos(theta);
 
   rmat[0][0] = 1.0;    rmat[0][1] = 0.0;    rmat[0][2] = 0.0;
   rmat[1][0] = 0.0;    rmat[1][1] =  c ;    rmat[1][2] =  s ;
   rmat[2][0] = 0.0;    rmat[2][1] = -s ;    rmat[2][2] =  c ;
 }
 
-void zmatrix(matrix rmat, real theta)
+void zmatrix(matrix rmat, double theta)
 {
-  real s = rsin(theta), c = rcos(theta);
+  real s = sin(theta), c = cos(theta);
 
   rmat[0][0] =  c ;    rmat[0][1] =  s ;    rmat[0][2] = 0.0;
   rmat[1][0] = -s ;    rmat[1][1] =  c ;    rmat[1][2] = 0.0;
