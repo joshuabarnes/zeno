@@ -1,7 +1,6 @@
 /*
- * gsprealize.c: make N-body realization of GSP.  This version uses
- * the range of radii listed in the density-profile gsp to define the
- * range of particle radii; this should be fixed!
+ * gsprealize.c: make N-body realization of GSP with isotropic
+ * or Osipkov-Merritt distribution function
  */
 
 #include "stdinc.h"
@@ -11,59 +10,52 @@
 #include "phatbody.h"
 #include "snapcenter.h"
 #include "gsp.h"
-
-#if (!defined(LINUX) && !defined(MACOSX))
-#include <ieeefp.h>
-#endif
+#include <gsl/gsl_integration.h>
+#include <assert.h>
 
 string defv[] = {		";Construct N-body realization of GSP.",
 				";Uses Abel integral to compute DF.",
   "gsp=???",			";Input GSP for density profile",
   "out=",			";Output snapshot file with bodies",
   "grav=",		        ";Input GSP for gravitational potential.",
-				";If blank, use density profile GSP.",
-  "nstep=128",			";Integration steps for DF calculation",
-  "dflist=false",		";Print out distribution function",
+				";If none, use density profile GSP.",
+  "raniso=-1",			";Osipkov-Merritt anisotropy radius.",
+				";If raniso <= 0, find isotropic DF.",
+  "epsrel=1.0e-4",		";Integration relative tolerance.",
+				";Need to relax for anisotropic models.",
   "copies=1",			";Number of realizations to produce",
-  "nbody=4096",			";Number of bodies per realization",
+  "nbody=16384",		";Number of bodies per realization",
   "seed=54321",			";Seed for random number generator",
-  "randrad=true",		";Pick radii randomly from M'(r).",
-				";If false, sample radii uniformly.",
+  "randrad=true",		";Pick radii randomly from M(r).",
+				";If FALSE, sample M(r) uniformly.",
+  "extmass=true",		";Extend model beyond limit of gsp",
   "besort=true",		";Sort particles by binding energy",
   "zerocm=false",		";Transform to center of mass coords",
   "hmaxpar=1024,1.25",		";Parameters for hmax function",
-  "VERSION=2.2",		";Josh Barnes  14 July 2012",
+  "VERSION=2.5",		";Josh Barnes  14 July 2017",
   NULL,
 };
 
 // Prototypes for model construction.
 
-local void computedf(void);			// tabulate dist. func.
-local void dfderiv(real *, real *);		// derivatives for f(E)
-local void inithmax(void);			// init table for hmax(phi)
-local void gsprealize(void);			// construct realization
-local bool pickspeed(real *, real);		// pick speed from h(v)
-local real h_v(real, real);			// speed distribution func
-local real f_E(real);				// phase-space dist. func
-local int berank(const void *, const void *);	// compare binding energies
+void gsp_realize(bool extmass, bool randrad);	// construct realization
+void init_hmax(void);				// init table for hmax(phi)
+bool pick_speed(double *, double);		// pick speed from h(v)
+double hfunc(double, double);			// speed distribution func
+int berank(const void *, const void *);		// compare binding energies
 
-real diffstep(real *, real *, int, void (*)(real *, real *), real);
-
 // Global data for communication between routines.
 
-local gsprof *gsp, *ggsp;		// profiles for mass and gravity
-local real *Etab, *Ftab, *Fcoef;	// tables for f(E) = dF/dE
-local real *htab, *hcoef, hsafe;	// tables for hmax(phi)
-local int ntab;				// number of values in tables
-local bodyptr btab = NULL;		// pointer to array of bodies
-local int nbody;			// number of bodies in array
+gsprof *gsp, *ggsp;			// profiles for mass and gravity
+double *ptab, *htab, hsafe;		// table for hmax(phi), safe factor
+gsl_interp *hp_spline;			// spline fit to hmax(phi)
 
-// Miscellaneous parameters and constants.
+string bodyfields[] = { PosTag, VelTag, MassTag, PhiTag, AuxTag, NULL };
+bodyptr btab = NULL;			// pointer to array of bodies
+int nbody;				// number of bodies in array
 
-#define NTRIAL 1000			// rejection cycles before note
-
-local string bodyfields[] = { PosTag, VelTag, MassTag, PhiTag, AuxTag, NULL };
-
+#define NTRIAL 1000
+
 //  main: handle I/O and call construction routines.
 //  ________________________________________________
 
@@ -72,19 +64,23 @@ int main(int argc, string argv[])
   stream fstr, gstr, ostr = NULL;
   int ncopy;
   real tsnap = 0.0;
+  double raniso, epsrel;
 
   initparam(argv, defv);
   fstr = stropen(getparam("gsp"), "r");
   get_history(fstr);
-  gsp = get_gsprof(fstr);
+  gsp = gsp_read(fstr);
   if (! strnull(getparam("grav"))) {
     gstr = stropen(getparam("grav"), "r");
     get_history(gstr);
-    ggsp = get_gsprof(gstr);
+    ggsp = gsp_read(gstr);
   } else
     ggsp = gsp;
-  computedf();
-  inithmax();
+  raniso = getdparam("raniso");
+  epsrel = getdparam("epsrel");
+  gsp_calc_dist_pars(NULL, &epsrel, NULL);
+  gsp_calc_dist(gsp, ggsp, raniso);		// compute distribution func
+  init_hmax();
   layout_body(bodyfields, Precision, NDIM);
   nbody = getiparam("nbody");
   if (nbody <= 0)
@@ -96,194 +92,149 @@ int main(int argc, string argv[])
   }
   ncopy = getiparam("copies");
   while (--ncopy >= 0) {
-    gsprealize();
-    if (ostr != NULL)
+    gsp_realize(getbparam("extmass"), getbparam("randrad"));
+    if (getbparam("besort"))
+      qsort(btab, nbody, SizeofBody, berank);
+    if (getbparam("zerocm"))
+      snapcenter(btab, nbody, MassField.offset);
+    if (ostr != NULL) {
       put_snap(ostr, &btab, &nbody, &tsnap, bodyfields);
-  }
-  if (ostr != NULL)
-    strclose(ostr);
-  return (0);
-}
-
-//  computedf: numerically integrate F(E) and tabulate result.
-//  __________________________________________________________
-
-local void computedf(void)
-{
-  real xmax, xFE[3], err, avgerr, maxerr;
-  int k, nstep, i, j;
-
-  (void) phi_gsp(ggsp, 1.0);			// compute potential table
-  for (k = 0; ggsp->phi[k] == ggsp->phi[k+1]; k++);
-  if (k > 0)
-    eprintf("[%s.computedf: skipping first %d values of phi]\n",
-	    getprog(), k);
-  ntab = ggsp->npoint - k;
-  Etab = ggsp->phi + k;
-  Ftab = (real *) allocate(ntab * sizeof(real));
-  Fcoef = (real *) allocate(3 * ntab * sizeof(real));
-  nstep = getiparam("nstep");
-  if (nstep <= 0)
-    error("%s: absurd value for nstep\n", getprog());
-  avgerr = maxerr = 0.0;
-  for (i = 0; i < ntab; i++) {
-    xmax = rsqrt(- (Etab[i] - Etab[ntab-1]));
-    xFE[0] = 0.0;				// init independent var
-    xFE[1] = 0.0;				// init integration result
-    xFE[2] = Etab[i];				// pass E on to dfderiv()
-    for (j = 0; j < nstep; j++) {
-      err = diffstep(xFE, xFE, 3, dfderiv, xmax / nstep);
-      avgerr += err / (ntab * nstep);
-      maxerr = MAX(maxerr, err);
+      fflush(ostr);
     }
-    Ftab[i] = xFE[1];
   }
-  eprintf("[%s.computedf: avgerr = %f  maxerr = %f]\n",
-	  getprog(), avgerr, maxerr);
-  spline(Fcoef, Etab, Ftab, ntab);
-  if (getbparam("dflist")) {
-    printf("#%11s  %12s  %12s\n", "E", "-F(E)", "f(E)");
-    for (i = 0; i < ntab; i++)
-      printf("%12.6f  %12.5e  %12.5e\n", Etab[i],
-	     - seval(Etab[i], Etab, Ftab, Fcoef, ntab),
-	     spldif(Etab[i], Etab, Ftab, Fcoef, ntab));
-  }
-}    
-
-//  dfderiv: evaluate dF/dx for computedf().
-//  ________________________________________
-
-local void dfderiv(real *dxFE, real *xFE)
-{
-  real r, C = 1.0 / (M_SQRT2 * M_PI * M_PI);
-
-  r = r_phi_gsp(ggsp, MIN(rsqr(xFE[0]) + xFE[2], 0.0));
-  dxFE[0] = 1.0;
-  dxFE[1] = C * (rsqr(r) / mass_gsp(ggsp, r)) * drho_gsp(gsp, r);
-  dxFE[2] = 0.0;
-  if (isnan((double) dxFE[1]))
-    error("%s: distfunc undefined for x = %f, E = %f, r = %f\n",
-	  getprog(), xFE[0], xFE[2], r);
+  fflush(NULL);
+  if (ggsp != gsp)
+    gsp_free(ggsp);
+  gsp_free(gsp);
+  return 0;
 }
 
-//  inithmax: initalize the table used to find hmax(phi).
-//  _____________________________________________________
+//  gsp_realize: construct realization from distribution function.
+//  ______________________________________________________________
 
-local void inithmax(void)
+void gsp_realize(bool extmass, bool randrad)
 {
-  int nsamp, i, j;
-  real vtop, h, v, hmax, vmax;
+  double mbody = gsp_mtot(gsp) / nbody, mmin, mmax, m, r, v, p, q;
+  bodyptr bp;
+  int nint = 0, next = 0;
+  bool speedfault;
+  vector vrad, vtan;
 
-  if (sscanf(getparam("hmaxpar"), "%i,%f", &nsamp, &hsafe) != 2)
+  mmin = (extmass ? 0.0           : gsp->mass[0]);
+  mmax = (extmass ? gsp_mtot(gsp) : gsp->mass[gsp->npoint-1]);
+  if (mbody < mmin || mbody < (gsp_mtot(gsp) - mmax))
+    eprintf("[%s.gsp_realize: warning: gsp limits range of radii\n"
+	    " mbody = %g  mmin = %g  mtot-mmax = %g]\n",
+	    getprog(), mbody, mmin, gsp_mtot(gsp) - mmax);
+  if (btab == NULL)
+    btab = (bodyptr) allocate(nbody * SizeofBody);
+  for (int i = 0; i < nbody; i++) {
+    bp = NthBody(btab, i);
+    Mass(bp) = mbody;
+    m = (randrad ? xrandom(mmin, mmax) :
+	           mmin + ((i + 0.5) / nbody) * (mmax - mmin));
+    if (m < gsp->mass[0])
+      nint++;
+    if (m > gsp->mass[gsp->npoint-1])
+      next++;
+    r = gsp_mass_rad(gsp, m);
+    pickshell(Pos(bp), NDIM, r);
+    Phi(bp) = gsp_phi(ggsp, r);
+  }
+  if (nint > 0 || next > 0)
+    eprintf("[%s.gsp_realize: nint, next = %d, %d]\n", getprog(), nint, next);
+  speedfault = TRUE;				// always take 1st loop
+  while (speedfault) {
+    speedfault = FALSE;
+    for (int i = 0; i < nbody; i++) {
+      bp = NthBody(btab, i);
+      if (! pick_speed(&v, Phi(bp))) {		// VN rejection failed?
+	hsafe = 2 * hsafe;
+	speedfault = TRUE;			// try again w/ bigger margin
+	eprintf("[%s.gsp_realize: warning: increasing hsafe to %g]\n",
+		getprog(), hsafe);
+	break;					// break out of for loop
+      }
+      Aux(bp) = gsp_dist(gsp, 0.5 * v*v + Phi(bp));
+      pickshell(Vel(bp), NDIM, v);
+      if (gsp->raniso > 0.0) {			// making aniso. model?
+	r = absv(Pos(bp));
+	p = 1 / sqrt(1 + gsl_pow_2(r / gsp->raniso));
+	q = dotvp(Vel(bp), Pos(bp)) / (r * r);
+	MULVS(vrad, Pos(bp), q);		// get radial vel. vector
+	SUBV(vtan, Vel(bp), vrad);		// and tangent. vel. vector
+	MULVS(vtan, vtan, p);			// squeeze tangent. component
+	ADDV(Vel(bp), vrad, vtan);		// put components together
+      }
+    }
+  }
+}
+
+//  init_hmax: initalize the table used to find hmax(phi).
+//  ______________________________________________________
+
+void init_hmax(void)
+{
+  int nsamp, ntab;
+  double vesc, h, v, hmax, vmax;
+
+  if (sscanf(getparam("hmaxpar"), "%i,%lf", &nsamp, &hsafe) != 2)
     error("%s: error scanning hmaxpar\n", getprog());
-  htab = (real *) allocate(ntab * sizeof(real));
-  hcoef = (real *) allocate(3 * ntab * sizeof(real));
-  for (i = 0; i < ntab-1; i++) {
-    vtop = rsqrt(-2.0 * (Etab[i] - Etab[ntab-1]));
-    for (j = 0; j <= nsamp; j++) {
-      v = vtop * j / ((real) nsamp);
-      h = h_v(v, Etab[i]);
-      if (j == 0 || h > hmax) {
+  ntab = gsp->npoint;				// ABSTRACTION VIOLATION
+  ptab = (double *) allocate(ntab * sizeof(double));
+  htab = (double *) allocate(ntab * sizeof(double));
+  for (int i = 0; i < ntab; i++) {
+    ptab[i] = gsp->energy[i];			// ABSTRACTION VIOLATION
+    vesc = sqrt(-2.0 * ptab[i]);
+    vmax = 2 * sqrt(ptab[i] / (1 + 2 * gsp_beta(gsp)));
+    hmax = hfunc(vmax, ptab[i]);		// set asymptotic values
+    for (int j = 0; j < nsamp; j++) {
+      v = vesc * j / ((double) nsamp);		// don't include v = vesc
+      h = hfunc(v, ptab[i]);
+      if (h > hmax) {
 	hmax = h;
 	vmax = v;
       }
     }
     htab[i] = hmax;
+    // printf("%16.8e  %16.8e  %16.8e  %16.8e  %16.8e\n", ptab[i], hmax, vmax,
+    //	      hfunc(2 * sqrt(ptab[i] / (1 + 2 * gsp_beta(gsp))), ptab[i]),
+    //        2 * sqrt(ptab[i] / (1 + 2 * gsp_beta(gsp))));
   }
-  htab[ntab-1] = 0.0;
-  spline(hcoef, Etab, htab, ntab);
+  hp_spline = gsl_interp_alloc(gsl_interp_akima, ntab);
+  gsl_interp_init(hp_spline, ptab, htab, ntab);  
 }
 
-//  gsprealize: construct realization from distribution function.
-//  _____________________________________________________________
+//  pick_speed: chose speed distributed according to h(v).
+//  ______________________________________________________
 
-local void gsprealize(void)
+bool pick_speed(double *vp, double phi)
 {
-  bool randrad, speedfault;
-  real mbody, mmin, mmax, x, rx, vx;
-  int i;
-  bodyptr bp;
+  double vesc, phi0 = ptab[0], phiN = ptab[gsp->npoint-1], hmax, v0, h0, hv;
+  int nloop = 0, nwarn = NTRIAL;
 
-  randrad = getbparam("randrad");
-  mbody = gsp->mtot / nbody;
-  mmin = gsp->mass[0];
-  mmax = gsp->mass[gsp->npoint-1];
-  if (mbody < mmin || mbody < (gsp->mtot - mmax))
-    eprintf("[%s: WARNING: gsp limits range of radii\n"
-	    " mbody = %g  mmin = %g  mtot-mmax = %g]\n",
-	    getprog(), mbody, mmin, gsp->mtot - mmax);
-  if (btab == NULL)
-    btab = (bodyptr) allocate(nbody * SizeofBody);
-  do {
-    speedfault = FALSE;
-    for (i = 0; i < nbody; i++) {
-      bp = NthBody(btab, i);
-      Mass(bp) = mbody;
-      if (randrad)				// use random sampling
-	x = xrandom(mmin, mmax);
-      else					// use uniform sampling
-	x = mmin + ((i + 0.5) / nbody) * (mmax - mmin);
-      rx = r_mass_gsp(gsp, x);
-      if (isnan((double) rx))
-	error("%s: rx = NAN for x = %f\n", getprog(), x);
-      pickshell(Pos(bp), NDIM, rx);
-      Phi(bp) = phi_gsp(ggsp, rx);
-      if (! pickspeed(&vx, Phi(bp))) {		// VN rejection failed?
-	speedfault = TRUE;
-	hsafe = 2 * hsafe;
-	eprintf("[%s: warning: increasing hsafe to %g]\n", getprog(), hsafe);
-	break;
-      }
-      if (isnan((double) vx))
-	error("%s: vx = NAN for x = %f\n", getprog(), x);
-      pickshell(Vel(bp), NDIM, vx);
-      Aux(bp) = f_E(0.5 * rsqr(vx) + Phi(bp));
-    }
-  } while (speedfault);
-  if (getbparam("besort"))
-    qsort(btab, nbody, SizeofBody, berank);
-  if (getbparam("zerocm"))
-    snapcenter(btab, nbody, MassField.offset);
-}
-
-//  pickspeed: chose speed distributed according to h(v).
-//  _____________________________________________________
-
-local bool pickspeed(real *vp, real phi)
-{
-  real vmax, hmax, v0, h0, hv;
-  int nloop = 0, nwarn = NTRIAL, i;
-
-  if (phi - Etab[ntab-1] > 0)
-    error("%s.pickspeed: imaginary vmax;  phi = %.8g  Etab[%d] = %.8g\n",
-	  getprog(), phi, ntab-1, Etab[ntab-1]);
-  vmax = rsqrt(-2.0 * (phi - Etab[ntab-1]));
-  hmax = (Etab[0] < phi ? seval(phi, Etab, htab, hcoef, ntab) : htab[0]);
-  if (hmax < 0)
-    error("%s.pickspeed: hmax = %.8g < 0;  phi = %.8g  Etab[0] = %.8g\n",
-	  getprog(), hmax, phi, Etab[0]);
+  if (phi > 0)
+    error("%s.pick_speed: phi = %.8g > 0\n", getprog(), phi);
+  vesc = sqrt(-2.0 * phi);
+  hmax = (phi < phi0 ? htab[0] :
+	  phi > phiN ? hfunc(2 * sqrt(phi / (1 + 2*gsp_beta(gsp))), phi) :
+	               gsl_interp_eval(hp_spline, ptab, htab, phi, NULL));
+  if (hmax <= 0)
+    error("%s.pick_speed: hmax = %.8g <= 0  phi = %.8g  ptab[0] = %.8g\n",
+	  getprog(), hmax, phi, phi0);
   do {
     if (nloop >= nwarn) {
-      eprintf("[%s.pickspeed: %d iterations]\n", getprog(), nloop);
+      eprintf("[%s.pick_speed: warning: %d iterations]\n", getprog(), nloop);
       nwarn += NTRIAL;
     }
     nloop++;
-    v0 = xrandom(0.0, vmax);
+    v0 = xrandom(0.0, vesc);
     h0 = xrandom(0.0, hsafe * hmax);
-    hv = h_v(v0, phi);
-    if (hv > hsafe * hmax) {			// fail if guess is OOB!
-      for (i = 0; i < ntab-1; i++)
-	if (Etab[i] <= phi && phi < Etab[i+1])
-	  eprintf("[%s.pickspeed: warning: guess out of bounds\n"
-		  "  hsafe*hmax = %g < hv = %g  v0 = %g  phi = %.8g\n"
-		  "  Etab[%d:%d] = %.8g:%.8g  htab[%d:%d] = %g:%g]\n",
-		  getprog(), hsafe * hmax, hv, v0, phi,
-		  i, i+1, Etab[i], Etab[i+1], i, i+1, htab[i], htab[i+1]);
-      if (phi < Etab[0])
-	eprintf("[%s.pickspeed: warning: guess out of bounds\n"
-		"  hsafe*hmax = %g < hv = %g  v0 = %g  phi = %.8g\n"
-		"  Etab[0] = %.8g  htab[0] = %g]\n",
-		getprog(), hsafe * hmax, hv, v0, phi, Etab[0], htab[0]);
+    hv = hfunc(v0, phi);
+    if (hv > hsafe * hmax) {			// if guess is out of bounds
+      eprintf("[%s.pick_speed: warning: guess out of bounds\n"
+	      " hsafe*hmax = %g < hv = %g  v0 = %g  phi = %.8g]\n",
+	      getprog(), hsafe * hmax, hv, v0, phi);
       return (FALSE);
     }
   } while (hv < h0);
@@ -291,39 +242,25 @@ local bool pickspeed(real *vp, real phi)
   return (TRUE);
 }
 
-//  h_v: compute speed distribution (up to a factor of 4 PI).
-//  _________________________________________________________
+//  hfunc: compute speed distribution (up to a factor of 4 PI).
+//  ___________________________________________________________
 
-local real h_v(real v, real phi)
+double hfunc(double v, double phi)
 {
-  real E;
+  double E = 0.5 * v * v + phi;
 
-  E = 0.5 * v * v + phi;
-  if (E > 0)
-    error("%s.h_v: E > 0 for v = %f, phi = %f\n", getprog(), v, phi);
-  return (v * v * f_E(E));
-}
-
-//  f_e: compute distribution function.
-//  ___________________________________
-
-local real f_E(real E)
-{
-  real f;
-  static bool warn = FALSE;
-
-  f = spldif(E, Etab, Ftab, Fcoef, ntab);
-  if (f < 0.0 && !warn) {
-    eprintf("[%s.f_E: WARNING: f < 0 for E = %f]\n", getprog(), E);
-    warn = TRUE;
+  if (E > 0) {
+    eprintf("[%s.hfunc: warning: E = %e > 0 for v = %e, phi = %e]\n",
+	    getprog(), E, v, phi);
+    return 0;
   }
-  return (f);
+  return (v * v * gsp_dist(gsp, E));
 }
 
 //  berank: rank bodies by binding energy.
 //  ______________________________________
 
-local int berank(const void *a, const void *b)
+int berank(const void *a, const void *b)
 {
   real Ea, Eb;
 
