@@ -126,11 +126,14 @@ float fexp2(float);
 
 //  Bessel functions available only in double precision.
 
+double bessel_J0(double x);
+double bessel_J1(double x);
+double bessel_J(int n, double x);
 double bessel_I0(double x);
 double bessel_I1(double x);
+double bessel_I(double nu, double x);
 double bessel_K0(double x);
 double bessel_K1(double x);
-double bessel_I(double nu, double x);
 double bessel_K(double nu, double x);
 
 //  Random number functions return double-precision values.
