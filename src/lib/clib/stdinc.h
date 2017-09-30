@@ -1,6 +1,6 @@
 /* 
  * stdinc.h: standard include file for Zeno C programs.
- * Copyright (c) 2012  Josh Barnes  Honolulu, HI.
+ * Copyright (c) 2017  Josh Barnes  Honolulu, HI.
  */
 
 #ifndef _stdinc_h
@@ -73,6 +73,7 @@ typedef FILE *stream;			// note: stdio.h is included above
 #  undef MIXEDPREC
    typedef double real, *realptr;
 #  define Precision "DOUBLEPREC"
+#  define REALFMT "%lf"
 #endif
 
 #if defined(MIXEDPREC)
@@ -80,6 +81,7 @@ typedef FILE *stream;			// note: stdio.h is included above
 #  undef SINGLEPREC
    typedef float *realptr, real;
 #  define Precision "MIXEDPREC"
+#  define REALFMT "%f"
 #endif
 
 #if defined(SINGLEPREC)
@@ -87,6 +89,7 @@ typedef FILE *stream;			// note: stdio.h is included above
 #  undef MIXEDPREC
    typedef float real, *realptr;
 #  define Precision "SINGLEPREC"
+#  define REALFMT "%f"
 #endif
 
 //  PI, etc.: mathematical constants.
