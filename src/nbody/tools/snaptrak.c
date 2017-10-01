@@ -18,25 +18,26 @@ string defv[] = {		";Track centroids of specified groups",
 				  SNAPMAP_BODY_VARS ".",
   "times=all",			";Range of times to process",
   "seed=",			";Generator seed for random values",
-  "VERSION=2.1",                ";Josh Barnes  2 February 2015",
+  "VERSION=2.2",                ";Josh Barnes  26 July 2017",
   NULL,
 };
 
-local void snaptrak(void);			// track groups of bodies
+void snaptrak(bool usemass);			// track groups of bodies
 local stream execmap(string);			// start snapmap process
 
-string names[2] = { "Group",  NULL };
+#define GroupField  phatbody[NewBodyFields+0]
+#define Group(b)    SelectInt(b, GroupField.offset)
+#define GroupTag    "Group"
+
+string names[2] = { GroupTag,  NULL };
 string exprs[2] = { NULL,     NULL };
 string types[2] = { IntType,  NULL };
 
-#define GroupField  phatbody[NewBodyFields+0]
-#define Group(b)  SelectInt(b, GroupField.offset)
-
-string btags[] = { MassTag, PosTag, VelTag, KeyTag, "Group", NULL};
-string otags[] = { MassTag, PosTag, VelTag, KeyTag, NULL};
+string btags[] = { PosTag, VelTag, KeyTag, MassTag, GroupTag, NULL};
+string otags[] = { PosTag, VelTag, KeyTag, MassTag, NULL};
 
 bodyptr bodytab = NULL, traktab = NULL;
-int nbody, ntrak;
+int nbody = 0, ntrak = 0;
 real tbody;
 
 int main(int argc, string argv[])
@@ -44,6 +45,7 @@ int main(int argc, string argv[])
   string prog, itags[MaxBodyFields];
   stream xstr, ostr;
   int nold = -1;
+  bool usemass;
 
   initparam(argv, defv);
   exprs[0] = getparam("group");
@@ -55,11 +57,18 @@ int main(int argc, string argv[])
   get_history(xstr);
   ostr = stropen(getparam("out"), "w");
   put_history(ostr);
-  new_field(&GroupField, IntType, "Group");
+  new_field(&GroupField, IntType, GroupTag);
   new_field(&GroupField + 1, NULL, NULL);
   layout_body(btags, Precision, NDIM);
   while (get_snap(xstr, &bodytab, &nbody, &tbody, itags, FALSE, NULL)) {
-    snaptrak();
+    if (nold == -1) {				// reading first frame?
+      usemass = set_member(itags, MassTag);	// remember if mass present
+      if (! usemass) {				// if no masses available
+	otags[3] = NULL;			// don't output mass data
+	eprintf("[%s: warning: assuming equal masses]\n", getprog());
+      }
+    }
+    snaptrak(usemass);
     put_snap(ostr, &traktab, &ntrak, &tbody, otags);
     if (ntrak != nold)
       eprintf("[%s: wrote %d groups at t = %f]\n",
@@ -69,40 +78,38 @@ int main(int argc, string argv[])
   strclose(ostr);
   if (unlink(prog) != 0)
     error("%s: can't unlink %s\n", getprog(), prog);
-  return (0);
+  return 0;
 }
 
-void snaptrak(void)
+void snaptrak(bool usemass)
 {
-  bodyptr bp, gp;
-  int nzero;
+  int nzero = 0;
   
   if (traktab == NULL) {
     ntrak = 0;
-    for (bp = bodytab; bp < NthBody(bodytab, nbody); bp = NextBody(bp))
+    for (bodyptr bp = bodytab; bp < NthBody(bodytab,nbody); bp = NextBody(bp))
       ntrak = MAX(ntrak, Group(bp));
     eprintf("[%s: allocating %d groups]\n", getprog(), ntrak);
     traktab = (bodyptr) allocate(ntrak * SizeofBody);
   }
-  for (gp = traktab; gp < NthBody(traktab, ntrak); gp = NextBody(gp)) {
+  for (bodyptr gp = traktab; gp < NthBody(traktab,ntrak); gp = NextBody(gp)) {
     Mass(gp) = 0.0;
     CLRV(Pos(gp));
     CLRV(Vel(gp));
     Key(gp) = 0;
   }
-  for (bp = bodytab; bp < NthBody(bodytab, nbody); bp = NextBody(bp)) {
-    if (Group(bp) > ntrak)
-      error("snaptrak: cant expand group array\n");
+  for (bodyptr bp = bodytab; bp < NthBody(bodytab,nbody); bp = NextBody(bp)) {
     if (Group(bp) > 0) {
+      if (Group(bp) > ntrak)
+	error("%s: cant expand group array\n", getprog());
       gp = NthBody(traktab, Group(bp) - 1);
-      Mass(gp) += Mass(bp);
-      ADDMULVS(Pos(gp), Pos(bp), Mass(bp));
-      ADDMULVS(Vel(gp), Vel(bp), Mass(bp));
+      ADDMULVS(Pos(gp), Pos(bp), (usemass ? Mass(bp) : 1.0));
+      ADDMULVS(Vel(gp), Vel(bp), (usemass ? Mass(bp) : 1.0));
       Key(gp)++;
+      Mass(gp) += (usemass ? Mass(bp) : 1.0);
     }
   }
-  nzero = 0;
-  for (gp = traktab; gp < NthBody(traktab, ntrak); gp = NextBody(gp))
+  for (bodyptr gp = traktab; gp < NthBody(traktab,ntrak); gp = NextBody(gp))
     if (Mass(gp) != 0.0) {
       DIVVS(Pos(gp), Pos(gp), Mass(gp));
       DIVVS(Vel(gp), Vel(gp), Mass(gp));
@@ -125,8 +132,8 @@ stream execmap(string prog)
     close(handle[0]);
     sprintf(handbuf, "-%d", handle[1]);
     execl(prog, getprog(), getparam("in"), handbuf, getparam("times"),
-	  MassTag "," PosTag "," VelTag,
-	  MassTag "," PosTag "," VelTag ",Group",
+	  PosTag "," VelTag,
+	  PosTag "," VelTag "," GroupTag,
 	  "true", getparam("seed"), NULL);
     error("%s: execl %s failed\n", getprog(), prog);
   }
