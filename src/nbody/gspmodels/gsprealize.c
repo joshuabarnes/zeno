@@ -32,14 +32,14 @@ string defv[] = {		";Construct N-body realization of GSP.",
   "besort=true",		";Sort particles by binding energy",
   "zerocm=false",		";Transform to center of mass coords",
   "hmaxpar=1024,1.25",		";Parameters for hmax function",
-  "VERSION=2.5",		";Josh Barnes  14 July 2017",
+  "VERSION=2.5",		";Josh Barnes  25 July 2017",
   NULL,
 };
 
 // Prototypes for model construction.
 
 void gsp_realize(bool extmass, bool randrad);	// construct realization
-void init_hmax(void);				// init table for hmax(phi)
+void init_hmax(int nsamp);			// init table for hmax(phi)
 bool pick_speed(double *, double);		// pick speed from h(v)
 double hfunc(double, double);			// speed distribution func
 int berank(const void *, const void *);		// compare binding energies
@@ -56,13 +56,13 @@ int nbody;				// number of bodies in array
 
 #define NTRIAL 1000
 
-//  main: handle I/O and call construction routines.
-//  ________________________________________________
+//  main: handle arguments and call construction routines.
+//  ______________________________________________________
 
 int main(int argc, string argv[])
 {
   stream fstr, gstr, ostr = NULL;
-  int ncopy;
+  int nsamp, ncopy;
   real tsnap = 0.0;
   double raniso, epsrel;
 
@@ -80,7 +80,9 @@ int main(int argc, string argv[])
   epsrel = getdparam("epsrel");
   gsp_calc_dist_pars(NULL, &epsrel, NULL);
   gsp_calc_dist(gsp, ggsp, raniso);		// compute distribution func
-  init_hmax();
+  if (sscanf(getparam("hmaxpar"), "%i,%lf", &nsamp, &hsafe) != 2)
+    error("%s: error scanning hmaxpar\n", getprog());
+  init_hmax(nsamp);
   layout_body(bodyfields, Precision, NDIM);
   nbody = getiparam("nbody");
   if (nbody <= 0)
@@ -173,13 +175,11 @@ void gsp_realize(bool extmass, bool randrad)
 //  init_hmax: initalize the table used to find hmax(phi).
 //  ______________________________________________________
 
-void init_hmax(void)
+void init_hmax(int nsamp)
 {
-  int nsamp, ntab;
+  int ntab;
   double vesc, h, v, hmax, vmax;
 
-  if (sscanf(getparam("hmaxpar"), "%i,%lf", &nsamp, &hsafe) != 2)
-    error("%s: error scanning hmaxpar\n", getprog());
   ntab = gsp->npoint;				// ABSTRACTION VIOLATION
   ptab = (double *) allocate(ntab * sizeof(double));
   htab = (double *) allocate(ntab * sizeof(double));
@@ -188,8 +188,8 @@ void init_hmax(void)
     vesc = sqrt(-2.0 * ptab[i]);
     vmax = 2 * sqrt(ptab[i] / (1 + 2 * gsp_beta(gsp)));
     hmax = hfunc(vmax, ptab[i]);		// set asymptotic values
-    for (int j = 0; j < nsamp; j++) {
-      v = vesc * j / ((double) nsamp);		// don't include v = vesc
+    for (int j = 0; j < nsamp; j++) {		// don't include v = vesc
+      v = vesc * (j*j) / ((double) nsamp*nsamp);
       h = hfunc(v, ptab[i]);
       if (h > hmax) {
 	hmax = h;
@@ -225,7 +225,7 @@ bool pick_speed(double *vp, double phi)
   do {
     if (nloop >= nwarn) {
       eprintf("[%s.pick_speed: warning: %d iterations]\n", getprog(), nloop);
-      nwarn += NTRIAL;
+      nwarn = 2 * nwarn;
     }
     nloop++;
     v0 = xrandom(0.0, vesc);
