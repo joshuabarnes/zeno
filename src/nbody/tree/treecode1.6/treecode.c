@@ -134,7 +134,7 @@ local void startrun(void)
   if (! strnull(getparam("gravgsp"))) {		// was GSP file given?
     gravstr = stropen(getparam("gravgsp"), "r");
     get_history(gravstr);
-    gravgsp = get_gsprof(gravstr);		// read external field GSP
+    gravgsp = gsp_read(gravstr);		// read external field GSP
     strclose(gravstr);
   }
 #endif
@@ -268,9 +268,9 @@ local void treeforce(void)
   for (p = bodytab; p < bodytab+nbody; p++)	// loop over all bodies
     if (Update(p) && gravgsp != NULL) {		// update in extern field?
       r = absv(Pos(p));				// get distance from origin
-      mr3i = - mass_gsp(gravgsp, r) / (r*r*r);
+      mr3i = - gsp_mass(gravgsp, r) / (r*r*r);
       ADDMULVS(Acc(p), Pos(p), mr3i);		// add extern acc and phi
-      Phi(p) += phi_gsp(gravgsp, r);
+      Phi(p) += gsp_phi(gravgsp, r);
     }
 #endif
 }
