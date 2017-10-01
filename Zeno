@@ -1,8 +1,9 @@
-# ~/zeno/Zeno: toplevel Zeno system makefile.
-# Copyright (c) 2015  Joshua E. Barnes  Kyoto, Japan
+##  ~/zeno/Zeno: toplevel Zeno system makefile.
+##  Copyright (c) 2017  Joshua E. Barnes  Honolulu, Hawaii
+##  ______________________________________________________
 
 ########################################################################
-# Install Zeno software.
+# Install Zeno software, with some double-precision support.
 
 install_all:
 	mkdir -p inc lib bin
@@ -15,22 +16,35 @@ install_all:
 	(cd src/nbody/analysis;		$(MAKE) -f Zeno install)
 	(cd src/nbody/graphics;		$(MAKE) -f Zeno install)
 	(cd src/nbody/tree/treecode1.6;	$(MAKE) -f Zeno install)
-	(cd src/nbody/sph/sphcode1.5;	$(MAKE) -f Zeno install)
+	(cd src/nbody/sph/sphcode1.6;	$(MAKE) -f Zeno install)
+	(cd src/nbody/tools;		$(MAKE) -f Zeno install X=_dp \
+	                                        OPTIONS=-DDOUBLEPREC)
+	(cd src/nbody/analysis;		$(MAKE) -f Zeno install X=_dp \
+	                                        OPTIONS=-DDOUBLEPREC)
+	(cd src/nbody/tree/treecode1.6;	$(MAKE) -f Zeno install X=_dp \
+	                                        OPTIONS=-DDOUBLEPREC)
+	(cd src/nbody/sph/sphcode1.6;	$(MAKE) -f Zeno install X=_dp \
+	                                        OPTIONS=-DDOUBLEPREC)
 
 ########################################################################
 # Clean up source directories.
 
 reset_all:
+	rm -f bin/* inc/* lib/*
 	(cd src/lib/clib;		$(MAKE) -f Zeno reset)
 	(cd src/util;			$(MAKE) -f Zeno reset)
 	(cd src/nbody/library;		$(MAKE) -f Zeno reset)
 	(cd src/nbody/models;		$(MAKE) -f Zeno reset)
 	(cd src/nbody/gspmodels;	$(MAKE) -f Zeno reset)
-	(cd src/nbody/tools;		$(MAKE) -f Zeno reset)
-	(cd src/nbody/analysis;		$(MAKE) -f Zeno reset)
+	(cd src/nbody/tools;		$(MAKE) -f Zeno reset; \
+                                        $(MAKE) -f Zeno reset X=_dp)
+	(cd src/nbody/analysis;		$(MAKE) -f Zeno reset; \
+                                        $(MAKE) -f Zeno reset X=_dp)
 	(cd src/nbody/graphics;		$(MAKE) -f Zeno reset)
-	(cd src/nbody/tree/treecode1.6;	$(MAKE) -f Zeno reset)
-	(cd src/nbody/sph/sphcode1.5;	$(MAKE) -f Zeno reset)
+	(cd src/nbody/tree/treecode1.6;	$(MAKE) -f Zeno reset; \
+                                        $(MAKE) -f Zeno reset X=_dp)
+	(cd src/nbody/sph/sphcode1.6;	$(MAKE) -f Zeno reset; \
+                                        $(MAKE) -f Zeno reset X=_dp)
 
 ########################################################################
 # Archive source directories.  Note that this is done from the parent of
@@ -50,7 +64,7 @@ archive_all:
 	     zeno/src/nbody/gspmodels/{Makefile,Zeno,*.h,*.c} \
 	     zeno/src/nbody/library/{Makefile,Zeno,*.h,*.c} \
 	     zeno/src/nbody/models/{Makefile,Zeno,*.c} \
-	     zeno/src/nbody/sph/sphcode1.5/{Makefile,Zeno,*.h,*.c} \
+	     zeno/src/nbody/sph/sphcode1.6/{Makefile,Zeno,*.h,*.c} \
 	     zeno/src/nbody/tools/{Makefile,Zeno,*.c} \
 	     zeno/src/nbody/tree/treecode1.6/{Makefile,Zeno,*.h,*.c} \
 	     zeno/src/util/{Makefile,Zeno,*.c} \
