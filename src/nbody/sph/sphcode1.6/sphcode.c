@@ -622,9 +622,9 @@ local void gravcalc(bool report)
   for (p = btab; p < btab+nbody; p++)		// loop over all bodies
     if (Update(p) && gravgsp != NULL) {		// update in extern field?
       r = absv(Pos(p));				// get distance from origin
-      mr3i = - mass_gsp(gravgsp, r) / (r*r*r);
+      mr3i = - gsp_mass(gravgsp, r) / (r*r*r);
       MULVS(Acc(p), Pos(p), mr3i);		// set extern acc and phi
-      Phi(p) = phi_gsp(gravgsp, r);
+      Phi(p) = gsp_phi(gravgsp, r);
     } else if (Update(p)) {			// update in zero field?
       CLRV(Acc(p));				// zero grav. acceleration
       Phi(p) = 0.0;				// zero grav. potential
