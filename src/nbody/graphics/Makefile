@@ -4,8 +4,8 @@ BINFILES = snapppm snapsmooth snapview viewfile
 
 # Location of X11 libraries.
 
-X11LIB = /opt/X11/lib
-# X11LIB = /usr/X11/lib
+X11LIB = -L/opt/X11/lib
+# X11LIB = -L/usr/X11/lib
 
 # Targets used to build Zeno utilities.
 
@@ -18,7 +18,7 @@ snapsmooth: snapsmooth.c
 	    -lNBody -lClib -lm
 
 snapview: snapview.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) -L$(X11LIB) \
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(X11LIB) \
 	    -o snapview snapview.c -lNBody -lClib \
 	    -lglut -lGLU -lGL -lXmu -lX11 -lm
 
