@@ -17,6 +17,7 @@
 #include "fixbody.h"
 
 //  Command-line parameters and defaults.
+//  _____________________________________
 
 string defv[] = {		";Compute densities and smoothing lengths",
   "in=???",			";Input, including " PosTag " data.",
@@ -25,33 +26,39 @@ string defv[] = {		";Compute densities and smoothing lengths",
                                   " data",
   "rhomass=false",		";If TRUE, output particle mass density.",
 				";Otherwise, output number density.",
+  "outgrad=false",		";If TRUE, output density gradient.",
+				";Uses " AuxVecTag " for gradient data.",
   "nsmooth=40",			";Number of bodies in smoothing volume",
   "nbucket=16",			";Number of bodies in leaves of KD tree",
   "slope=0.0",			";Smoothing kernel slope at origin",
-  "VERSION=1.0",		";Joshua Barnes  18 December 2012",
+  "VERSION=1.1",		";Joshua Barnes  12 August 2017",
   NULL,
 };
 
-//  Local procedure prototypes and variables.
+//  Local procedure prototypes.
+//  ___________________________
 
-local void setupbody(void);			// set offsets for dynbody
-local void sphdensity(bool, real, int, int);	// perform smoothing
-local void sph_numb_density(smxptr, int, int);	// compute number density
+local void setupbody(bool);			// set offsets for dynbody
+local void sphdensity(bool, bool, real, int, int);	// perform smoothing
 local void sph_mass_density(smxptr, int, int);	// compute mass density
+local void sph_mass_gradient(smxptr, int, int);	// compute gradient
+local void sph_numb_density(smxptr, int, int);	// compute number density
+local void sph_numb_gradient(smxptr, int, int);	// compute gradient
 
 //  main: toplevel routine.
 //  _______________________
 
 int main(int argc, string argv[])
 {
+  bool outgrad, massdata = FALSE;
   stream istr, ostr = NULL;
   string intags[MaxBodyFields], *newtags, *outtags;
-  bool massdata = FALSE;
   bodyptr p;
 
   initparam(argv, defv);			// initialize param access
-  setupbody();					// interface to dynbody
-  newtags = set_cons(SmoothTag, RhoTag, NULL);
+  outgrad = getbparam("outgrad");
+  setupbody(outgrad);				// interface to dynbody
+  newtags = set_cons(SmoothTag, RhoTag, (outgrad ? AuxVecTag : NULL), NULL);
   istr = stropen(getparam("in"), "r");
   get_history(istr);
   while (get_snap(istr, &btab, &nbody, &tnow, intags, FALSE, NULL)) {
@@ -63,7 +70,7 @@ int main(int argc, string argv[])
 	    getprog(), MassTag);
     for (p = btab; p < btab+nbody; p++)
       Type(p) = BODY | GAS;
-    sphdensity(getbparam("rhomass"), getdparam("slope"),
+    sphdensity(getbparam("rhomass"), outgrad, getdparam("slope"),
 	       getiparam("nsmooth"), getiparam("nbucket"));
     if (ostr == NULL) {
       ostr = stropen(getparam("out"), "w");
@@ -79,7 +86,7 @@ int main(int argc, string argv[])
 //  setupbody: inform dynamic body routines of relevant body fields.
 //  ________________________________________________________________
 
-local void setupbody(void)
+local void setupbody(bool outgrad)
 {
   define_body(sizeof(body), Precision, NDIM);
   define_body_offset(TypeTag, BodyOffset(Type));
@@ -90,12 +97,15 @@ local void setupbody(void)
   define_body_offset(PhiTag, BodyOffset(Phi));
   define_body_offset(AccTag, BodyOffset(Acc));
   define_body_offset(RhoTag, BodyOffset(Rho));
+  if (outgrad)					// use vmid for gradient
+    define_body_offset(AuxVecTag, BodyOffset(Vmid));
 }
 
 //  sphdensity: compute smoothing length and density.
 //  _________________________________________________
 
-local void sphdensity(bool rhomass, real slope, int nsmooth, int nbucket)
+local void sphdensity(bool usemass, bool outgrad,
+		      real slope, int nsmooth, int nbucket)
 {
   kdxptr kd;
   smxptr sm;
@@ -106,16 +116,68 @@ local void sphdensity(bool rhomass, real slope, int nsmooth, int nbucket)
   sm = init_smooth(kd, nsmooth, slope);		// prepare for smoothing
   for (p = btab; p < btab+nbody; p++)		// loop over bodies
     Rho(p) = 0.0;				// prepare to sum density
-  if (rhomass)					// mass density reqested?
+  if (usemass) {				// mass density reqested?
     smooth(sm, sph_mass_density);		// compute mass density
-  else
+    if (outgrad)
+      smooth(sm, sph_mass_gradient);		// compute density gradient
+  } else {
     smooth(sm, sph_numb_density);		// compute number density
+    if (outgrad)
+      smooth(sm, sph_numb_gradient);		// compute density gradient
+  }
   finish_smooth(sm);				// deallocate smooth data
   finish_kdtree(kd);				// deallocate kdtree data
 }
 
-//  sph_numb_density: compute number density for body and its neighbors.
-//  ____________________________________________________________________
+//  sph_mass_density: compute density for body and its neighbors.
+//  _____________________________________________________________
+
+local void sph_mass_density(smxptr sm, int pi, int nball)
+{
+  bodyptr bi = sm->kd->bptr[pi], bj;
+  real hinv2, wsc, rhinv2, wsm;
+  int j;
+
+  hinv2 = 4 / sm->r2ball[pi];
+  wsc = 0.5 * rsqrt(hinv2) * hinv2 / PI;
+  for (j = 0; j < nball; ++j) {
+    bj = sm->kd->bptr[sm->inlist[j]];
+    rhinv2 = sm->r2list[j] * hinv2;
+    WSmooth(wsm, wsc, rhinv2, sm->coefs);
+    Rho(bi) += wsm * Mass(bj);
+    Rho(bj) += wsm * Mass(bi);
+  }
+}
+
+//  sph_mass_gradient: compute density gradient for body.
+//  _____________________________________________________
+
+local void sph_mass_gradient(smxptr sm, int pi, int nball)
+{
+  bodyptr bi = sm->kd->bptr[pi], bj;
+  real hinv2, dwsc, rhinv2, dwsm, dwsmrinv, fij;
+  vector gradrho, rij;
+  int j;
+
+  hinv2 = 4 / sm->r2ball[pi];
+  dwsc = hinv2 * hinv2 / PI;
+  CLRV(gradrho);
+  for (j = 0; j < nball; ++j) {
+    bj = sm->kd->bptr[sm->inlist[j]];
+    if (bi != bj) {
+      rhinv2 = sm->r2list[j] * hinv2;
+      dWSmooth(dwsm, dwsc, rhinv2, sm->coefs);
+      dwsmrinv = dwsm / sqrt(sm->r2list[j]);
+      SUBV(rij, Pos(bi), Pos(bj));
+      fij = Rho(bj) / Rho(bi) - 1.0;
+      ADDMULVS(gradrho, rij, fij * dwsmrinv * Mass(bj));
+    }
+  }
+  SETV(Vmid(bi), gradrho);			// store gradient in vmid
+}
+
+//  sph_numb_density: compute density for body and its neighbors.
+//  _____________________________________________________________
 
 local void sph_numb_density(smxptr sm, int pi, int nball)
 {
@@ -134,22 +196,29 @@ local void sph_numb_density(smxptr sm, int pi, int nball)
   }
 }
 
-//  sph_mass_density: compute mass density for body and its neighbors.
-//  __________________________________________________________________
+//  sph_numb_gradient: compute density gradient for body.
+//  _____________________________________________________
 
-local void sph_mass_density(smxptr sm, int pi, int nball)
+local void sph_numb_gradient(smxptr sm, int pi, int nball)
 {
   bodyptr bi = sm->kd->bptr[pi], bj;
-  real hinv2, wsc, rhinv2, wsm;
+  real hinv2, dwsc, rhinv2, dwsm, dwsmrinv, fij;
+  vector gradrho, rij;
   int j;
 
   hinv2 = 4 / sm->r2ball[pi];
-  wsc = 0.5 * rsqrt(hinv2) * hinv2 / PI;
+  dwsc = hinv2 * hinv2 / PI;
+  CLRV(gradrho);
   for (j = 0; j < nball; ++j) {
     bj = sm->kd->bptr[sm->inlist[j]];
-    rhinv2 = sm->r2list[j] * hinv2;
-    WSmooth(wsm, wsc, rhinv2, sm->coefs);
-    Rho(bi) += wsm * Mass(bj);
-    Rho(bj) += wsm * Mass(bi);
+    if (bi != bj) {
+      rhinv2 = sm->r2list[j] * hinv2;
+      dWSmooth(dwsm, dwsc, rhinv2, sm->coefs);
+      dwsmrinv = dwsm / sqrt(sm->r2list[j]);
+      SUBV(rij, Pos(bi), Pos(bj));
+      fij = Rho(bj) / Rho(bi) - 1.0;
+      ADDMULVS(gradrho, rij, fij * dwsmrinv);
+    }
   }
+  SETV(Vmid(bi), gradrho);			// store gradient in vmid
 }
