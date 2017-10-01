@@ -1,30 +1,32 @@
+/*
+ * kdtree.h: definitions for kd-tree for SPH codes.
+ * Adapted from SMOOTH V2.01; http://www-hpcc.astro.washington.edu/
+ */
+
 #ifndef _kdtree_h
 #define _kdtree_h
 
-/*
- * BOUND: structure representing the bounds of a kd node.
- */
+//  bound: structure representing the bounds of a kd node.
+//  ______________________________________________________
 
 typedef struct {
-    real minb[3];
-    real maxb[3];
+  real minb[3];
+  real maxb[3];
 } bound;
 
-/*
- * KDNODE: structure representing a node of a kd-tree.
- */
+//  kdnode: structure representing a node of a kd-tree.
+//  ___________________________________________________
 
 typedef struct {
-    bound bnd;				/* min, max bounds of kd-cell	    */
-    int dim;				/* splitting dimension		    */
-    real split;				/* median coordinate value	    */
-    int first;				/* index of first body in node	    */
-    int last;				/* index of last body in node	    */
+  bound bnd;				// min, max bounds of kd-cell
+  int dim;				// splitting dimension
+  real split;				// median coordinate value
+  int first;				// index of first body in node
+  int last;				// index of last body in node
 } kdnode;
 
-/*
- * KDROOT, ..., Sibling: macros for indicies into kd tree.
- */
+//  KDROOT, ..., Sibling: macros for indicies into kd tree.
+//  _______________________________________________________
 
 #define KDROOT		1
 #define Lower(i)	((i)<<1)
@@ -33,22 +35,21 @@ typedef struct {
 #define Sibling(i) 	(((i)&1)?(i)-1:(i)+1)
 
 #define SetNext(i) {				\
-    while (i&1)					\
-        i=i>>1;					\
-    ++i;					\
+  while (i&1)					\
+    i=i>>1;					\
+  ++i;						\
 }
 
-/*
- * KDCONTEXT, KDXPTR: structure to represent context of KD tree.
- */
+//  kdcontext, kdxptr: structure to represent context of KD tree.
+//  _____________________________________________________________
 
 typedef struct {
-    int ngas;
-    bodyptr *bptr;
-    bound bnd;
-    int nnode;
-    int nsplit;
-    kdnode *ntab;
+  int ngas;
+  bodyptr *bptr;
+  bound bnd;
+  int nnode;
+  int nsplit;
+  kdnode *ntab;
 } kdcontext, *kdxptr;
 
 kdxptr init_kdtree(bodyptr, int, int);
