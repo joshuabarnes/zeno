@@ -102,7 +102,7 @@ void inputgrav(string gspfile)
 #if defined(EXTGRAV)
   gspstr = stropen(gspfile, "r");
   get_history(gspstr);
-  gravgsp = get_gsprof(gspstr);			// read external field GSP
+  gravgsp = gsp_read(gspstr);			// read external field GSP
   strclose(gspstr);
 #endif
 }
@@ -439,7 +439,7 @@ void savestate(void)
   put_data(str, "theta", RealType, &theta, 0);
 #elif defined(EXTGRAV)
   if (gravgsp != NULL)
-    put_gsprof(str, gravgsp);
+    gsp_write(str, gravgsp);
 #endif
   put_string(str, "options", options);
   put_string(str, "outputs", outputs);
@@ -521,7 +521,7 @@ void restorestate(void)
   get_data(str, "theta", RealType, &theta, 0);
 #elif defined(EXTGRAV)
   if (get_tag_ok(str, "GeneralSphericalProfile"))
-    gravgsp = get_gsprof(str);			// set external field GSP
+    gravgsp = gsp_read(str);			// set external field GSP
   else
     gravgsp = NULL;				// else no external field
 #endif
