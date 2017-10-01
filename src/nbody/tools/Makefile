@@ -6,13 +6,13 @@ BINFILES = snapascii$X snapaux$X snapcenter$X snapcm$X snapcollect$X \
 	   snapcons$X snapfile$X snapforce$X snapkey$X snaplist$X \
 	   snapmake$X snaprect$X snapregister$X snaprotate$X snapset$X \
 	   snapsift$X snapsort$X snapsplit$X snapstack$X snapstream$X \
-	   snaptipsy$X snaptrak$X snapturn$X \
-	   testcode$X testcode_gsp$X testcode_hqm$X
+	   snaptipsy$X snaptrak$X snapturn$X testcode$X testcode_gsp$X \
+	   testcode_hmp$X testcode_zom$X testcode_mpi$X testcode_zom_mpi$X
 
-##  Compilation options are selected by changing OPTIONS (and X):
+##  Compilation options are selected by changing OPTIONS (and X); e.g.,
 ##	make binfiles OPTIONS="-DDOUBLEPREC" X=_dp
-##  compiles BINFILES in double precision, with "_dp" suffixes.
-##  _____________________________________________________________
+##  compiles BINFILES in double precision, attaching "_dp" suffixes.
+##  ___________________________________________________________________
 
 OPTIONS =
 OPT = -O3
@@ -116,15 +116,33 @@ snapturn$X: snapturn.c
 
 testcode$X: testcode.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) $(OPT) \
-	       -o testcode$X testcode.c -lNBody -lClib -lm
+	       -o testcode$X testcode.c -lGSP -lNBody -lClib \
+	       -lgsl -lgslcblas -lm
 
 testcode_gsp$X: testcode.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) $(OPT) -DGSPGRAV \
-	       -o testcode_gsp$X testcode.c -lNBody -lGSP -lClib -lm
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPT) $(OPTIONS) -DGSPGRAV \
+	       -o testcode_gsp$X testcode.c -lGSP -lNBody -lClib \
+	       -lgsl -lgslcblas -lm
 
-testcode_hqm$X: testcode.c
-	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) $(OPT) -DHQMGRAV \
-	       -o testcode_hqm$X testcode.c -lNBody -lClib -lgsl -lgslcblas -lm
+testcode_hmp$X: testcode.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPT) $(OPTIONS) -DHMPGRAV \
+	       -o testcode_hmp$X testcode.c -lGSP -lNBody -lClib \
+	       -lgsl -lgslcblas -lm
+
+testcode_zom$X: testcode.c
+	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPT) $(OPTIONS) -DZOMGRAV \
+	       -o testcode_zom$X testcode.c -lGSP -lNBody -lClib \
+	       -lgsl -lgslcblas -lm
+
+testcode_mpi$X: testcode.c
+	mpicc $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) $(OPT) -DMPICODE \
+	       -o testcode_mpi$X testcode.c -lGSP -lNBody -lClib \
+	       -lgsl -lgslcblas -lm
+
+testcode_zom_mpi$X: testcode.c
+	mpicc $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) $(OPT) -DZOMGRAV -DMPICODE \
+	       -o testcode_zom_mpi$X testcode.c -lGSP -lNBody -lClib \
+	       -lgsl -lgslcblas -lm
 
 # Generate listing of source code.
 
