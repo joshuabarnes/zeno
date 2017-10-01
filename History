@@ -284,9 +284,34 @@ zeno.009e.tar.gz:  20 May 2013 (update)
     * added snapregister program.
     * upgraded snapcons to version 2.2; removed nbody parameter.
 
+zeno.010.tar.gz:  7 June 2015
+
+    * allocate function takes size_t argument.
+    * burststring function revised; no limits on size, handles empty words.
+    * phatstruct package: automatically terminates field array.
+    * programs accepting C code now have uniform documentation, listing
+      all variables and parameters which may be mentioned in code;
+      replaced tempnam() calls with mktemp().
+    * bodyio functions now support AuxArray and KeyArray, but no longer
+      support PhaseSpace input.
+    * buildmap function renamed codemap and extended to accept time mapping.
+    * phatbody package: added AuxArray and KeyArray.
+    * upgraded snapmap to v1.3.
+    * upgraded snaprotate to v3.1: can specify which vectors to rotate.
+    * upgraded snapset to v2.9: can set keyarr, auxarr, and time values.
+    * snapsift program only outputs empty snapshots on request.
+    * added testcode program and variants.
+    * snapavg program handles rare bug when std == 0.
+    * upgraded snapstat to v2.4: uses double precision internally, and
+      allows user to specify output formats.
+    * gsplist program handles single radius correctly.
+    * gsptestdisk has new model options.
+    * upgraded treecode to v1.6: added Keigo's softening correction term,
+      renamed "trace" argument to "stream", improved interaction with "log".
+
 Joshua Barnes <barnes@ifa.hawaii.edu>
 
-						20 May 2013
-						Honolulu, Hawaii
+						7 June 2015
+						Kyoto, Japan
 
 HistoryHistoryHistoryHistoryHistoryHistoryHistoryHistoryHistoryHistoryHi
