@@ -103,14 +103,14 @@ bool get_snap(stream istr, bodyptr *btab, int *nbody, real *tnow,
       if (*btab == NULL && expand)		// permit expand before alloc
 	add_body_fields(istr);
       if (*btab != NULL && nbody1 > *nbody) {	// not enough room for bodies?
-	eprintf("[%s.get_snap: WARNING: reallocating body array\n"
-		" nbody = %d -> %d]\n", getprog(), *nbody, nbody1);
+	eprintf("[%s.get_snap: WARNING: reallocating body array"
+		"  nbody = %d -> %d]\n", getprog(), *nbody, nbody1);
 	free(*btab);
 	*btab = NULL;				// trigger array reallocation
       }
       if (nbody1 < *nbody)
-	eprintf("[%s.get_snap: shrinking body array\n"
-		" nbody = %d -> %d]\n", getprog(), *nbody, nbody1);
+	eprintf("[%s.get_snap: shrinking body array"
+		"  nbody = %d -> %d]\n", getprog(), *nbody, nbody1);
       *nbody = nbody1;
       *tnow = tnow1;
       get_particles(istr, btab, nbody, tags);
@@ -268,8 +268,14 @@ local void list_fields(int *ndef, int offbuf[], char tagbuf[], int taglen)
   for (i = 0; i < *ndef; i++)
     for (ps_field *fp = &phatbody[1]; fp->name != NULL; fp++)
       if (fp->offset == offbuf[i]) {
+#if defined(MACOSX)
 	if (tagbuf[0] != (char) NULL)		// if not zero length
 	  strlcat(tagbuf, ",", taglen);		// then insert a comma
 	strlcat(tagbuf, fp->name, taglen);
+#else
+	if (tagbuf[0] != (char) NULL)		// if not zero length
+	  strcat(tagbuf, ",");			// then insert a comma
+	strcat(tagbuf, fp->name);		// should use strncat()
+#endif
       }
 }
