@@ -102,7 +102,7 @@ void snaptrak(bool usemass)
     if (Group(bp) > 0) {
       if (Group(bp) > ntrak)
 	error("%s: cant expand group array\n", getprog());
-      gp = NthBody(traktab, Group(bp) - 1);
+      bodyptr gp = NthBody(traktab, Group(bp) - 1);
       ADDMULVS(Pos(gp), Pos(bp), (usemass ? Mass(bp) : 1.0));
       ADDMULVS(Vel(gp), Vel(bp), (usemass ? Mass(bp) : 1.0));
       Key(gp)++;
