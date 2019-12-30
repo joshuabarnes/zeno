@@ -64,4 +64,4 @@ zeno_treecode.ps: treecode.c treeio.c treeload.c treegrav.c \
 
 treepeek$X: treepeek.c treedefs.h treecode.h
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o treepeek$X \
-	       treepeek.c -lNBody -lClib
+	       treepeek.c -lNBody -lClib -lm

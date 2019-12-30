@@ -3,8 +3,8 @@
 ##  _________________________________________________________
 
 BINFILES = snapascii$X snapaux$X snapcenter$X snapcm$X snapcollect$X \
-	   snapcons$X snapfile$X snapforce$X snapkey$X snaplist$X \
-	   snapmake$X snaprect$X snapregister$X snaprotate$X snapset$X \
+	   snapcons$X            snapforce$X snapkey$X snaplist$X \
+	              snaprect$X snapregister$X snaprotate$X snapset$X \
 	   snapsift$X snapsort$X snapsplit$X snapstack$X snapstream$X \
 	   snaptipsy$X snaptrak$X snapturn$X testcode$X testcode_gsp$X \
 	   testcode_hmp$X testcode_zom$X testcode_mpi$X testcode_zom_mpi$X
@@ -32,19 +32,19 @@ snapaux$X: snapaux.c
 
 snapcenter$X: snapcenter.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapcenter$X \
-	       snapcenter.c -lNBody -lClib
+	       snapcenter.c -lNBody -lClib -lm
 
 snapcm$X: snapcm.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapcm$X \
-	       snapcm.c -lNBody -lClib
+	       snapcm.c -lNBody -lClib -lm
 
 snapcollect$X: snapcollect.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapcollect$X \
-	       snapcollect.c -lNBody -lClib
+	       snapcollect.c -lNBody -lClib -lm
 
 snapcons$X: snapcons.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapcons$X \
-	       snapcons.c -lNBody -lClib
+	       snapcons.c -lNBody -lClib -lm
 
 snapfile$X: snapfile.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapfile$X \
@@ -60,7 +60,7 @@ snapkey$X: snapkey.c
 
 snaplist$X: snaplist.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snaplist$X \
-	       snaplist.c -lNBody -lClib
+	       snaplist.c -lNBody -lClib -lm
 
 snapmake$X: snapmake.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapmake$X \
@@ -84,23 +84,23 @@ snapset$X: snapset.c
 
 snapsift$X: snapsift.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapsift$X \
-	       snapsift.c -lNBody -lClib
+	       snapsift.c -lNBody -lClib -lm
 
 snapsort$X: snapsort.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapsort$X \
-	       snapsort.c -lNBody -lClib
+	       snapsort.c -lNBody -lClib -lm
 
 snapsplit$X: snapsplit.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapsplit$X \
-	       snapsplit.c -lNBody -lClib
+	       snapsplit.c -lNBody -lClib -lm
 
 snapstack$X: snapstack.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapstack$X \
-	       snapstack.c -lNBody -lClib
+	       snapstack.c -lNBody -lClib -lm
 
 snapstream$X: snapstream.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -o snapstream$X \
-	       snapstream.c -lNBody -lClib
+	       snapstream.c -lNBody -lClib -lm
 
 snaptipsy$X: snapascii.c
 	$(ZCC) $(ZCCFLAGS) $(ZLDFLAGS) $(OPTIONS) -DTIPSY -o snaptipsy$X \
